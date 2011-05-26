@@ -7,7 +7,9 @@ To compile sources you will need linux tools such a gcc, svn, autoconf, automake
 
 = Details =
 
-At first you need to download wireshark sources. You can get it by:
+== Instruction for Linux ==
+
+At first you need to download Wireshark sources. You can get it by:
 {{{
 svn co http://anonsvn.wireshark.org/wireshark/trunk wireshark-source
 }}}
