@@ -1,0 +1,80 @@
+Index: configure.in
+===================================================================
+--- configure.in	(wersja 37406)
++++ configure.in	(kopia robocza)
+@@ -2044,6 +2044,7 @@
+   plugins/unistim/Makefile
+   plugins/wimax/Makefile
+   plugins/wimaxasncp/Makefile
++  plugins/xmpp/Makefile
+   tools/Makefile
+   tools/idl2wrs.sh
+   tools/lemon/Makefile
+Index: Makefile.am
+===================================================================
+--- Makefile.am	(wersja 37406)
++++ Makefile.am	(kopia robocza)
+@@ -291,7 +291,8 @@
+ 	-dlopen plugins/sercosiii/sercosiii.la \
+ 	-dlopen plugins/stats_tree/stats_tree.la \
+ 	-dlopen plugins/unistim/unistim.la \
+-	-dlopen plugins/wimax/wimax.la
++	-dlopen plugins/wimax/wimax.la \
++	-dlopen plugins/xmpp/xmpp.la
+ 
+ WTAP_PLUGIN_SOURCES = \
+        epan/plugins.c \
+Index: plugins/Makefile.nmake
+===================================================================
+--- plugins/Makefile.nmake	(wersja 37406)
++++ plugins/Makefile.nmake	(kopia robocza)
+@@ -22,7 +22,8 @@
+ 	stats_tree  \
+ 	unistim     \
+ 	wimax       \
+-	wimaxasncp
++	wimaxasncp  \
++	xmpp
+ 
+ 
+ all:
+Index: plugins/Makefile.am
+===================================================================
+--- plugins/Makefile.am	(wersja 37406)
++++ plugins/Makefile.am	(kopia robocza)
+@@ -38,7 +38,8 @@
+ 	stats_tree \
+ 	unistim \
+ 	wimax \
+-	wimaxasncp
++	wimaxasncp \
++	xmpp
+ 
+ plugindir = @plugindir@
+ 
+Index: epan/Makefile.am
+===================================================================
+--- epan/Makefile.am	(wersja 37406)
++++ epan/Makefile.am	(kopia robocza)
+@@ -284,7 +284,8 @@
+         ../plugins/wimax/wimax_pdu_decoder.c \
+         ../plugins/wimax/wimax_phy_attributes_decoder.c \
+         ../plugins/wimax/wimax_tlv.c \
+-        ../plugins/wimax/wimax_utils.c
++        ../plugins/wimax/wimax_utils.c \
++        ../plugins/xmpp/packet-xmpp.c
+ 
+ 
+ else		# ENABLE_STATIC
+Index: CMakeLists.txt
+===================================================================
+--- CMakeLists.txt	(wersja 37406)
++++ CMakeLists.txt	(kopia robocza)
+@@ -394,6 +394,7 @@
+ 		plugins/unistim
+ 		plugins/wimax
+ 		plugins/wimaxasncp
++		plugins/xmpp
+ 	)
+ # It seems this stuff doesn't build with autofoo either...
+ #	if(YAPP_FOUND)
