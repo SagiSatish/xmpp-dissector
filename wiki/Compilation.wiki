@@ -2,7 +2,7 @@
 
 = Introduction =
 
-To compile sources you will need linux tools such a gcc, svn, autoconf, automake, libtool, bison, yacc, flex, GTK+, GLib, libpcap.
+To compile sources you will need linux tools such as gcc, svn, autoconf, automake, libtool, bison, yacc, flex, GTK+, GLib, libpcap.
 
 
 = Details =
