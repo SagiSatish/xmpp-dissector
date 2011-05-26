@@ -2,7 +2,7 @@
 
 = Introduction =
 
-To compile sources you will need linux tools such a gcc, svn, autoconf, automake, libtool, bison, yacc, flex, GTK+, GLib.
+To compile sources you will need linux tools such a gcc, svn, autoconf, automake, libtool, bison, yacc, flex, GTK+, GLib, libpcap.
 
 
 = Details =
@@ -35,7 +35,7 @@ Next you have to run
 make && make install
 }}}
 
-If errors don't occur, Wireshark is built correctly and you can use it by
+If errors didn't occur, Wireshark is built correctly and you can use it by
 {{{
 /your-path/wireshark-bin/bin/wireshark
 }}}
