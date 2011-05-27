@@ -56,7 +56,10 @@ typedef struct _xmpp_reqresp_transaction_t {
 
 static int proto_xmpp = -1;
 
-static gint hf_xmpp_unknown = -1;
+static gint hf_xmpp_iq = -1;
+static gint hf_xmpp_presence = -1;
+static gint hf_xmpp_message = -1;
+
 static gint hf_xmpp_req = -1;
 static gint hf_xmpp_res = -1;
 static gint hf_xmpp_response_in = -1;
@@ -65,8 +68,6 @@ static gint hf_xmpp_jingle_session = -1;
 
 static gint ett_xmpp = -1;
 static gint ett_xmpp_xml = -1;
-static gint ett_xmpp_message = -1;
-static gint ett_xmpp_unknown = -1;
 
 static dissector_handle_t xml_handle = NULL;
 
@@ -330,6 +331,27 @@ xmpp_iq_errors_expert_info(packet_info *pinfo, xml_node_t *packet)
 }
 
 static void
+xmpp_iq(proto_tree *tree, tvbuff_t *tvb)
+{
+    proto_item *item = proto_tree_add_boolean(tree, hf_xmpp_iq, tvb, 0, 0, TRUE);
+    PROTO_ITEM_SET_HIDDEN(item);
+}
+
+static void
+xmpp_presence(proto_tree *tree, tvbuff_t *tvb)
+{
+    proto_item *item = proto_tree_add_boolean(tree, hf_xmpp_presence, tvb, 0, 0, TRUE);
+    PROTO_ITEM_SET_HIDDEN(item);
+}
+
+static void
+xmpp_message(proto_tree *tree, tvbuff_t *tvb)
+{
+    proto_item *item = proto_tree_add_boolean(tree, hf_xmpp_message, tvb, 0, 0, TRUE);
+    PROTO_ITEM_SET_HIDDEN(item);
+}
+
+static void
 dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
     
     xml_frame_t *xml_frame;
@@ -417,6 +439,8 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
 
             xmpp_iq_errors_expert_info(pinfo, packet);
 
+            xmpp_iq(xmpp_tree,tvb);
+
             /*Display request/response field in each iq packet*/
             if (xmpp_reqresp_trans) {
 
@@ -447,6 +471,16 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
             }
         }
 
+        if(strcmp(packet->name,"presence") == 0)
+        {
+            xmpp_presence(xmpp_tree,tvb);
+        }
+
+        if(strcmp(packet->name,"message") == 0)
+        {
+            xmpp_message(xmpp_tree, tvb);
+        }
+
     }
 }
 
@@ -454,10 +488,20 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
 void
 proto_register_xmpp(void) {
     static hf_register_info hf[] = {
-        { &hf_xmpp_unknown,
+        { &hf_xmpp_iq,
             {
-                "Unknown", "xmpp.unknown", FT_BOOLEAN, BASE_NONE, NULL, 0x0,
-                "XMPP_UNKNOWN", HFILL
+                "Iq", "xmpp.iq", FT_BOOLEAN, BASE_NONE, NULL, 0x0,
+                "XMPP_IQ", HFILL
+            }},
+            { &hf_xmpp_presence,
+            {
+                "Presence", "xmpp.presence", FT_BOOLEAN, BASE_NONE, NULL, 0x0,
+                "XMPP_PRESENCE", HFILL
+            }},
+            { &hf_xmpp_message,
+            {
+                "Message", "xmpp.message", FT_BOOLEAN, BASE_NONE, NULL, 0x0,
+                "XMPP_MESSAGE", HFILL
             }},
             { &hf_xmpp_response_in,
 		{ "Response In", "xmpp.response_in",
@@ -489,8 +533,6 @@ proto_register_xmpp(void) {
     static gint * ett[] = {
         &ett_xmpp,
         &ett_xmpp_xml,
-        &ett_xmpp_unknown,
-        &ett_xmpp_message
     };
 
     proto_xmpp = proto_register_protocol(
