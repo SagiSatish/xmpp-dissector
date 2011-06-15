@@ -26,14 +26,14 @@ typedef struct _attr_t{
     gint length;
 } attr_t;
 
-typedef struct _xml_data_t{
+typedef struct _data_t{
     gchar *value;
 
     gint offset;
     gint length;
 } data_t;
 
-typedef struct _packet_t{
+typedef struct _element_t{
     gchar* name;
     GHashTable *attrs;
     GList *elements;
@@ -87,6 +87,17 @@ static gint hf_xmpp_iq_error_code = -1;
 static gint hf_xmpp_iq_error_condition = -1;
 static gint hf_xmpp_iq_error_text = -1;
 
+static gint hf_xmpp_iq_bind = -1;
+static gint hf_xmpp_iq_bind_jid = -1;
+static gint hf_xmpp_iq_bind_resource = -1;
+
+static gint hf_xmpp_iq_services = -1;
+
+static gint hf_xmpp_iq_session = -1;
+
+static gint hf_xmpp_iq_vcard  = -1;
+static gint hf_xmpp_iq_vcard_content = -1;
+
 static gint hf_xmpp_presence = -1;
 static gint hf_xmpp_message = -1;
 
@@ -107,32 +118,42 @@ static gint ett_xmpp_iq_query_identity = -1;
 static gint ett_xmpp_iq_query_feature = -1;
 
 static gint ett_xmpp_iq_error = -1;
+static gint ett_xmpp_iq_bind = -1;
+static gint ett_xmpp_iq_vcard = -1;
+
+
+static gint ett_xmpp_message = -1;
+static gint ett_xmpp_presence = -1;
 
 static dissector_handle_t xml_handle = NULL;
 
 
 static xmpp_transaction_t* xmpp_iq_reqresp_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info);
 static void xmpp_iq_jingle_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info);
-static void xmpp_iq_errors_expert_info(packet_info *pinfo, element_t *packet);
 
 static void xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
-static void xmpp_iq_query(proto_tree *tree,  tvbuff_t *tvb, element_t *element);
+static void xmpp_iq_query(proto_tree *tree,  tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 static void xmpp_iq_query_item(proto_tree *tree, tvbuff_t *tvb, element_t *element);
 static void xmpp_iq_query_identity(proto_tree *tree, tvbuff_t *tvb, element_t *element);
 static void xmpp_iq_query_feature(proto_tree *tree, tvbuff_t *tvb, element_t *element);
 
-static void xmpp_iq_error(proto_tree *tree, tvbuff_t *tvb, element_t *element);
+static void xmpp_iq_error(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 static void xmpp_iq_error_condition(proto_tree *tree, tvbuff_t *tvb, element_t *element);
 static void xmpp_iq_error_text(proto_tree *tree, tvbuff_t *tvb, element_t *element);
 
-static void xmpp_presence(proto_tree *tree, tvbuff_t *tvb);
+static void xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+static void xmpp_iq_services(proto_tree *tree, tvbuff_t *tvb, element_t *element);
+static void xmpp_iq_session(proto_tree *tree, tvbuff_t *tvb, element_t *element);
+static void xmpp_iq_vcard(proto_tree *tree, tvbuff_t *tvb, element_t *element);
 
-static void xmpp_message(proto_tree *tree, tvbuff_t *tvb);
+static void xmpp_presence(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
 
-static void xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, element_t *element);
+static void xmpp_message(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
+
+static void xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
 static gint
-xml_node_cmp(gconstpointer a, gconstpointer b)
+element_t_cmp(gconstpointer a, gconstpointer b)
 {
     return strcmp(((element_t*)a)->name,((element_t*)b)->name);
 }
@@ -147,7 +168,7 @@ find_element_by_name(element_t *packet,const gchar *name)
     search_element = ep_alloc(sizeof(element_t));
     search_element->name = ep_strdup(name);
 
-    found_elements = g_list_find_custom(packet->elements, search_element, xml_node_cmp);
+    found_elements = g_list_find_custom(packet->elements, search_element, element_t_cmp);
     
     if(found_elements)
         return found_elements;
@@ -174,6 +195,15 @@ steal_element_by_name(element_t *packet, gchar *name)
 
     return element;
     
+}
+
+static element_t*
+get_first_element(element_t *packet)
+{
+    if(packet->elements && packet->elements->data)
+        return packet->elements->data;
+    else
+        return NULL;
 }
 
 //Function converts xml_frame_t structure to element_t (simpler representation)
@@ -369,42 +399,6 @@ xmpp_iq_jingle_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_in
 
 
 static void
-xmpp_iq_errors_expert_info(packet_info *pinfo, element_t *packet)
-{
-    attr_t *attr_type;
-
-    attr_type = g_hash_table_lookup(packet->attrs, "type");
-    if(attr_type && strcmp(attr_type->value,"error")==0)
-    {
-        GList *error_l = find_element_by_name(packet,"error");
-
-        element_t *error = error_l?error_l->data:NULL;
-
-        if(error)
-        {
-            gchar *buff= ep_strdup("Stanza error");
-            GList *child_elem = error->elements;
-
-            while(child_elem)
-            {
-                element_t *node = child_elem->data;
-
-                buff = ep_strdup_printf("%s; %s",buff,node->name);
-                if(node->data)
-                {
-                    data_t *data = node->data;
-                    buff = ep_strdup_printf("%s:%s",buff,data->value);
-                }
-
-                child_elem = child_elem->next;
-            }
-
-            expert_add_info_format(pinfo, error->item, PI_RESPONSE_CODE, PI_NOTE,"%s", buff);
-        }
-    }
-}
-
-static void
 xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
 {
     proto_item *xmpp_iq_item;
@@ -412,8 +406,8 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
 
     attr_t *attr_id, *attr_type, *attr_from, *attr_to;
 
-    element_t *query_element = NULL;
-    element_t  *error_element = NULL;
+    element_t *query_element, *error_element, *bind_element, *services_element,
+        *session_element, *vcard_element;
 
     attr_id = g_hash_table_lookup(packet->attrs,"id");
     attr_type = g_hash_table_lookup(packet->attrs,"type");
@@ -459,7 +453,47 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
             col_clear(pinfo->cinfo, COL_INFO);
             col_add_fstr(pinfo->cinfo, COL_INFO, "IQ QUERY %s", attr_type?attr_type->value:"");
         }
-        xmpp_iq_query(xmpp_iq_tree,tvb,query_element);
+        xmpp_iq_query(xmpp_iq_tree,tvb,pinfo,query_element);
+    }
+
+    if((bind_element = steal_element_by_name(packet,"bind")) != NULL)
+    {
+        if (check_col(pinfo->cinfo, COL_INFO))
+        {
+            col_clear(pinfo->cinfo, COL_INFO);
+            col_add_fstr(pinfo->cinfo, COL_INFO, "IQ BIND %s", attr_type?attr_type->value:"");
+        }
+        xmpp_iq_bind(xmpp_iq_tree, tvb, pinfo, bind_element);
+    }
+
+    if((services_element = steal_element_by_name(packet,"services")) != NULL)
+    {
+        if (check_col(pinfo->cinfo, COL_INFO))
+        {
+            col_clear(pinfo->cinfo, COL_INFO);
+            col_add_fstr(pinfo->cinfo, COL_INFO, "IQ SERVICES %s", attr_type?attr_type->value:"");
+        }
+        xmpp_iq_services(xmpp_iq_tree,tvb,services_element);
+    }
+
+    if((session_element = steal_element_by_name(packet,"session")) != NULL)
+    {
+        if (check_col(pinfo->cinfo, COL_INFO))
+        {
+            col_clear(pinfo->cinfo, COL_INFO);
+            col_add_fstr(pinfo->cinfo, COL_INFO, "IQ SESSION %s", attr_type?attr_type->value:"");
+        }
+        xmpp_iq_session(xmpp_iq_tree,tvb,session_element);
+    }
+
+     if((vcard_element = steal_element_by_name(packet,"vCard")) != NULL)
+    {
+        if (check_col(pinfo->cinfo, COL_INFO))
+        {
+            col_clear(pinfo->cinfo, COL_INFO);
+            col_add_fstr(pinfo->cinfo, COL_INFO, "IQ VCARD %s", attr_type?attr_type->value:"");
+        }
+        xmpp_iq_vcard(xmpp_iq_tree,tvb,vcard_element);
     }
 
     if((error_element = steal_element_by_name(packet, "error")) != NULL)
@@ -469,15 +503,15 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
             col_clear(pinfo->cinfo, COL_INFO);
             col_add_fstr(pinfo->cinfo, COL_INFO, "IQ ERROR %s", attr_type?attr_type->value:"");
         }
-        xmpp_iq_error(xmpp_iq_tree, tvb, error_element);
+        xmpp_iq_error(xmpp_iq_tree, tvb, pinfo, error_element);
     }
 
-    xmpp_unknown(xmpp_iq_tree, tvb, packet);
+    xmpp_unknown(xmpp_iq_tree, tvb, pinfo, packet);
 }
 
 
 static void
-xmpp_iq_query(proto_tree *tree,  tvbuff_t *tvb, element_t *element)
+xmpp_iq_query(proto_tree *tree,  tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
     proto_item *query_item;
     proto_tree *query_tree;
@@ -530,7 +564,7 @@ xmpp_iq_query(proto_tree *tree,  tvbuff_t *tvb, element_t *element)
         xmpp_iq_query_feature(query_tree, tvb, feature_element);
     }
 
-    xmpp_unknown(query_tree, tvb, element);
+    xmpp_unknown(query_tree, tvb, pinfo, element);
 }
 
 static void
@@ -579,8 +613,6 @@ xmpp_iq_query_item(proto_tree *tree, tvbuff_t *tvb, element_t *element)
          proto_item_append_text(item_item, " group=%s", group->data->value);
     }
     proto_item_append_text(item_item, "]");
-
-    xmpp_unknown(item_tree, tvb, element);
 }
 
 static void
@@ -621,8 +653,6 @@ xmpp_iq_query_identity(proto_tree *tree, tvbuff_t *tvb, element_t *element)
         proto_item_append_text(identity_item, " lang=%s", lang->value);
     }
     proto_item_append_text(identity_item, "]");
-
-    xmpp_unknown(identity_tree, tvb, element);
 }
 
 static void
@@ -635,11 +665,10 @@ xmpp_iq_query_feature(proto_tree *tree, tvbuff_t *tvb, element_t *element)
     {
         proto_tree_add_string_format(tree, hf_xmpp_iq_query_feature, tvb, var->offset, var->length, var->value, "FEATURE [%s]", var->value);
     }
-    xmpp_unknown(tree, tvb, element);
 }
 
 static void
-xmpp_iq_error(proto_tree *tree, tvbuff_t *tvb, element_t *element)
+xmpp_iq_error(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
     proto_item *error_item;
     proto_tree *error_tree;
@@ -647,7 +676,11 @@ xmpp_iq_error(proto_tree *tree, tvbuff_t *tvb, element_t *element)
     attr_t *type, *code;
     element_t *text_element;
 
+    gchar *error_info;
+
     GList *childs = element->elements;
+
+    error_info = ep_strdup("Stanza error");
 
     error_item = proto_tree_add_item(tree, hf_xmpp_iq_error, tvb, element->offset, element->length, FALSE);
     error_tree = proto_item_add_subtree(error_item, ett_xmpp_iq_query_item);
@@ -679,15 +712,23 @@ xmpp_iq_error(proto_tree *tree, tvbuff_t *tvb, element_t *element)
         {
             xmpp_iq_error_condition(error_tree, tvb, error_cond);
             element->elements = g_list_delete_link(element->elements, childs);
+
+            error_info = ep_strdup_printf("%s: %s;", error_info, error_cond->name);
             break;
         } else
             childs = childs->next;
     }
 
     while((text_element = steal_element_by_name(element, "text")) != NULL)
+    {
         xmpp_iq_error_text(error_tree, tvb, text_element);
 
-    xmpp_unknown(error_tree, tvb, element);
+        error_info = ep_strdup_printf("%s Text: %s", error_info, text_element->data->value);
+    }
+
+    expert_add_info_format(pinfo, error_item, PI_RESPONSE_CODE, PI_NOTE,"%s", error_info);
+
+    xmpp_unknown(error_tree, tvb, pinfo, element);
 }
 
 static void
@@ -707,21 +748,116 @@ xmpp_iq_error_text(proto_tree *tree, tvbuff_t *tvb, element_t *element)
 }
 
 static void
-xmpp_presence(proto_tree *tree, tvbuff_t *tvb)
+xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
-    proto_item *item = proto_tree_add_boolean(tree, hf_xmpp_presence, tvb, 0, 0, TRUE);
-    PROTO_ITEM_SET_HIDDEN(item);
+    proto_item *bind_item;
+    proto_tree *bind_tree;
+
+    attr_t *xmlns;
+    element_t *resource, *jid;
+
+    bind_item = proto_tree_add_item(tree, hf_xmpp_iq_bind, tvb, element->offset, element->length, FALSE);
+    bind_tree = proto_item_add_subtree(bind_item, ett_xmpp_iq_bind);
+
+    xmlns = g_hash_table_lookup(element->attrs, "xmlns");
+    resource = steal_element_by_name(element, "resource");
+    jid = steal_element_by_name(element, "jid");
+
+    proto_item_append_text(bind_item," [");
+
+    if(xmlns)
+    {
+        proto_item_append_text(bind_item, "xmlns=%s", xmlns->value);
+    }
+
+    if(resource)
+    {
+        proto_item_append_text(bind_item, " resource=%s", resource->data->value);
+        proto_tree_add_string(bind_tree, hf_xmpp_iq_bind_resource, tvb, resource->offset, resource->length, resource->data->value);
+    }
+
+    if(jid)
+    {
+        proto_item_append_text(bind_item," jid=%s",jid->data->value);
+        proto_tree_add_string(bind_tree, hf_xmpp_iq_bind_jid, tvb, jid->offset, jid->length, jid->data->value);
+    }
+    proto_item_append_text(bind_item,"]");
+
+    xmpp_unknown(bind_tree, tvb, pinfo, element);
+}
+
+
+static void
+xmpp_iq_services(proto_tree *tree, tvbuff_t *tvb, element_t *element)
+{
+    proto_item *services_item;
+
+    attr_t *xmlns = g_hash_table_lookup(element->attrs, "xmlns");
+
+    services_item = proto_tree_add_string_format(tree, hf_xmpp_iq_services, tvb, element->offset, element->length, xmlns?xmlns->value:"", "SERVICES (%s)", xmlns?xmlns->value:"");
 }
 
 static void
-xmpp_message(proto_tree *tree, tvbuff_t *tvb)
+xmpp_iq_session(proto_tree *tree, tvbuff_t *tvb, element_t *element)
 {
-    proto_item *item = proto_tree_add_boolean(tree, hf_xmpp_message, tvb, 0, 0, TRUE);
-    PROTO_ITEM_SET_HIDDEN(item);
+    attr_t *xmlns  = g_hash_table_lookup(element->attrs, "xmlns");
+    proto_tree_add_string_format(tree, hf_xmpp_iq_session, tvb, element->offset, element->length, xmlns?xmlns->value:"","SESSION (%s)",xmlns?xmlns->value:"");
 }
 
 static void
-xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, element_t *element)
+xmpp_iq_vcard(proto_tree *tree, tvbuff_t *tvb, element_t *element)
+{
+    proto_item *vcard_item;
+    proto_tree *vcard_tree;
+
+    attr_t *xmlns = g_hash_table_lookup(element->attrs, "xmlns");
+
+    element_t *content;
+
+    vcard_item = proto_tree_add_item(tree, hf_xmpp_iq_vcard, tvb, element->offset, element->length, FALSE);
+    proto_item_append_text(vcard_item, " (%s)",xmlns?xmlns->value:"");
+
+    content = get_first_element(element);
+
+    if(content)
+    {
+        vcard_tree = proto_item_add_subtree(vcard_item, ett_xmpp_iq_vcard);
+        proto_tree_add_string(vcard_tree, hf_xmpp_iq_vcard_content, tvb, content->offset, content->length, element_to_string(tvb, content));
+    }
+}
+
+static void
+xmpp_presence(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
+{
+    proto_item *presence_item;
+    proto_tree *presence_tree;
+
+    if (check_col(pinfo->cinfo, COL_INFO))
+            col_set_str(pinfo->cinfo, COL_INFO, "PRESENCE");
+
+    presence_item = proto_tree_add_item(tree, hf_xmpp_presence, tvb, packet->offset, packet->length, FALSE);
+    presence_tree = proto_item_add_subtree(presence_item, ett_xmpp_presence);
+
+    xmpp_unknown(presence_tree, tvb, pinfo, packet);
+}
+
+static void
+xmpp_message(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
+{
+    proto_item *message_item;
+    proto_tree *message_tree;
+
+    if (check_col(pinfo->cinfo, COL_INFO))
+            col_set_str(pinfo->cinfo, COL_INFO, "MESSAGE");
+
+    message_item = proto_tree_add_item(tree, hf_xmpp_message, tvb, packet->offset, packet->length, FALSE);
+    message_tree = proto_item_add_subtree(message_item, ett_xmpp_message);
+
+    xmpp_unknown(message_tree, tvb, pinfo, packet);
+}
+
+static void
+xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
     guint i;
 
@@ -729,7 +865,8 @@ xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, element_t *element)
     for(i = 0; i<g_list_length(element->elements); i++)
     {
         element_t *child = g_list_nth_data(element->elements,i);
-        proto_tree_add_string(tree, hf_xmpp_unknown, tvb, child->offset, child->length, element_to_string(tvb, child));
+        proto_item *unknown_item= proto_tree_add_string(tree, hf_xmpp_unknown, tvb, child->offset, child->length, element_to_string(tvb, child));
+        expert_add_info_format(pinfo, unknown_item, PI_UNDECODED, PI_WARN,"Unknown element: %s", child->name);
     }
 }
 
@@ -748,8 +885,6 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
     proto_item *xmpp_item = NULL;// *xmpp_xml_item;
 
     element_t *packet;
-
-
 
     if(check_col(pinfo->cinfo, COL_PROTOCOL))
         col_set_str(pinfo->cinfo, COL_PROTOCOL, "XMPP");
@@ -797,17 +932,12 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
         proto_item *hidden_item;
         //gchar *col_info= node_to_string(tvb, packet);
 
+        //hide_xml_dissector_tree(xmpp_tree);
+
         if(is_request)
             hidden_item = proto_tree_add_boolean(xmpp_tree, hf_xmpp_req, tvb, 0, 0, TRUE);
         else
             hidden_item = proto_tree_add_boolean(xmpp_tree, hf_xmpp_res, tvb, 0, 0, TRUE);
-      
-/*
-        if (check_col(pinfo->cinfo, COL_INFO)) {
-            col_add_fstr(pinfo->cinfo, COL_INFO, "%s: %s", is_request ? "REQ" : "RES", format_text(col_info, strlen(col_info)));
-
-        }
-*/
         
 
         PROTO_ITEM_SET_HIDDEN(hidden_item);
@@ -818,9 +948,6 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
             attr_t *attr_id;
             char *id;
             gchar *sid;
-
-
-            xmpp_iq_errors_expert_info(pinfo, packet);
 
             xmpp_iq(xmpp_tree,tvb, pinfo, packet);
 
@@ -852,16 +979,15 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
                 proto_item *it = proto_tree_add_string(xmpp_tree, hf_xmpp_jingle_session, tvb, 0, 0, sid);
                 PROTO_ITEM_SET_GENERATED(it);
             }
-        }
-
-        if(strcmp(packet->name,"presence") == 0)
+        } else if(strcmp(packet->name,"presence") == 0)
         {
-            xmpp_presence(xmpp_tree,tvb);
-        }
-
-        if(strcmp(packet->name,"message") == 0)
+            xmpp_presence(xmpp_tree,tvb, pinfo, packet);
+        } else if(strcmp(packet->name,"message") == 0)
         {
-            xmpp_message(xmpp_tree, tvb);
+            xmpp_message(xmpp_tree, tvb, pinfo, packet);
+        } else
+        {
+            
         }
 
     }
@@ -874,116 +1000,116 @@ proto_register_xmpp(void) {
         { &hf_xmpp_iq,
             {
                 "IQ", "xmpp.iq", FT_NONE, BASE_NONE, NULL, 0x0,
-                "iq stanza", HFILL
+                "iq", HFILL
             }},
             { &hf_xmpp_iq_id,
             {
                 "id", "xmpp.iq.id", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza id", HFILL
+                "iq id", HFILL
             }},
             { &hf_xmpp_iq_type,
             {
                 "type", "xmpp.iq.type", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza type", HFILL
+                "iq type", HFILL
             }},
              { &hf_xmpp_iq_from,
             {
                 "from", "xmpp.iq.from", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza from", HFILL
+                "iq from", HFILL
             }},
              { &hf_xmpp_iq_to,
             {
                 "to", "xmpp.iq.to", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza to", HFILL
+                "iq to", HFILL
             }},
             { &hf_xmpp_iq_query,
             {
                 "QUERY", "xmpp.iq.query", FT_NONE, BASE_NONE, NULL, 0x0,
-                "iq stanza query", HFILL
+                "iq query", HFILL
             }},
             { &hf_xmpp_iq_query_xmlns,
             {
                 "xmlns", "xmpp.iq.query.xmlns", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza query xmlns", HFILL
+                "iq query xmlns", HFILL
             }},
             { &hf_xmpp_iq_query_node,
             {
                 "node", "xmpp.iq.query.node", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza query node", HFILL
+                "iq query node", HFILL
             }},
             { &hf_xmpp_iq_query_item,
             {
                 "ITEM", "xmpp.iq.query.item", FT_NONE, BASE_NONE, NULL, 0x0,
-                "iq stanza query item", HFILL
+                "iq query item", HFILL
 
             }},
             { &hf_xmpp_iq_query_item_jid,
             {
                 "jid", "xmpp.iq.query.item.jid", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza query item jid", HFILL
+                "iq query item jid", HFILL
 
             }},
             { &hf_xmpp_iq_query_item_name,
             {
                 "name", "xmpp.iq.query.item.name", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza query item name", HFILL
+                "iq query item name", HFILL
             }},
             { &hf_xmpp_iq_query_item_subscription,
             {
                 "subscription", "xmpp.iq.query.item.subscription", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza query item subscription", HFILL
+                "iq query item subscription", HFILL
             }},
             { &hf_xmpp_iq_query_item_ask,
             {
                 "ask", "xmpp.iq.query.item.ask", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza query item ask", HFILL
+                "iq query item ask", HFILL
             }},
             { &hf_xmpp_iq_query_item_group,
             {
                 "GROUP", "xmpp.iq.query.item.group", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza query item group", HFILL
+                "iq query item group", HFILL
 
             }},
             { &hf_xmpp_iq_query_identity,
             {
                 "IDENTITY", "xmpp.iq.query.identity", FT_NONE, BASE_NONE, NULL, 0x0,
-                "iq stanza query identity", HFILL
+                "iq query identity", HFILL
 
             }},
             { &hf_xmpp_iq_query_identity_category,
             {
                 "category", "xmpp.iq.query.identity.category", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza query identity category", HFILL
+                "iq query identity category", HFILL
 
             }},
             { &hf_xmpp_iq_query_identity_type,
             {
                 "type", "xmpp.iq.query.identity.type", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza query identity type", HFILL
+                "iq query identity type", HFILL
 
             }},
             { &hf_xmpp_iq_query_identity_name,
             {
                 "name", "xmpp.iq.query.identity.name", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza query identity name", HFILL
+                "iq query identity name", HFILL
 
             }},
             { &hf_xmpp_iq_query_identity_lang,
             {
                 "lang", "xmpp.iq.query.identity.lang", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza query identity lang", HFILL
+                "iq query identity lang", HFILL
 
             }},
             { &hf_xmpp_iq_query_feature,
             {
                 "FEATURE", "xmpp.iq.query.feature", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza query feature", HFILL
+                "iq query feature", HFILL
 
             }},
             { &hf_xmpp_iq_error,
             {
                 "ERROR", "xmpp.iq.error", FT_NONE, BASE_NONE, NULL, 0x0,
-                "iq stanza error", HFILL
+                "iq error", HFILL
             }},
             { &hf_xmpp_iq_error_code,
             {
@@ -994,29 +1120,67 @@ proto_register_xmpp(void) {
             { &hf_xmpp_iq_error_type,
             {
                 "type", "xmpp.iq.error.type", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza error type", HFILL
+                "iq error type", HFILL
 
             }},
             { &hf_xmpp_iq_error_condition,
             {
                 "CONDITION", "xmpp.iq.error.condition", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza error condition", HFILL
+                "iq error condition", HFILL
 
             }},
             { &hf_xmpp_iq_error_text,
             {
                 "TEXT", "xmpp.iq.error.text", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq stanza error text", HFILL
+                "iq error text", HFILL
 
+            }},
+            { &hf_xmpp_iq_bind,
+            {
+                "BIND", "xmpp.iq.bind", FT_NONE, BASE_NONE, NULL, 0x0,
+                "iq bind", HFILL
+
+            }},
+            { &hf_xmpp_iq_bind_jid,
+            {
+                "jid", "xmpp.iq.bind.jid", FT_STRING, BASE_NONE, NULL, 0x0,
+                "iq bind jid", HFILL
+
+            }},
+            { &hf_xmpp_iq_bind_resource,
+            {
+                "resource", "xmpp.iq.bind.resource", FT_STRING, BASE_NONE, NULL, 0x0,
+                "iq bind resource", HFILL
+
+            }},
+            { &hf_xmpp_iq_services,
+            {
+                "SERVICES", "xmpp.iq.services", FT_STRING, BASE_NONE, NULL, 0x0,
+                "iq services", HFILL
+            }},
+            { &hf_xmpp_iq_session,
+            {
+                "SESSION", "xmpp.iq.session", FT_STRING, BASE_NONE, NULL, 0x0,
+                "iq session", HFILL
+            }},
+            { &hf_xmpp_iq_vcard,
+            {
+                "VCARD", "xmpp.iq.vcard", FT_NONE, BASE_NONE, NULL, 0x0,
+                "iq vCard", HFILL
+            }},
+            { &hf_xmpp_iq_vcard_content,
+            {
+                "CONTENT", "xmpp.iq.vcard.content", FT_STRING, BASE_NONE, NULL, 0x0,
+                "iq vCard content", HFILL
             }},
             { &hf_xmpp_presence,
             {
-                "Presence", "xmpp.presence", FT_BOOLEAN, BASE_NONE, NULL, 0x0,
+                "PRESENCE", "xmpp.presence", FT_NONE, BASE_NONE, NULL, 0x0,
                 "XMPP_PRESENCE", HFILL
             }},
             { &hf_xmpp_message,
             {
-                "Message", "xmpp.message", FT_BOOLEAN, BASE_NONE, NULL, 0x0,
+                "MESSAGE", "xmpp.message", FT_NONE, BASE_NONE, NULL, 0x0,
                 "XMPP_MESSAGE", HFILL
             }},
             { &hf_xmpp_unknown,
@@ -1059,6 +1223,10 @@ proto_register_xmpp(void) {
         &ett_xmpp_iq_query_identity,
         &ett_xmpp_iq_query_feature,
         &ett_xmpp_iq_error,
+        &ett_xmpp_iq_bind,
+        &ett_xmpp_iq_vcard,
+        &ett_xmpp_message,
+        &ett_xmpp_presence,
         &ett_xmpp_xml,
     };
 
