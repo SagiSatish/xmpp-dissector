@@ -17,6 +17,17 @@
 
 #include <glib.h>
 
+#define FI_RESET_FLAG(fi, flag) \
+    do { \
+      if (fi) \
+        (fi)->flags = (fi)->flags & !(flag); \
+    } while(0)
+
+#define PROTO_ITEM_SET_VISIBLE(proto_item)       \
+  do { \
+    if (proto_item) \
+      FI_RESET_FLAG(PITEM_FINFO(proto_item), FI_HIDDEN); \
+	} while(0)
 
 #define XMPP_PORT 5222
 
@@ -100,6 +111,15 @@ static gint hf_xmpp_iq_vcard_content = -1;
 
 static gint hf_xmpp_presence = -1;
 static gint hf_xmpp_message = -1;
+static gint hf_xmpp_auth = -1;
+static gint hf_xmpp_auth_mechanism = -1;
+static gint hf_xmpp_auth_content = -1;
+static gint hf_xmpp_challenge = -1;
+static gint hf_xmpp_challenge_content = -1;
+static gint hf_xmpp_response = -1;
+static gint hf_xmpp_response_content = -1;
+static gint hf_xmpp_success = -1;
+static gint hf_xmpp_success_content = -1;
 
 static gint hf_xmpp_unknown = -1;
 
@@ -121,9 +141,12 @@ static gint ett_xmpp_iq_error = -1;
 static gint ett_xmpp_iq_bind = -1;
 static gint ett_xmpp_iq_vcard = -1;
 
-
 static gint ett_xmpp_message = -1;
 static gint ett_xmpp_presence = -1;
+static gint ett_xmpp_auth = -1;
+static gint ett_xmpp_challenge = -1;
+static gint ett_xmpp_response = -1;
+static gint ett_xmpp_success = -1;
 
 static dissector_handle_t xml_handle = NULL;
 
@@ -147,8 +170,8 @@ static void xmpp_iq_session(proto_tree *tree, tvbuff_t *tvb, element_t *element)
 static void xmpp_iq_vcard(proto_tree *tree, tvbuff_t *tvb, element_t *element);
 
 static void xmpp_presence(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
-
 static void xmpp_message(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
+static void xmpp_auth(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
 
 static void xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
@@ -318,10 +341,41 @@ element_to_string(tvbuff_t *tvb, element_t *element)
     }
 }
 
+static void
+children_foreach_hide_func(proto_node *node, gpointer data)
+{
+    int *i = data;
+    if((*i) == 0)
+        PROTO_ITEM_SET_HIDDEN(node);
+    (*i)++;
+}
+
+static void
+children_foreach_show_func(proto_node *node, gpointer data)
+{
+    int *i = data;
+    if((*i) == 0)
+        PROTO_ITEM_SET_VISIBLE(node);
+    (*i)++;
+}
+
+static void
+proto_tree_hide_first_child(proto_tree *tree)
+{
+    int i = 0;
+    proto_tree_children_foreach(tree, children_foreach_hide_func, &i);
+}
+
+static void
+proto_tree_show_first_child(proto_tree *tree)
+{
+    int i = 0;
+    proto_tree_children_foreach(tree, children_foreach_show_func, &i);
+}
 
 /*
 static void
-xml_tree_delete()
+element_tree_delete()
 {
     //TODO
 }
@@ -409,6 +463,10 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
     element_t *query_element, *error_element, *bind_element, *services_element,
         *session_element, *vcard_element;
 
+    conversation_t *conversation = NULL;
+    xmpp_conv_info_t *xmpp_info = NULL;
+    xmpp_transaction_t *reqresp_trans = NULL;
+    
     attr_id = g_hash_table_lookup(packet->attrs,"id");
     attr_type = g_hash_table_lookup(packet->attrs,"type");
     attr_from = g_hash_table_lookup(packet->attrs,"from");
@@ -507,6 +565,30 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
     }
 
     xmpp_unknown(xmpp_iq_tree, tvb, pinfo, packet);
+
+    conversation = find_or_create_conversation(pinfo);
+    xmpp_info = conversation_get_proto_data(conversation, proto_xmpp);
+    if(xmpp_info && attr_id)
+    {
+        reqresp_trans = se_tree_lookup_string(xmpp_info->req_resp, attr_id->value, EMEM_TREE_STRING_NOCASE);
+    }
+
+    /*Display request/response field in each iq packet*/
+    if (reqresp_trans) {
+
+        if (reqresp_trans->req_frame == pinfo->fd->num) {
+            if (reqresp_trans->resp_frame) {
+                proto_item *it = proto_tree_add_uint(tree, hf_xmpp_response_in, tvb, 0, 0, reqresp_trans->resp_frame);
+                PROTO_ITEM_SET_GENERATED(it);
+            }
+
+        } else {
+            if (reqresp_trans->req_frame) {
+                proto_item *it = proto_tree_add_uint(tree, hf_xmpp_response_to, tvb, 0, 0, reqresp_trans->req_frame);
+                PROTO_ITEM_SET_GENERATED(it);
+            }
+        }
+    }
 }
 
 
@@ -857,6 +939,75 @@ xmpp_message(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pac
 }
 
 static void
+xmpp_auth(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
+{
+    proto_item *auth_item;
+    proto_tree *auth_tree;
+
+    attr_t *xmlns, *mechanism;
+
+    if (check_col(pinfo->cinfo, COL_INFO))
+            col_set_str(pinfo->cinfo, COL_INFO, "AUTH");
+
+    auth_item = proto_tree_add_item(tree, hf_xmpp_auth, tvb, packet->offset, packet->length, FALSE);
+    auth_tree = proto_item_add_subtree(auth_item, ett_xmpp_auth);
+
+    xmlns = g_hash_table_lookup(packet->attrs,"xmlns");
+    mechanism = g_hash_table_lookup(packet->attrs, "mechanism");
+
+    proto_item_append_text(auth_item," [");
+
+    if(xmlns)
+    {
+        proto_item_append_text(auth_item,"xmlns=%s ",xmlns->value);
+    }
+
+    if(mechanism)
+    {
+        proto_item_append_text(auth_item,"mechanism=%s",mechanism->value);
+        proto_tree_add_string(auth_tree,hf_xmpp_auth_mechanism, tvb, mechanism->offset, mechanism->length, mechanism->value);
+    }
+    proto_item_append_text(auth_item,"]");
+
+    if(packet->data)
+        proto_tree_add_string(auth_tree, hf_xmpp_auth_content, tvb, packet->data->offset, packet->data->length, packet->data->value);
+
+    xmpp_unknown(auth_tree, tvb, pinfo, packet);
+}
+
+static void
+xmpp_challenge_response_success(proto_tree *tree, tvbuff_t *tvb,
+    packet_info *pinfo, element_t *packet, gint hf, gint ett,
+    gint hf_content, const char *col_info)
+{
+    proto_item *item;
+    proto_tree *subtree;
+
+    attr_t *xmlns;
+
+    if (check_col(pinfo->cinfo, COL_INFO))
+            col_set_str(pinfo->cinfo, COL_INFO, col_info);
+
+    item = proto_tree_add_item(tree, hf, tvb, packet->offset, packet->length, FALSE);
+    subtree = proto_item_add_subtree(item, ett);
+
+    xmlns = g_hash_table_lookup(packet->attrs,"xmlns");
+
+    if(xmlns)
+    {
+        proto_item_append_text(item," [xmlns=%s]",xmlns->value);
+    }
+
+    if(packet->data)
+    {
+        proto_tree_add_string(subtree, hf_content, tvb, packet->data->offset, packet->data->length, packet->data->value);
+    }
+    xmpp_unknown(subtree, tvb, pinfo, packet);
+}
+
+/*TODO xmpp_failure - when auth failure*/
+
+static void
 xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
     guint i;
@@ -879,7 +1030,6 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
 
     conversation_t *conversation;
     xmpp_conv_info_t *xmpp_info;
-    xmpp_transaction_t *xmpp_reqresp_trans = NULL;
 
     proto_tree *xmpp_tree = NULL;// *xmpp_xml_tree;
     proto_item *xmpp_item = NULL;// *xmpp_xml_item;
@@ -895,10 +1045,7 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
     //if tree == NULL then xmpp_item and xmpp_tree will also NULL
     xmpp_item = proto_tree_add_item(tree,proto_xmpp, tvb, 0, -1, FALSE);
     xmpp_tree = proto_item_add_subtree(xmpp_item, ett_xmpp);
-
-    //xmpp_xml_item = proto_tree_add_text(xmpp_tree,tvb, 0, -1,"XML");
-    //xmpp_xml_tree = proto_item_add_subtree(xmpp_xml_item, ett_xmpp_xml);
-
+    
 
     call_dissector(xml_handle,tvb,pinfo,xmpp_tree);
     //data from XML dissector
@@ -923,25 +1070,24 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
 
     if (strcmp(packet->name,"iq") == 0)
     {
-        xmpp_reqresp_trans = xmpp_iq_reqresp_track(pinfo, packet, xmpp_info);
+        xmpp_iq_reqresp_track(pinfo, packet, xmpp_info);
         xmpp_iq_jingle_session_track(pinfo, packet, xmpp_info);
         
     }
     
     if (tree) { /* we are being asked for details */
-        proto_item *hidden_item;
-        //gchar *col_info= node_to_string(tvb, packet);
-
-        //hide_xml_dissector_tree(xmpp_tree);
+        proto_item *reqresp_item;
 
         if(is_request)
-            hidden_item = proto_tree_add_boolean(xmpp_tree, hf_xmpp_req, tvb, 0, 0, TRUE);
+            reqresp_item = proto_tree_add_boolean(xmpp_tree, hf_xmpp_req, tvb, 0, 0, TRUE);
         else
-            hidden_item = proto_tree_add_boolean(xmpp_tree, hf_xmpp_res, tvb, 0, 0, TRUE);
+            reqresp_item = proto_tree_add_boolean(xmpp_tree, hf_xmpp_res, tvb, 0, 0, TRUE);
+        
+        PROTO_ITEM_SET_HIDDEN(reqresp_item);
         
 
-        PROTO_ITEM_SET_HIDDEN(hidden_item);
-
+        //it hides tree generated by XML dissector
+        proto_tree_hide_first_child(xmpp_tree);
 
         if(strcmp(packet->name,"iq") == 0)
         {
@@ -950,23 +1096,6 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
             gchar *sid;
 
             xmpp_iq(xmpp_tree,tvb, pinfo, packet);
-
-            /*Display request/response field in each iq packet*/
-            if (xmpp_reqresp_trans) {
-
-                if (xmpp_reqresp_trans->req_frame == pinfo->fd->num) {
-                    if (xmpp_reqresp_trans->resp_frame) {
-                        proto_item *it = proto_tree_add_uint(xmpp_tree, hf_xmpp_response_in, tvb, 0, 0, xmpp_reqresp_trans->resp_frame);
-                        PROTO_ITEM_SET_GENERATED(it);
-                    }
-
-                } else {
-                    if (xmpp_reqresp_trans->req_frame) {
-                        proto_item *it = proto_tree_add_uint(xmpp_tree, hf_xmpp_response_to, tvb, 0, 0, xmpp_reqresp_trans->req_frame);
-                        PROTO_ITEM_SET_GENERATED(it);
-                    }
-                }
-            }
 
             /*Display jingle session id in jingle and their ACKs packet*/
             attr_id = g_hash_table_lookup(packet->attrs,"id");
@@ -985,11 +1114,24 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
         } else if(strcmp(packet->name,"message") == 0)
         {
             xmpp_message(xmpp_tree, tvb, pinfo, packet);
+        } else  if(strcmp(packet->name,"auth") == 0)
+        {
+            xmpp_auth(xmpp_tree, tvb, pinfo, packet);
+        } else  if(strcmp(packet->name,"challenge") == 0)
+        {
+            xmpp_challenge_response_success(xmpp_tree, tvb, pinfo, packet, hf_xmpp_challenge, ett_xmpp_challenge, hf_xmpp_challenge_content, "CHALLENGE");
+        } else  if(strcmp(packet->name,"response") == 0)
+        {
+            xmpp_challenge_response_success(xmpp_tree, tvb, pinfo, packet, hf_xmpp_response, ett_xmpp_response, hf_xmpp_response_content, "RESPONSE");
+        } else  if(strcmp(packet->name,"success") == 0)
+        {
+            xmpp_challenge_response_success(xmpp_tree, tvb, pinfo, packet, hf_xmpp_success, ett_xmpp_success, hf_xmpp_success_content, "SUCCESS");
         } else
         {
-            
+            proto_tree_show_first_child(xmpp_tree);
+            expert_add_info_format(pinfo, xmpp_tree, PI_DEBUG, PI_ERROR, "Unknown packet: %s", packet->name );
         }
-
+        
     }
 }
 
@@ -1176,12 +1318,57 @@ proto_register_xmpp(void) {
             { &hf_xmpp_presence,
             {
                 "PRESENCE", "xmpp.presence", FT_NONE, BASE_NONE, NULL, 0x0,
-                "XMPP_PRESENCE", HFILL
+                "presence", HFILL
             }},
             { &hf_xmpp_message,
             {
                 "MESSAGE", "xmpp.message", FT_NONE, BASE_NONE, NULL, 0x0,
-                "XMPP_MESSAGE", HFILL
+                "message", HFILL
+            }},
+            { &hf_xmpp_auth,
+            {
+                "AUTH", "xmpp.auth", FT_NONE, BASE_NONE, NULL, 0x0,
+                "auth", HFILL
+            }},
+            { &hf_xmpp_auth_mechanism,
+            {
+                "mechanism", "xmpp.auth.mechanism", FT_STRING, BASE_NONE, NULL, 0x0,
+                "auth mechanism", HFILL
+            }},
+            { &hf_xmpp_auth_content,
+            {
+                "CONTENT", "xmpp.auth.content", FT_STRING, BASE_NONE, NULL, 0x0,
+                "auth content", HFILL
+            }},
+            { &hf_xmpp_challenge,
+            {
+                "CHALLENGE", "xmpp.challenge", FT_NONE, BASE_NONE, NULL, 0x0,
+                "challenge", HFILL
+            }},
+            { &hf_xmpp_challenge_content,
+            {
+                "CONTENT", "xmpp.challenge.content", FT_STRING, BASE_NONE, NULL, 0x0,
+                "challenge content", HFILL
+            }},
+            { &hf_xmpp_response,
+            {
+                "RESPONSE", "xmpp.response", FT_NONE, BASE_NONE, NULL, 0x0,
+                "response", HFILL
+            }},
+            { &hf_xmpp_response_content,
+            {
+                "CONTENT", "xmpp.response.content", FT_STRING, BASE_NONE, NULL, 0x0,
+                "response content", HFILL
+            }},
+            { &hf_xmpp_success,
+            {
+                "SUCCESS", "xmpp.success", FT_NONE, BASE_NONE, NULL, 0x0,
+                "success", HFILL
+            }},
+            { &hf_xmpp_success_content,
+            {
+                "CONTENT", "xmpp.success.content", FT_STRING, BASE_NONE, NULL, 0x0,
+                "success content", HFILL
             }},
             { &hf_xmpp_unknown,
             {
@@ -1227,6 +1414,10 @@ proto_register_xmpp(void) {
         &ett_xmpp_iq_vcard,
         &ett_xmpp_message,
         &ett_xmpp_presence,
+        &ett_xmpp_auth,
+        &ett_xmpp_challenge,
+        &ett_xmpp_response,
+        &ett_xmpp_success,
         &ett_xmpp_xml,
     };
 
