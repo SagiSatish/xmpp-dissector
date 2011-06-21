@@ -15,77 +15,11 @@
 
 #include <epan/dissectors/packet-xml.h>
 
+#include <plugins/xmpp/xmpp.h>
+
 #include <glib.h>
 
-#define FI_RESET_FLAG(fi, flag) \
-    do { \
-      if (fi) \
-        (fi)->flags = (fi)->flags & !(flag); \
-    } while(0)
-
-#define PROTO_ITEM_SET_VISIBLE(proto_item)       \
-  do { \
-    if (proto_item) \
-      FI_RESET_FLAG(PITEM_FINFO(proto_item), FI_HIDDEN); \
-	} while(0)
-
-//length of attr_info array
-#define AINFO_LEN(array)  (gint) sizeof(array)/sizeof(attr_info)
-
 #define XMPP_PORT 5222
-
-typedef struct _array_t
-{
-    gpointer *data;
-    gint length;
-} array_t;
-
-typedef struct _attr_t{
-    gchar *value;
-    gint offset;
-    gint length;
-} attr_t;
-
-typedef struct _data_t{
-    gchar *value;
-
-    gint offset;
-    gint length;
-} data_t;
-
-typedef struct _element_t{
-    gchar* name;
-    GHashTable *attrs;
-    GList *elements;
-    data_t *data;
-    proto_item *item;
-
-    gint offset;
-    gint length;
-} element_t;
-
-//informations about attributes that are displayed in proto tree
-typedef struct _attr_info{
-    gchar *name;
-    gint hf;
-    gboolean is_required;
-    gboolean in_short_list;
-
-    //function validates this attribute
-    //it may impose other restrictions (e.g. validating atribut's name, ...)
-    void (*val_func)(packet_info *pinfo, proto_item *item, gchar *name, gchar *value, gpointer data);
-    gpointer data;
-} attr_info;
-
-typedef struct _xmpp_conv_info_t {
-    emem_tree_t *req_resp;
-    emem_tree_t *jingle_sessions;
-} xmpp_conv_info_t;
-
-typedef struct _xmpp_reqresp_transaction_t {
-    guint32 req_frame;
-    guint32 resp_frame;
-} xmpp_transaction_t;
 
 static int proto_xmpp = -1;
 
@@ -153,6 +87,25 @@ static gint hf_xmpp_iq_jingle_content_description_media = -1;
 static gint hf_xmpp_iq_jingle_content_description_ssrc = -1;
 
 static gint hf_xmpp_iq_jingle_cont_desc_payload = -1;
+static gint hf_xmpp_iq_jingle_cont_desc_payload_id = -1;
+static gint hf_xmpp_iq_jingle_cont_desc_payload_channels = -1;
+static gint hf_xmpp_iq_jingle_cont_desc_payload_clockrate = -1;
+static gint hf_xmpp_iq_jingle_cont_desc_payload_maxptime = -1;
+static gint hf_xmpp_iq_jingle_cont_desc_payload_name = -1;
+static gint hf_xmpp_iq_jingle_cont_desc_payload_ptime = -1;
+
+static gint hf_xmpp_iq_jingle_cont_desc_payload_param = -1;
+static gint hf_xmpp_iq_jingle_cont_desc_payload_param_value = -1;
+static gint hf_xmpp_iq_jingle_cont_desc_payload_param_name = -1;
+
+static gint hf_xmpp_iq_jingle_cont_desc_enc = -1;
+
+static gint hf_xmpp_iq_jingle_cont_trans = -1;
+static gint hf_xmpp_iq_jingle_cont_trans_pwd = -1;
+static gint hf_xmpp_iq_jingle_cont_trans_ufrag = -1;
+
+static gint hf_xmpp_iq_jingle_cont_trans_cand = -1;
+static gint hf_xmpp_iq_jingle_cont_trans_rem_cand = -1;
 
 static gint hf_xmpp_iq_jingle_reason = -1;
 static gint hf_xmpp_iq_jingle_reason_condition = -1;
@@ -193,7 +146,12 @@ static gint ett_xmpp_iq_vcard = -1;
 static gint ett_xmpp_iq_jingle = -1;
 static gint ett_xmpp_iq_jingle_content = -1;
 static gint ett_xmpp_iq_jingle_content_description = -1;
+static gint ett_xmpp_iq_jingle_cont_desc_enc = -1;
 static gint ett_xmpp_iq_jingle_cont_desc_payload = -1;
+static gint ett_xmpp_iq_jingle_cont_desc_payload_param = -1;
+static gint ett_xmpp_iq_jingle_cont_trans = -1;
+static gint ett_xmpp_iq_jingle_cont_trans_cand = -1;
+static gint ett_xmpp_iq_jingle_cont_trans_rem_cand = -1;
 static gint ett_xmpp_iq_jingle_reason = -1;
 
 static gint ett_xmpp_message = -1;
@@ -224,9 +182,19 @@ static void xmpp_iq_session(proto_tree *tree, tvbuff_t *tvb, element_t *element)
 static void xmpp_iq_vcard(proto_tree *tree, tvbuff_t *tvb, element_t *element);
 
 static void xmpp_iq_jingle(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+
 static void xmpp_iq_jingle_content(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+
 static void xmpp_iq_jingle_content_description(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_iq_jingle_cont_desc_payload(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+static void xmpp_iq_jingle_cont_desc_payload_param(proto_tree* tree, tvbuff_t* tvb, packet_info *pinfo, element_t* element);
+
+static void xmpp_iq_jingle_cont_desc_enc(proto_tree* tree, tvbuff_t* tvb, packet_info *pinfo, element_t* element);
+
+static void xmpp_iq_jingle_cont_trans(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+static void xmpp_iq_jingle_cont_trans_candidate(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+static void xmpp_iq_jingle_cont_trans_remote_candidate(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+
 static void xmpp_iq_jingle_reason(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 
 static void xmpp_presence(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
@@ -237,302 +205,6 @@ static void xmpp_challenge_response_success(proto_tree *tree, tvbuff_t *tvb,
     gint hf_content, const char *col_info);
 
 static void xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
-
-static gint
-element_t_cmp(gconstpointer a, gconstpointer b)
-{
-    return strcmp(((element_t*)a)->name,((element_t*)b)->name);
-}
-
-static GList*
-find_element_by_name(element_t *packet,const gchar *name)
-{
-    GList *found_elements;
-    element_t *search_element;
-
-    //create fake elementonly with name
-    search_element = ep_alloc(sizeof(element_t));
-    search_element->name = ep_strdup(name);
-
-    found_elements = g_list_find_custom(packet->elements, search_element, element_t_cmp);
-    
-    if(found_elements)
-        return found_elements;
-    else
-        return NULL;
-}
-
-
-//function searches and removes element from packet.
-//if element doesn't exist, NULL is returned.
-static element_t*
-steal_element_by_name(element_t *packet, gchar *name)
-{
-    GList *element_l;
-    element_t *element = NULL;
-
-    element_l = find_element_by_name(packet, name);
-
-    if(element_l)
-    {
-        element = element_l->data;
-        packet->elements = g_list_delete_link(packet->elements, element_l);
-    }
-
-    return element;
-    
-}
-
-//function searches and removes one element from packet by name
-//names are taken from variable names
-static element_t*
-steal_element_by_names(element_t *packet, gchar **names, gint names_len)
-{
-    gint i;
-    element_t *el = NULL;
-
-    for(i = 0; i<names_len; i++)
-    {
-        if((el = steal_element_by_name(packet, names[i])))
-            break;
-    }
-
-    return el;
-}
-
-static element_t*
-get_first_element(element_t *packet)
-{
-    if(packet->elements && packet->elements->data)
-        return packet->elements->data;
-    else
-        return NULL;
-}
-
-//Function converts xml_frame_t structure to element_t (simpler representation)
-static element_t*
-xml_frame_to_element_t(xml_frame_t *xml_frame)
-{
-    static gint start_offset = -1;
-    xml_frame_t *child;
-    element_t *node = ep_alloc0(sizeof(element_t));
-
-
-    node->attrs = g_hash_table_new(g_str_hash, g_str_equal);
-    node->elements = NULL;
-    node->data = NULL;
-    node->item = NULL;
-
-    node->name = ep_strdup(xml_frame->name_orig_case);
-    node->offset = 0;
-    node->length = 0;
-
-    if(start_offset == -1 && xml_frame->item != NULL)
-        start_offset = xml_frame->item->finfo->start;
-
-
-    if(xml_frame->item != NULL)
-    {
-        node->item = xml_frame->item;
-        node->offset = xml_frame->item->finfo->start - start_offset;
-        node->length = xml_frame->item->finfo->length;
-    }
-
-
-    child = xml_frame->first_child;
-
-    while(child)
-    {
-        if(child->type != XML_FRAME_TAG)
-        {
-            if(child->type == XML_FRAME_ATTRIB)
-            {
-                gint l;
-                gchar *value = NULL;
-
-                attr_t *attr = ep_alloc(sizeof(attr_t));
-                attr->length = 0;
-                attr->offset = 0;
-
-                if (child->value != NULL && child->value->initialized) {
-                    l = tvb_reported_length(child->value);
-                    value = ep_alloc0(l + 1);
-                    tvb_memcpy(child->value, value, 0, l);
-                }
-
-                if(child->item)
-                {
-                    attr->offset = child->item->finfo->start - start_offset;
-                    attr->length = child->item->finfo->length;
-                }
-                attr->value = value;
-
-                g_hash_table_insert(node->attrs,(gpointer)child->name_orig_case,(gpointer)attr);
-            }
-            else if( child->type == XML_FRAME_CDATA)
-            {
-                data_t *data = NULL;
-                gint l;
-                gchar* value = NULL;
-
-                data = ep_alloc(sizeof(data_t));
-                data->length = 0;
-                data->offset = 0;
-
-                if (child->value != NULL && child->value->initialized) {
-                    l = tvb_reported_length(child->value);
-                    value = ep_alloc0(l + 1);
-                    tvb_memcpy(child->value, value, 0, l);
-                }
-
-                data->value = value;
-
-                if(child->item)
-                {
-                    data->offset = child->item->finfo->start - start_offset;
-                    data->length = child->item->finfo->length;
-                }
-                node->data = data;
-            }
-        } else
-        {
-            node->elements = g_list_append(node->elements,(gpointer)xml_frame_to_element_t(child));
-        }
-        
-        child = child->next_sibling;
-    }
-    return node;
-}
-
-
-static gchar*
-element_to_string(tvbuff_t *tvb, element_t *element)
-{
-    gchar *buff;
-
-    if(tvb && tvb->initialized)
-    {
-        buff = ep_alloc0(element->length+1);
-        tvb_memcpy(tvb,buff,element->offset,element->length);
-        return buff;
-    } else
-    {
-        return NULL;
-    }
-}
-
-static void
-children_foreach_hide_func(proto_node *node, gpointer data)
-{
-    int *i = data;
-    if((*i) == 0)
-        PROTO_ITEM_SET_HIDDEN(node);
-    (*i)++;
-}
-
-static void
-children_foreach_show_func(proto_node *node, gpointer data)
-{
-    int *i = data;
-    if((*i) == 0)
-        PROTO_ITEM_SET_VISIBLE(node);
-    (*i)++;
-}
-
-static void
-proto_tree_hide_first_child(proto_tree *tree)
-{
-    int i = 0;
-    proto_tree_children_foreach(tree, children_foreach_hide_func, &i);
-}
-
-static void
-proto_tree_show_first_child(proto_tree *tree)
-{
-    int i = 0;
-    proto_tree_children_foreach(tree, children_foreach_show_func, &i);
-}
-
-/*
-static void
-element_tree_delete()
-{
-    //TODO
-}
-*/
-
-
-static void
-display_attrs(proto_tree *tree, proto_item *item, element_t *element, packet_info *pinfo, tvbuff_t *tvb, attr_info *attrs, gint n)
-{
-    attr_t *attr;
-
-    gint i;
-    gboolean short_list_started = FALSE;
-
-    proto_item_append_text(item," [");
-    for(i = 0; i < n; i++)
-    {
-        attr = g_hash_table_lookup(element->attrs, attrs[i].name);
-        if(attr)
-        {
-            if(attrs[i].hf != -1)
-                proto_tree_add_string(tree, attrs[i].hf, tvb, attr->offset, attr->length, attr->value);
-            else
-                proto_tree_add_text(tree, tvb, attr->offset, attr->length, "%s: %s", attrs[i].name, attr->value);
-
-            if(attrs[i].in_short_list)
-            {
-                if(short_list_started)
-                {
-                    proto_item_append_text(item," ");
-                }
-                proto_item_append_text(item,"%s=%s",attrs[i].name, attr->value);
-                short_list_started = TRUE;
-            }
-
-            if(attrs[i].val_func)
-            {
-                attrs[i].val_func(pinfo, item, attrs[i].name, attr->value, attrs[i].data);
-            }
-        } else if(attrs[i].is_required)
-        {
-            expert_add_info_format(pinfo, item, PI_PROTOCOL, PI_WARN,
-                    "Required attribute \"%s\" doesn't appear in \"%s\".",attrs[i].name,
-                    element->name);
-        }
-    }
-    proto_item_append_text(item,"]");
-
-}
-
-//function checks that variable value is in array ((array_t)data)->data
-static void
-val_enum_list(packet_info *pinfo, proto_item *item, gchar *name, gchar *value, gpointer data)
-{
-    array_t *enums_array = data;
-
-    gint i;
-    gboolean value_in_enums = FALSE;
-
-    gchar **enums =  (char**)enums_array->data;
-
-    for(i = 0; i < enums_array->length; i++)
-    {
-        if(strcmp(value,enums[i]) == 0)
-        {
-            value_in_enums = TRUE;
-            break;
-        }
-    }
-    if(!value_in_enums)
-    {
-        expert_add_info_format(pinfo, item, PI_PROTOCOL, PI_WARN,
-                "Field \"%s\" has unexpected value \"%s\"",
-                name, value);
-    }
-}
-
 
 static xmpp_transaction_t*
 xmpp_iq_reqresp_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info)
@@ -752,7 +424,6 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
     
 }
 
-
 static void
 xmpp_iq_query(proto_tree *tree,  tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
@@ -795,19 +466,17 @@ xmpp_iq_query_item(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_
     proto_item *item_item;
     proto_tree *item_tree;
 
-    gchar *ask_enums[] = {"subscribed"};
-    array_t ask_enums_array = {(gpointer)ask_enums,1};
 
-    gchar *subscription_enums[] = {"both","from","none","remove","to"};
-    array_t subscription_array = {(gpointer)subscription_enums, 5};
+    array_t *ask_enums_array = ep_init_array_t((const gchar*[]){"subscribed"},1);
+    array_t *subscription_array = ep_init_array_t((const gchar*[]){"both","from","none","remove","to"},5);
 
     attr_info attrs_info[] = {
         {"jid", hf_xmpp_iq_query_item_jid, TRUE, TRUE, NULL, NULL},
         {"name", hf_xmpp_iq_query_item_name, FALSE, TRUE, NULL, NULL},
         {"node", hf_xmpp_iq_query_item_node, FALSE, TRUE, NULL, NULL},
-        {"ask", hf_xmpp_iq_query_item_ask, FALSE, TRUE, val_enum_list, &ask_enums_array},
+        {"ask", hf_xmpp_iq_query_item_ask, FALSE, TRUE, val_enum_list, ask_enums_array},
         {"approved", hf_xmpp_iq_query_item_approved, FALSE, TRUE, NULL, NULL},
-        {"subscription", hf_xmpp_iq_query_item_subscription, FALSE, TRUE, val_enum_list, &subscription_array},
+        {"subscription", hf_xmpp_iq_query_item_subscription, FALSE, TRUE, val_enum_list, subscription_array},
         {"group", hf_xmpp_iq_query_item_group, FALSE, TRUE, NULL, NULL}
     };
 
@@ -921,7 +590,7 @@ xmpp_iq_error(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *el
         error_info = ep_strdup_printf("%s Text: %s", error_info, text_element->data->value);
     }
 
-    expert_add_info_format(pinfo, error_item, PI_RESPONSE_CODE, PI_NOTE,"%s", error_info);
+    expert_add_info_format(pinfo, error_item, PI_RESPONSE_CODE, PI_CHAT,"%s", error_info);
 
     xmpp_unknown(error_tree, tvb, pinfo, element);
 }
@@ -1022,12 +691,20 @@ xmpp_iq_jingle(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *e
     proto_item *jingle_item;
     proto_tree *jingle_tree;
 
+    const gchar *action_enums[] = {"content-accept","content-add", "content-modify",
+        "content-modify", "content-remove", "description-info", "security-info",
+        "session-accept", "session-info", "session-initiate", "session-terminate",
+        "transport-accept", "transport-info", "transport-reject", "transport-replace"
+    };
+
+    array_t *action_array = ep_init_array_t(action_enums,sizeof(action_enums)/sizeof(gchar*));
+
     attr_info attrs_info[] = {
-        {"xmlns", -1, TRUE, FALSE, NULL, NULL},
-        {"action", hf_xmpp_iq_jingle_action, TRUE, TRUE, NULL, NULL},
-        {"sid", hf_xmpp_iq_jingle_sid, TRUE, TRUE, NULL, NULL},
-        {"initiator", hf_xmpp_iq_jingle_initiator, FALSE, TRUE, NULL, NULL},
-        {"responder", hf_xmpp_iq_jingle_responder, FALSE, TRUE, NULL, NULL}
+        {"xmlns", hf_xmpp_xmlns, TRUE, FALSE, NULL, NULL},
+        {"action", hf_xmpp_iq_jingle_action, TRUE, TRUE, val_enum_list, action_array},
+        {"sid", hf_xmpp_iq_jingle_sid, TRUE, FALSE, NULL, NULL},
+        {"initiator", hf_xmpp_iq_jingle_initiator, FALSE, FALSE, NULL, NULL},
+        {"responder", hf_xmpp_iq_jingle_responder, FALSE, FALSE, NULL, NULL}
     };
 
     element_t *content; /*0-inf*/
@@ -1057,50 +734,27 @@ xmpp_iq_jingle_content(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, elem
     proto_item *content_item;
     proto_tree *content_tree;
 
-    attr_t *creator, *name; /*REQUIRED*/
-    attr_t *disposition, *senders;
+    array_t *creator_enums = ep_init_array_t((const gchar*[]){"initiator","responder"},2);
 
-    element_t *description;
+    attr_info attrs_info[] = {
+        {"creator", hf_xmpp_iq_jingle_content_creator, TRUE, FALSE, val_enum_list, creator_enums},
+        {"name", hf_xmpp_iq_jingle_content_name, TRUE, TRUE, NULL, NULL},
+        {"disposition", hf_xmpp_iq_jingle_content_disposition, FALSE, FALSE, NULL, NULL},
+        {"sensers", hf_xmpp_iq_jingle_content_senders, FALSE, FALSE, NULL, NULL}
+    };
+
+    element_t *description, *transport;
 
     content_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_content, tvb, element->offset, element->length, FALSE);
     content_tree = proto_item_add_subtree(content_item, ett_xmpp_iq_jingle_content);
 
-    creator = g_hash_table_lookup(element->attrs, "creator");
-    name = g_hash_table_lookup(element->attrs, "name");
-    disposition = g_hash_table_lookup(element->attrs, "disposition");
-    senders = g_hash_table_lookup(element->attrs, "senders");
+    display_attrs(content_tree, content_item, element, pinfo, tvb, attrs_info, AINFO_LEN(attrs_info));
 
-    proto_item_append_text(content_item," [");
-
-    if(creator)
-    {
-        proto_tree_add_string(content_tree, hf_xmpp_iq_jingle_content_creator, tvb, creator->offset, creator->length, creator->value);
-        proto_item_append_text(content_item,"creator=%s",creator->value);
-    }
-
-    if(name)
-    {
-        proto_tree_add_string(content_tree, hf_xmpp_iq_jingle_content_name, tvb, name->offset, name->length, name->value);
-        proto_item_append_text(content_item, " name=%s",name->value);
-    }
-
-    if(disposition)
-    {
-        proto_tree_add_string(content_tree, hf_xmpp_iq_jingle_content_disposition, tvb, disposition->offset, disposition->length, disposition->value);
-        proto_item_append_text(content_item," disposition=%s",disposition->value);
-    }
-
-    if(senders)
-    {
-        proto_tree_add_string(content_tree, hf_xmpp_iq_jingle_content_senders, tvb, senders->offset, senders->length, senders->value);
-        proto_item_append_text(content_item," senders=%s",senders->value);
-    }
-
-    description = steal_element_by_name(element, "description");
-    if(description)
+    while((description = steal_element_by_name(element, "description"))!=NULL)
         xmpp_iq_jingle_content_description(content_tree, tvb, pinfo, description);
 
-    proto_item_append_text(content_item,"]");
+    while((transport = steal_element_by_name(element, "transport"))!=NULL)
+        xmpp_iq_jingle_cont_trans(content_tree, tvb, pinfo, transport);
 
     xmpp_unknown(content_tree, tvb, pinfo, element);
 }
@@ -1111,41 +765,24 @@ xmpp_iq_jingle_content_description(proto_tree* tree, tvbuff_t* tvb, packet_info*
     proto_item *desc_item;
     proto_tree *desc_tree;
 
-    attr_t *media; /*REQUIRED*/
-    attr_t *xmlns, *ssrc;
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, FALSE, NULL, NULL},
+        {"media", hf_xmpp_iq_jingle_content_description_media, TRUE, TRUE, NULL, NULL},
+        {"ssrc", hf_xmpp_iq_jingle_content_description_ssrc , FALSE, TRUE, NULL, NULL}
+    };
 
-    element_t *payload;
+    element_t *payload, *encryption;
 
     desc_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_content_description, tvb, element->offset, element->length, FALSE);
     desc_tree = proto_item_add_subtree(desc_item, ett_xmpp_iq_jingle_content_description);
 
-    media = g_hash_table_lookup(element->attrs, "media");
-    xmlns = g_hash_table_lookup(element->attrs, "xmlns");
-    ssrc = g_hash_table_lookup(element->attrs, "ssrc");
-
-    proto_item_append_text(desc_item," [");
-
-    if(xmlns)
-    {
-        proto_tree_add_string(desc_tree, hf_xmpp_iq_jingle_content_description_xmlns, tvb, xmlns->offset, xmlns->length, xmlns->value);
-    }
-    
-    if(media)
-    {
-        proto_tree_add_string(desc_tree, hf_xmpp_iq_jingle_content_description_media, tvb, media->offset, media->length, media->value);
-        proto_item_append_text(desc_item,"media=%s", media->value);
-    }
-
-    if(ssrc)
-    {
-        proto_tree_add_string(desc_tree, hf_xmpp_iq_jingle_content_description_ssrc, tvb, ssrc->offset, ssrc->length, ssrc->value);
-        proto_item_append_text(desc_item," ssrc=%s", ssrc->value);
-    }
-    proto_item_append_text(desc_item,"]");
-
+    display_attrs(desc_tree, desc_item, element, pinfo, tvb, attrs_info, AINFO_LEN(attrs_info));
     
     while((payload = steal_element_by_name(element, "payload-type"))!=NULL)
         xmpp_iq_jingle_cont_desc_payload(desc_tree, tvb, pinfo, payload);
+
+    while((encryption = steal_element_by_name(element, "encryption"))!=NULL)
+        xmpp_iq_jingle_cont_desc_enc(desc_tree, tvb, pinfo, encryption);
 
     xmpp_unknown(desc_tree, tvb, pinfo, element);
 }
@@ -1156,22 +793,167 @@ xmpp_iq_jingle_cont_desc_payload(proto_tree* tree, tvbuff_t* tvb, packet_info* p
     proto_item *payload_item;
     proto_tree *payload_tree;
 
-    attr_t *id; /*REQUIRED*/
-    attr_t *channels, *clockrate, *maxptime, *name, *ptime;
+    attr_info attrs_info[] = {
+        {"id", hf_xmpp_iq_jingle_cont_desc_payload_id, TRUE, TRUE, NULL, NULL},
+        {"channels", hf_xmpp_iq_jingle_cont_desc_payload_channels, FALSE, FALSE, NULL, NULL},
+        {"clockrate", hf_xmpp_iq_jingle_cont_desc_payload_clockrate, FALSE, FALSE, NULL, NULL},
+        {"maxptime", hf_xmpp_iq_jingle_cont_desc_payload_maxptime, FALSE, FALSE, NULL, NULL},
+        {"name", hf_xmpp_iq_jingle_cont_desc_payload_name, FALSE, TRUE, NULL, NULL},
+        {"ptime", hf_xmpp_iq_jingle_cont_desc_payload_ptime, FALSE, FALSE, NULL, NULL}
+    };
+
+    element_t *param;
 
     payload_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_desc_payload, tvb, element->offset, element->length, FALSE);
-    payload_tree = proto_item_add_subtree(tree, ett_xmpp_iq_jingle_cont_desc_payload);
+    payload_tree = proto_item_add_subtree(payload_item, ett_xmpp_iq_jingle_cont_desc_payload);
 
-    id = g_hash_table_lookup(element->attrs, "id");
-    channels = g_hash_table_lookup(element->attrs, "channels");
-    clockrate = g_hash_table_lookup(element->attrs, "clockrate");
-    maxptime = g_hash_table_lookup(element->attrs, "maxptime");
-    name = g_hash_table_lookup(element->attrs, "name");
-    ptime = g_hash_table_lookup(element->attrs, "ptime");
+    display_attrs(payload_tree, payload_item, element, pinfo, tvb, attrs_info, AINFO_LEN(attrs_info));
 
-    
+    while((param = steal_element_by_name(element,"parameter"))!=NULL)
+    {
+        xmpp_iq_jingle_cont_desc_payload_param(payload_tree, tvb, pinfo, param);
+    }
 
     xmpp_unknown(payload_tree, tvb, pinfo, element);
+}
+
+static void
+xmpp_iq_jingle_cont_desc_payload_param(proto_tree* tree, tvbuff_t* tvb, packet_info *pinfo, element_t* element)
+{
+    proto_item *param_item;
+    proto_tree *param_tree;
+    
+    proto_item *parent_item;
+    attr_t *name, *value;
+
+    attr_info attrs_info[] = {
+        {"name", hf_xmpp_iq_jingle_cont_desc_payload_param_name, TRUE, TRUE, NULL, NULL},
+        {"value", hf_xmpp_iq_jingle_cont_desc_payload_param_value, TRUE, TRUE, NULL, NULL}
+    };
+
+
+    name = g_hash_table_lookup(element->attrs, "name");
+    value = g_hash_table_lookup(element->attrs, "value");
+
+    if(name && value)
+    {
+        gchar *parent_item_label;
+        //gchar *new_parent_item_label;
+
+        parent_item = proto_tree_get_parent(tree);
+
+        parent_item_label = proto_item_get_text(parent_item);
+
+        if(parent_item_label)
+        {
+            parent_item_label[strlen(parent_item_label)-1]= '\0';
+            proto_item_set_text(parent_item, "%s param(\"%s\")=%s]", parent_item_label ,name->value, value->value);
+        }
+    }
+
+    param_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_desc_payload_param, tvb, element->offset, element->length, FALSE);
+    param_tree = proto_item_add_subtree(param_item, ett_xmpp_iq_jingle_cont_desc_payload_param);
+
+    display_attrs(param_tree, param_item, element, pinfo, tvb, attrs_info, AINFO_LEN(attrs_info));
+
+}
+
+static void
+xmpp_iq_jingle_cont_desc_enc(proto_tree* tree, tvbuff_t* tvb, packet_info *pinfo, element_t* element)
+{
+    proto_item *enc_item;
+    proto_tree *enc_tree;
+
+    enc_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_desc_enc, tvb, element->offset, element->length, FALSE);
+    enc_tree = proto_item_add_subtree(enc_item, ett_xmpp_iq_jingle_cont_desc_enc);
+
+    xmpp_unknown(enc_tree, tvb, pinfo, element);
+}
+
+/*TODO description(encryption, bandwidth, rtp-hdrext, zrtp-hash)*/
+
+static void
+xmpp_iq_jingle_cont_trans(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+{
+    proto_item *trans_item;
+    proto_tree *trans_tree;
+
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, FALSE, FALSE, NULL, NULL},
+        {"pwd", hf_xmpp_iq_jingle_cont_trans_pwd, FALSE, FALSE, NULL, NULL},
+        {"ufrag", hf_xmpp_iq_jingle_cont_trans_ufrag, FALSE, TRUE, NULL, NULL}
+    };
+
+    element_t *candidate, *remote_candidate;
+
+    trans_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_trans, tvb, element->offset, element->length, FALSE);
+    trans_tree = proto_item_add_subtree(trans_item, ett_xmpp_iq_jingle_cont_trans);
+
+    display_attrs(trans_tree, trans_item, element, pinfo, tvb, attrs_info, AINFO_LEN(attrs_info));
+
+    while((candidate = steal_element_by_name(element, "candidate"))!=NULL)
+    {
+        xmpp_iq_jingle_cont_trans_candidate(trans_tree, tvb, pinfo, candidate);
+    }
+
+    while((remote_candidate = steal_element_by_name(element, "remote-candidate"))!=NULL)
+    {
+        xmpp_iq_jingle_cont_trans_remote_candidate(trans_tree, tvb, pinfo, remote_candidate);
+    }
+
+    xmpp_unknown(trans_tree, tvb, pinfo, element);
+    
+}
+
+static void
+xmpp_iq_jingle_cont_trans_candidate(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+{
+    proto_item *cand_item;
+    proto_tree *cand_tree;
+
+    array_t *type_enums = ep_init_array_t((const gchar*[]){"host", "prflx", "relay", "srflx"},4);
+
+    attr_info attrs_info[] = {
+        {"component", -1, TRUE, FALSE, NULL, NULL},
+        {"foundation", -1, TRUE, FALSE, NULL, NULL},
+        {"generation", -1, TRUE, FALSE, NULL, NULL},
+        {"id", -1, FALSE, FALSE, NULL, NULL}, /*in schemas id is marked as required, but in jitsi logs it doesn't appear*/
+        {"ip", -1, TRUE, FALSE, NULL, NULL},
+        {"network", -1, TRUE, FALSE, NULL, NULL},
+        {"port", -1, TRUE, FALSE, NULL, NULL},
+        {"priority", -1, TRUE, FALSE, NULL, NULL},
+        {"protocol", -1, TRUE, TRUE, NULL, NULL},
+        {"rel-addr", -1, FALSE, FALSE, NULL, NULL},
+        {"rel-port", -1, FALSE, FALSE, NULL, NULL},
+        {"type", -1, TRUE, TRUE, val_enum_list, type_enums}
+    };
+
+    cand_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_trans_cand, tvb, element->offset, element->length, FALSE);
+    cand_tree = proto_item_add_subtree(cand_item, ett_xmpp_iq_jingle_cont_trans_cand);
+
+    display_attrs(cand_tree, cand_item, element, pinfo, tvb, attrs_info, AINFO_LEN(attrs_info));
+
+    xmpp_unknown(cand_tree, tvb, pinfo, element);
+}
+
+static void
+xmpp_iq_jingle_cont_trans_remote_candidate(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+{
+    proto_item *remote_cand_item;
+    proto_tree *remote_cand_tree;
+
+    attr_info attrs_info[] = {
+        {"component", -1, TRUE, FALSE, NULL, NULL},
+        {"ip", -1, TRUE, FALSE, NULL, NULL},
+        {"port", -1, TRUE, FALSE, NULL, NULL}
+    };
+
+    remote_cand_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_trans_rem_cand, tvb, element->offset, element->length, FALSE);
+    remote_cand_tree = proto_item_add_subtree(remote_cand_item, ett_xmpp_iq_jingle_cont_trans_rem_cand);
+
+    display_attrs(remote_cand_tree, remote_cand_item, element, pinfo, tvb, attrs_info, AINFO_LEN(attrs_info));
+
+    xmpp_unknown(remote_cand_tree, tvb, pinfo, element);
 }
 
 static void
@@ -1690,6 +1472,81 @@ proto_register_xmpp(void) {
                 "PAYLOAD-TYPE", "xmpp.iq.jingle.content.description.payload-type", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle content description payload-type", HFILL
             }},
+            { &hf_xmpp_iq_jingle_cont_desc_payload_id,
+            {
+                "id", "xmpp.iq.jingle.content.description.payload-type.id", FT_STRING, BASE_NONE, NULL, 0x0,
+                "iq jingle content description payload-type id", HFILL
+            }},
+            { &hf_xmpp_iq_jingle_cont_desc_payload_channels,
+            {
+                "channels", "xmpp.iq.jingle.content.description.payload-type.channels", FT_STRING, BASE_NONE, NULL, 0x0,
+                "iq jingle content description payload-type channels", HFILL
+            }},
+            { &hf_xmpp_iq_jingle_cont_desc_payload_clockrate,
+            {
+                "clockrate", "xmpp.iq.jingle.content.description.payload-type.clockrate", FT_STRING, BASE_NONE, NULL, 0x0,
+                "iq jingle content description payload-type clockrate", HFILL
+            }},
+            { &hf_xmpp_iq_jingle_cont_desc_payload_maxptime,
+            {
+                "maxptime", "xmpp.iq.jingle.content.description.payload-type.maxptime", FT_STRING, BASE_NONE, NULL, 0x0,
+                "iq jingle content description payload-type maxptime", HFILL
+            }},
+            { &hf_xmpp_iq_jingle_cont_desc_payload_name,
+            {
+                "name", "xmpp.iq.jingle.content.description.payload-type.name", FT_STRING, BASE_NONE, NULL, 0x0,
+                "iq jingle content description payload-type name", HFILL
+            }},
+            { &hf_xmpp_iq_jingle_cont_desc_payload_ptime,
+            {
+                "ptime", "xmpp.iq.jingle.content.description.payload-type.ptime", FT_STRING, BASE_NONE, NULL, 0x0,
+                "iq jingle content description payload-type ptime", HFILL
+            }},
+            { &hf_xmpp_iq_jingle_cont_desc_payload_param,
+            {
+                "PARAMETER", "xmpp.iq.jingle.content.description.payload-type.parameter", FT_NONE, BASE_NONE, NULL, 0x0,
+                "iq jingle content description payload-type parameter", HFILL
+            }},
+            { &hf_xmpp_iq_jingle_cont_desc_payload_param_name,
+            {
+                "name", "xmpp.iq.jingle.content.description.payload-type.parameter.name", FT_STRING, BASE_NONE, NULL, 0x0,
+                "iq jingle content description payload-type parameter name", HFILL
+            }},
+            { &hf_xmpp_iq_jingle_cont_desc_payload_param_value,
+            {
+                "value", "xmpp.iq.jingle.content.description.payload-type.parameter.value", FT_STRING, BASE_NONE, NULL, 0x0,
+                "iq jingle content description payload-type parameter value", HFILL
+            }},
+            { &hf_xmpp_iq_jingle_cont_trans,
+            {
+                "TRANSPORT", "xmpp.iq.jingle.content.transport", FT_NONE, BASE_NONE, NULL, 0x0,
+                "iq jingle content transport", HFILL
+            }},
+            { &hf_xmpp_iq_jingle_cont_trans_ufrag,
+            {
+                "ufrag", "xmpp.iq.jingle.content.transport.ufrag", FT_STRING, BASE_NONE, NULL, 0x0,
+                "iq jingle content transport ufrag", HFILL
+            }},
+            { &hf_xmpp_iq_jingle_cont_trans_pwd,
+            {
+                "pwd", "xmpp.iq.jingle.content.transport.pwd", FT_STRING, BASE_NONE, NULL, 0x0,
+                "iq jingle content transport pwd", HFILL
+            }},
+            { &hf_xmpp_iq_jingle_cont_trans_cand,
+            {
+                "CANDIDATE", "xmpp.iq.jingle.content.transport.candidate", FT_NONE, BASE_NONE, NULL, 0x0,
+                "iq jingle content transport candidate", HFILL
+            }},
+            { &hf_xmpp_iq_jingle_cont_trans_rem_cand,
+            {
+                "REMOTE-CANDIDATE", "xmpp.iq.jingle.content.transport.remote-candidate", FT_NONE, BASE_NONE, NULL, 0x0,
+                "iq jingle content transport remote-candidate", HFILL
+            }},
+            { &hf_xmpp_iq_jingle_cont_desc_enc,
+            {
+                "ENCRYPTION", "xmpp.iq.jingle.content.description.encryption", FT_NONE, BASE_NONE, NULL, 0x0,
+                "iq jingle content descryption encryption", HFILL
+            }},
             { &hf_xmpp_iq_jingle_reason,
             {
                 "REASON", "xmpp.iq.jingle.reason", FT_NONE, BASE_NONE, NULL, 0x0,
@@ -1806,6 +1663,11 @@ proto_register_xmpp(void) {
         &ett_xmpp_iq_jingle_content,
         &ett_xmpp_iq_jingle_content_description,
         &ett_xmpp_iq_jingle_cont_desc_payload,
+        &ett_xmpp_iq_jingle_cont_desc_payload_param,
+        &ett_xmpp_iq_jingle_cont_desc_enc,
+        &ett_xmpp_iq_jingle_cont_trans,
+        &ett_xmpp_iq_jingle_cont_trans_cand,
+        &ett_xmpp_iq_jingle_cont_trans_rem_cand,
         &ett_xmpp_iq_jingle_reason,
         &ett_xmpp_message,
         &ett_xmpp_presence,
