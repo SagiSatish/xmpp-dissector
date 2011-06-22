@@ -62,6 +62,7 @@ typedef struct _attr_info{
 typedef struct _xmpp_conv_info_t {
     emem_tree_t *req_resp;
     emem_tree_t *jingle_sessions;
+    emem_tree_t *ibb_sessions;
 } xmpp_conv_info_t;
 
 typedef struct _xmpp_reqresp_transaction_t {
@@ -70,10 +71,11 @@ typedef struct _xmpp_reqresp_transaction_t {
 } xmpp_transaction_t;
 
 extern array_t* ep_init_array_t(const gchar** array, gint len);
+extern attr_t* ep_init_attr_t(gchar *value, gint offset, gint length);
 extern gint element_t_cmp(gconstpointer a, gconstpointer b);
 extern GList* find_element_by_name(element_t *packet,const gchar *name);
-extern element_t* steal_element_by_name(element_t *packet, gchar *name);
-extern element_t* steal_element_by_names(element_t *packet, gchar **names, gint names_len);
+extern element_t* steal_element_by_name(element_t *packet, const gchar *name);
+extern element_t* steal_element_by_names(element_t *packet, const gchar **names, gint names_len);
 extern element_t* get_first_element(element_t *packet);
 extern element_t* xml_frame_to_element_t(xml_frame_t *xml_frame);
 extern gchar* element_to_string(tvbuff_t *tvb, element_t *element);

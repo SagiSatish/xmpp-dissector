@@ -24,6 +24,18 @@ ep_init_array_t(const gchar** array, gint len)
     return result;
 }
 
+attr_t*
+ep_init_attr_t(gchar *value, gint offset, gint length)
+{
+    attr_t *result;
+    result = ep_alloc(sizeof(attr_t));
+    result->value = value;
+    result->offset = offset;
+    result->length = length;
+
+    return result;
+}
+
 gint
 element_t_cmp(gconstpointer a, gconstpointer b)
 {
@@ -52,7 +64,7 @@ find_element_by_name(element_t *packet,const gchar *name)
 //function searches and removes element from packet.
 //if element doesn't exist, NULL is returned.
 element_t*
-steal_element_by_name(element_t *packet, gchar *name)
+steal_element_by_name(element_t *packet,const gchar *name)
 {
     GList *element_l;
     element_t *element = NULL;
@@ -72,7 +84,7 @@ steal_element_by_name(element_t *packet, gchar *name)
 //function searches and removes one element from packet by name
 //names are taken from variable names
 element_t*
-steal_element_by_names(element_t *packet, gchar **names, gint names_len)
+steal_element_by_names(element_t *packet, const gchar **names, gint names_len)
 {
     gint i;
     element_t *el = NULL;
