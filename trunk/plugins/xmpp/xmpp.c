@@ -2,7 +2,10 @@
 #include "config.h"
 #endif
 
+
 #include <glib.h>
+#include <stdio.h>
+
 #include <epan/proto.h>
 #include <epan/packet_info.h>
 #include <epan/epan.h>
@@ -11,6 +14,8 @@
 #include <epan/dissectors/packet-xml.h>
 
 #include <plugins/xmpp/xmpp.h>
+
+#include "epan/strutil.h"
 
 array_t*
 ep_init_array_t(const gchar** array, gint len)
@@ -96,6 +101,53 @@ steal_element_by_names(element_t *packet, const gchar **names, gint names_len)
     }
 
     return el;
+}
+
+element_t*
+steal_element_by_attr(element_t *packet, const gchar *attr_name, const gchar *attr_value)
+{
+    GList *childs = packet->elements;
+    element_t *result = NULL;
+
+    while (childs) {
+        element_t *child_elem = childs->data;
+        attr_t *attr = g_hash_table_lookup(child_elem->attrs, attr_name);
+
+        //child is one of the defined stanza error conditions
+        if (attr && strcmp(attr->value, attr_value) == 0) {
+
+            result = childs->data;
+            packet->elements = g_list_delete_link(packet->elements, childs);
+            
+            break;
+        } else
+            childs = childs->next;
+    }
+
+    return result;
+}
+
+element_t*
+steal_element_by_name_and_attr(element_t *packet, const gchar *name, const gchar *attr_name, const gchar *attr_value)
+{
+    GList *childs = packet->elements;
+    element_t *result = NULL;
+
+    while (childs) {
+        element_t *child_elem = childs->data;
+        attr_t *attr = g_hash_table_lookup(child_elem->attrs, attr_name);
+
+        //child is one of the defined stanza error conditions
+        if (attr && strcmp(child_elem->name, name) == 0 && strcmp(attr->value, attr_value) == 0) {
+
+            result = childs->data;
+            packet->elements = g_list_delete_link(packet->elements, childs);
+
+            break;
+        } else
+            childs = childs->next;
+    }
+    return result;
 }
 
 element_t*
@@ -307,7 +359,7 @@ display_attrs(proto_tree *tree, proto_item *item, element_t *element, packet_inf
                 {
                     proto_item_append_text(item," ");
                 }
-                proto_item_append_text(item,"%s=%s",attrs[i].name, attr->value);
+                proto_item_append_text(item,"%s=\"%s\"",attrs[i].name, attr->value);
                 short_list_started = TRUE;
             }
 

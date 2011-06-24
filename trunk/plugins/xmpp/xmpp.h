@@ -15,6 +15,7 @@
 
 //length of attr_info array
 #define AINFO_LEN(array)  (gint) sizeof(array)/sizeof(attr_info)
+#define GCHARS_LEN(array)  (gint) sizeof(array)/sizeof(gchar*)
 
 typedef struct _array_t
 {
@@ -76,6 +77,8 @@ extern gint element_t_cmp(gconstpointer a, gconstpointer b);
 extern GList* find_element_by_name(element_t *packet,const gchar *name);
 extern element_t* steal_element_by_name(element_t *packet, const gchar *name);
 extern element_t* steal_element_by_names(element_t *packet, const gchar **names, gint names_len);
+extern element_t* steal_element_by_attr(element_t *packet, const gchar *attr_name, const gchar *attr_value);
+extern element_t* steal_element_by_name_and_attr(element_t *packet, const gchar *name, const gchar *attr_name, const gchar *attr_value);
 extern element_t* get_first_element(element_t *packet);
 extern element_t* xml_frame_to_element_t(xml_frame_t *xml_frame);
 extern gchar* element_to_string(tvbuff_t *tvb, element_t *element);
