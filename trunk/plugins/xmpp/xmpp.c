@@ -271,6 +271,7 @@ element_to_string(tvbuff_t *tvb, element_t *element)
     }
 }
 
+
 static void
 children_foreach_hide_func(proto_node *node, gpointer data)
 {
@@ -362,16 +363,19 @@ display_attrs(proto_tree *tree, proto_item *item, element_t *element, packet_inf
                 proto_item_append_text(item,"%s=\"%s\"",attrs[i].name, attr->value);
                 short_list_started = TRUE;
             }
-
-            if(attrs[i].val_func)
-            {
-                attrs[i].val_func(pinfo, item, attrs[i].name, attr->value, attrs[i].data);
-            }
         } else if(attrs[i].is_required)
         {
             expert_add_info_format(pinfo, item, PI_PROTOCOL, PI_WARN,
                     "Required attribute \"%s\" doesn't appear in \"%s\".",attrs[i].name,
                     element->name);
+        }
+
+        if(attrs[i].val_func)
+        {
+            if(attr)
+                attrs[i].val_func(pinfo, item, attrs[i].name, attr->value, attrs[i].data);
+            else
+                attrs[i].val_func(pinfo, item, attrs[i].name, NULL, attrs[i].data);
         }
     }
     proto_item_append_text(item,"]");
@@ -389,18 +393,17 @@ val_enum_list(packet_info *pinfo, proto_item *item, gchar *name, gchar *value, g
 
     gchar **enums =  (char**)enums_array->data;
 
-    for(i = 0; i < enums_array->length; i++)
-    {
-        if(strcmp(value,enums[i]) == 0)
-        {
-            value_in_enums = TRUE;
-            break;
+    if (value != NULL) {
+        for (i = 0; i < enums_array->length; i++) {
+            if (strcmp(value, enums[i]) == 0) {
+                value_in_enums = TRUE;
+                break;
+            }
         }
-    }
-    if(!value_in_enums)
-    {
-        expert_add_info_format(pinfo, item, PI_PROTOCOL, PI_WARN,
-                "Field \"%s\" has unexpected value \"%s\"",
-                name, value);
+        if (!value_in_enums) {
+            expert_add_info_format(pinfo, item, PI_PROTOCOL, PI_WARN,
+                    "Field \"%s\" has unexpected value \"%s\"",
+                    name, value);
+        }
     }
 }
