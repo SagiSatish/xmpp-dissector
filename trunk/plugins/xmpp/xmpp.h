@@ -13,10 +13,6 @@
       FI_RESET_FLAG(PITEM_FINFO(proto_item), FI_HIDDEN); \
 	} while(0)
 
-//length of attr_info array
-#define AINFO_LEN(array)  (gint) sizeof(array)/sizeof(attr_info)
-#define GCHARS_LEN(array)  (gint) sizeof(array)/sizeof(gchar*)
-
 typedef struct _array_t
 {
     gpointer data;
@@ -70,6 +66,11 @@ typedef struct _xmpp_reqresp_transaction_t {
     guint32 req_frame;
     guint32 resp_frame;
 } xmpp_transaction_t;
+
+extern void xmpp_iq_reqresp_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info);
+extern void xmpp_jingle_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info);
+extern void xmpp_ibb_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info);
+extern void xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
 extern array_t* ep_init_array_t(const gchar** array, gint len);
 extern attr_t* ep_init_attr_t(gchar *value, gint offset, gint length);
