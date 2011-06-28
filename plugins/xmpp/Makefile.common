@@ -32,10 +32,17 @@ DISSECTOR_SRC = \
 
 # corresponding headers
 DISSECTOR_INCLUDES = \
-	xmpp.h
-
+        packet-xmpp.h \
+        xmpp-core.h \
+	xmpp.h \
+        xmpp-jingle.h \
+        xmpp-other.h
+        
 # Dissector helpers. They're included in the source files in this
 # directory, but they're not dissectors themselves, i.e. they're not
 # used to generate "plugin.c".
 DISSECTOR_SUPPORT_SRC = \
-	xmpp.c
+        xmpp-core.c \
+	xmpp.c \
+        xmpp-jingle.c \
+        xmpp-other.c

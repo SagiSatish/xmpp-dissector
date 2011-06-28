@@ -6,6 +6,7 @@
 #include <glib.h>
 #include <stdio.h>
 
+#include <epan/conversation.h>
 #include <epan/proto.h>
 #include <epan/packet_info.h>
 #include <epan/epan.h>
@@ -13,9 +14,127 @@
 
 #include <epan/dissectors/packet-xml.h>
 
+#include <plugins/xmpp/packet-xmpp.h>
 #include <plugins/xmpp/xmpp.h>
 
 #include "epan/strutil.h"
+
+void
+xmpp_iq_reqresp_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info)
+{
+    xmpp_transaction_t *xmpp_trans = NULL;
+
+    attr_t *attr_id;
+    char *id;
+
+    attr_id = g_hash_table_lookup(packet->attrs, "id");
+    id = ep_strdup(attr_id->value);
+
+
+
+    if (!pinfo->fd->flags.visited) {
+        xmpp_trans = se_tree_lookup_string(xmpp_info->req_resp, id, EMEM_TREE_STRING_NOCASE);
+        if (xmpp_trans) {
+            xmpp_trans->resp_frame = pinfo->fd->num;
+
+        } else {
+            char *se_id = se_strdup(id);
+
+            xmpp_trans = se_alloc(sizeof (xmpp_transaction_t));
+            xmpp_trans->req_frame = pinfo->fd->num;
+            xmpp_trans->resp_frame = 0;
+
+            se_tree_insert_string(xmpp_info->req_resp, se_id, (void *) xmpp_trans, EMEM_TREE_STRING_NOCASE);
+
+        }
+
+    } else {
+        xmpp_trans = se_tree_lookup_string(xmpp_info->req_resp, id, EMEM_TREE_STRING_NOCASE);
+    }
+}
+
+void
+xmpp_jingle_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info)
+{
+    element_t *jingle_packet;
+    GList *jingle_packet_l;
+
+    jingle_packet_l = find_element_by_name(packet,"jingle");
+    jingle_packet = jingle_packet_l?jingle_packet_l->data:NULL;
+
+    if (jingle_packet && !pinfo->fd->flags.visited) {
+        attr_t *attr_id;
+        attr_t *attr_sid;
+
+        char *se_id;
+        char *se_sid;
+
+
+        attr_id = g_hash_table_lookup(packet->attrs, "id");
+        se_id = se_strdup(attr_id->value);
+
+        attr_sid = g_hash_table_lookup(jingle_packet->attrs, "sid");
+        se_sid = se_strdup(attr_sid->value);
+
+        se_tree_insert_string(xmpp_info->jingle_sessions, se_id, (void*) se_sid, EMEM_TREE_STRING_NOCASE);
+    }
+}
+
+void
+xmpp_ibb_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info)
+{
+    element_t *ibb_packet = NULL;
+    GList *ibb_packet_l;
+
+    if(strcmp(packet->name, "message") == 0)
+    {
+        ibb_packet_l = find_element_by_name(packet,"data");
+        ibb_packet = ibb_packet_l?ibb_packet_l->data:NULL;
+        
+    } else if(strcmp(packet->name, "iq") == 0)
+    {
+        ibb_packet_l = find_element_by_name(packet,"open");
+        
+        if(!ibb_packet_l)
+            ibb_packet_l = find_element_by_name(packet,"close");
+         if(!ibb_packet_l)
+            ibb_packet_l = find_element_by_name(packet,"data");
+
+        ibb_packet = ibb_packet_l?ibb_packet_l->data:NULL;
+    }
+
+    if (ibb_packet && !pinfo->fd->flags.visited) {
+        attr_t *attr_id;
+        attr_t *attr_sid;
+
+        char *se_id;
+        char *se_sid;
+
+
+        attr_id = g_hash_table_lookup(packet->attrs, "id");
+        attr_sid = g_hash_table_lookup(ibb_packet->attrs, "sid");
+        if(attr_id && attr_sid)
+        {
+            se_id = se_strdup(attr_id->value);
+            se_sid = se_strdup(attr_sid->value);
+            se_tree_insert_string(xmpp_info->ibb_sessions, se_id, (void*) se_sid, EMEM_TREE_STRING_NOCASE);
+        }
+    }
+}
+
+void
+xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+{
+    guint i;
+
+    //element has unrecognized elements
+    for(i = 0; i<g_list_length(element->elements); i++)
+    {
+        element_t *child = g_list_nth_data(element->elements,i);
+        proto_item *unknown_item= proto_tree_add_string(tree, hf_xmpp_unknown, tvb, child->offset, child->length, element_to_string(tvb, child));
+        expert_add_info_format(pinfo, unknown_item, PI_UNDECODED, PI_NOTE,"Unknown element: %s", child->name);
+    }
+}
 
 array_t*
 ep_init_array_t(const gchar** array, gint len)
@@ -23,7 +142,7 @@ ep_init_array_t(const gchar** array, gint len)
     array_t *result;
 
     result = ep_alloc(sizeof(array_t));
-    result->data = array;
+    result->data = (const gpointer) array;
     result->length = len;
     
     return result;
