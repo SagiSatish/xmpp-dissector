@@ -253,9 +253,9 @@ xmpp_iq_error(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *el
     {
         xmpp_iq_error_text(error_tree, tvb, text_element);
 
-        error_info = ep_strdup_printf("%s Text: %s", error_info, text_element->data->value);
+        error_info = ep_strdup_printf("%s Text: %s", error_info, text_element->data?text_element->data->value:"");
     }
-
+ 
     expert_add_info_format(pinfo, error_item, PI_RESPONSE_CODE, PI_CHAT,"%s", error_info);
 
     xmpp_unknown(error_tree, tvb, pinfo, element);
@@ -264,7 +264,7 @@ xmpp_iq_error(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *el
 static void
 xmpp_iq_error_text(proto_tree *tree, tvbuff_t *tvb, element_t *element)
 {
-    proto_tree_add_string(tree, hf_xmpp_iq_error_text, tvb, element->offset, element->length, element->data->value);
+    proto_tree_add_string(tree, hf_xmpp_iq_error_text, tvb, element->offset, element->length, element->data?element->data->value:"");
 }
 
 

@@ -77,7 +77,7 @@ xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
     if(resource)
     {
         attr_t *fake_attr_res = ep_alloc(sizeof(attr_t));
-        fake_attr_res->value = resource->data->value;
+        fake_attr_res->value = resource->data?resource->data->value:"";
         fake_attr_res->offset = resource->offset;
         fake_attr_res->length = resource->length;
         g_hash_table_insert(element->attrs, "resource", fake_attr_res);
@@ -86,7 +86,7 @@ xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
     if(jid)
     {
         attr_t *fake_attr_jid = ep_alloc(sizeof(attr_t));
-        fake_attr_jid->value = jid->data->value;
+        fake_attr_jid->value = jid->data?jid->data->value:"";
         fake_attr_jid->offset = jid->offset;
         fake_attr_jid->length = jid->length;
         g_hash_table_insert(element->attrs, "jid", fake_attr_jid);
@@ -239,7 +239,7 @@ xmpp_disco_items_item(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, eleme
     if(group)
     {
         fake_attr_group = ep_alloc(sizeof(attr_t));
-        fake_attr_group->value = group->data->value;
+        fake_attr_group->value = group->data?group->data->value:"";
         fake_attr_group->offset = group->offset;
         fake_attr_group->length = group->length;
         g_hash_table_insert(element->attrs,"group",fake_attr_group);
