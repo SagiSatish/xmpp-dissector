@@ -84,12 +84,13 @@ extern element_t* steal_element_by_name_and_attr(element_t *packet, const gchar 
 extern element_t* get_first_element(element_t *packet);
 extern element_t* xml_frame_to_element_t(xml_frame_t *xml_frame);
 extern gchar* element_to_string(tvbuff_t *tvb, element_t *element);
+extern gchar* attr_to_string(tvbuff_t *tvb, attr_t *attr);
 
 extern void proto_tree_hide_first_child(proto_tree *tree);
 extern void proto_tree_show_first_child(proto_tree *tree);
 extern gchar* proto_item_get_text(proto_item *item);
 
-extern void display_attrs(proto_tree *tree, proto_item *item, element_t *element, packet_info *pinfo, tvbuff_t *tvb, attr_info *attrs, gint n);
+extern void display_attrs(proto_tree *tree, proto_item *item, element_t *element, packet_info *pinfo, tvbuff_t *tvb, attr_info *attrs, guint n);
 
 extern void val_enum_list(packet_info *pinfo, proto_item *item, gchar *name, gchar *value, gpointer data);
 

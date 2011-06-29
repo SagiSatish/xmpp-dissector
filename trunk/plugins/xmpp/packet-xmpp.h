@@ -37,11 +37,11 @@ extern gint hf_xmpp_iq_query_streamhost_used;
 extern gint hf_xmpp_iq_query_activate;
 extern gint hf_xmpp_iq_query_udpsuccess;
 
-extern gint hf_xmpp_iq_error;
-extern gint hf_xmpp_iq_error_type;
-extern gint hf_xmpp_iq_error_code;
-extern gint hf_xmpp_iq_error_condition;
-extern gint hf_xmpp_iq_error_text;
+extern gint hf_xmpp_error;
+extern gint hf_xmpp_error_type;
+extern gint hf_xmpp_error_code;
+extern gint hf_xmpp_error_condition;
+extern gint hf_xmpp_error_text;
 
 extern gint hf_xmpp_iq_bind;
 extern gint hf_xmpp_iq_bind_jid;
@@ -51,8 +51,9 @@ extern gint hf_xmpp_iq_services;
 
 extern gint hf_xmpp_iq_session;
 
-extern gint hf_xmpp_iq_vcard ;
-extern gint hf_xmpp_iq_vcard_content;
+extern gint hf_xmpp_vcard;
+extern gint hf_xmpp_vcard_x_update;
+
 
 extern gint hf_xmpp_iq_jingle;
 extern gint hf_xmpp_iq_jingle_sid;
@@ -125,22 +126,22 @@ extern gint hf_xmpp_ibb_data;
 
 extern gint hf_xmpp_delay;
 
+extern gint hf_xmpp_x_event;
+extern gint hf_xmpp_x_event_condition;
+
 extern gint hf_xmpp_presence;
 extern gint hf_xmpp_presence_show;
 extern gint hf_xmpp_presence_status;
 extern gint hf_xmpp_presence_caps;
 
 extern gint hf_xmpp_auth;
-extern gint hf_xmpp_auth_mechanism;
-extern gint hf_xmpp_auth_content;
 extern gint hf_xmpp_challenge;
-extern gint hf_xmpp_challenge_content;
 extern gint hf_xmpp_response;
-extern gint hf_xmpp_response_content;
 extern gint hf_xmpp_success;
-extern gint hf_xmpp_success_content;
+extern gint hf_xmpp_failure;
 
 extern gint hf_xmpp_unknown;
+extern gint hf_xmpp_unknown_attr;
 
 extern gint hf_xmpp_req;
 extern gint hf_xmpp_res;
@@ -162,7 +163,8 @@ extern gint ett_xmpp_iq_query_udpsuccess;
 
 extern gint ett_xmpp_iq_error;
 extern gint ett_xmpp_iq_bind;
-extern gint ett_xmpp_iq_vcard;
+extern gint ett_xmpp_vcard;
+extern gint ett_xmpp_vcard_x_update;
 
 extern gint ett_xmpp_iq_jingle;
 extern gint ett_xmpp_iq_jingle_content;
@@ -195,6 +197,8 @@ extern gint ett_xmpp_ibb_data;
 
 extern gint ett_xmpp_delay;
 
+extern gint ett_xmpp_x_event;
+
 extern gint ett_xmpp_message;
 extern gint ett_xmpp_message_thread;
 extern gint ett_xmpp_message_body;
@@ -208,6 +212,7 @@ extern gint ett_xmpp_auth;
 extern gint ett_xmpp_challenge;
 extern gint ett_xmpp_response;
 extern gint ett_xmpp_success;
+extern gint ett_xmpp_failure;
 
 
 #endif	/* PACKET_XMPP_H */

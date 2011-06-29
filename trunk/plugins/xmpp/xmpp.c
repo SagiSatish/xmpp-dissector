@@ -390,6 +390,21 @@ element_to_string(tvbuff_t *tvb, element_t *element)
     }
 }
 
+gchar*
+attr_to_string(tvbuff_t *tvb, attr_t *attr)
+{
+    gchar *buff;
+
+    if(tvb && tvb->initialized)
+    {
+        buff = ep_alloc0(attr->length+1);
+        tvb_memcpy(tvb,buff,attr->offset,attr->length);
+        return buff;
+    } else
+    {
+        return NULL;
+    }
+}
 
 static void
 children_foreach_hide_func(proto_node *node, gpointer data)
@@ -455,12 +470,14 @@ element_tree_delete()
 
 
 void
-display_attrs(proto_tree *tree, proto_item *item, element_t *element, packet_info *pinfo, tvbuff_t *tvb, attr_info *attrs, gint n)
+display_attrs(proto_tree *tree, proto_item *item, element_t *element, packet_info *pinfo, tvbuff_t *tvb, attr_info *attrs, guint n)
 {
     attr_t *attr;
 
-    gint i;
+    guint i;
     gboolean short_list_started = FALSE;
+
+    GList *attrs_copy = g_hash_table_get_values(element->attrs);
 
     proto_item_append_text(item," [");
     for(i = 0; i < n; i++)
@@ -482,6 +499,9 @@ display_attrs(proto_tree *tree, proto_item *item, element_t *element, packet_inf
                 proto_item_append_text(item,"%s=\"%s\"",attrs[i].name, attr->value);
                 short_list_started = TRUE;
             }
+
+            attrs_copy = g_list_remove(attrs_copy, attr);
+
         } else if(attrs[i].is_required)
         {
             expert_add_info_format(pinfo, item, PI_PROTOCOL, PI_WARN,
@@ -498,6 +518,14 @@ display_attrs(proto_tree *tree, proto_item *item, element_t *element, packet_inf
         }
     }
     proto_item_append_text(item,"]");
+
+    /*displays attributes that weren't recognized*/
+    for(i = 0; i<g_list_length(attrs_copy); i++)
+    {
+        attr_t *unknown_attr = g_list_nth_data(attrs_copy,i);
+        proto_item *unknown_attr_item= proto_tree_add_string(tree, hf_xmpp_unknown_attr, tvb, unknown_attr->offset, unknown_attr->length, attr_to_string(tvb, unknown_attr));
+        expert_add_info_format(pinfo, unknown_attr_item, PI_UNDECODED, PI_NOTE,"Unknown attribute.");
+    }
 
 }
 

@@ -61,11 +61,11 @@ gint hf_xmpp_iq_query_streamhost_used = -1;
 gint hf_xmpp_iq_query_activate = -1;
 gint hf_xmpp_iq_query_udpsuccess = -1;
 
-gint hf_xmpp_iq_error = -1;
-gint hf_xmpp_iq_error_type = -1;
-gint hf_xmpp_iq_error_code = -1;
-gint hf_xmpp_iq_error_condition = -1;
-gint hf_xmpp_iq_error_text = -1;
+gint hf_xmpp_error = -1;
+gint hf_xmpp_error_type = -1;
+gint hf_xmpp_error_code = -1;
+gint hf_xmpp_error_condition = -1;
+gint hf_xmpp_error_text = -1;
 
 gint hf_xmpp_iq_bind = -1;
 gint hf_xmpp_iq_bind_jid = -1;
@@ -75,8 +75,8 @@ gint hf_xmpp_iq_services = -1;
 
 gint hf_xmpp_iq_session = -1;
 
-gint hf_xmpp_iq_vcard  = -1;
-gint hf_xmpp_iq_vcard_content = -1;
+gint hf_xmpp_vcard  = -1;
+gint hf_xmpp_vcard_x_update = -1;
 
 gint hf_xmpp_iq_jingle = -1;
 gint hf_xmpp_iq_jingle_sid = -1;
@@ -149,22 +149,22 @@ gint hf_xmpp_ibb_data = -1;
 
 gint hf_xmpp_delay = -1;
 
+gint hf_xmpp_x_event = -1;
+gint hf_xmpp_x_event_condition = -1;
+
 gint hf_xmpp_presence = -1;
 gint hf_xmpp_presence_show = -1;
 gint hf_xmpp_presence_status = -1;
 gint hf_xmpp_presence_caps = -1;
 
 gint hf_xmpp_auth = -1;
-gint hf_xmpp_auth_mechanism = -1;
-gint hf_xmpp_auth_content = -1;
 gint hf_xmpp_challenge = -1;
-gint hf_xmpp_challenge_content = -1;
 gint hf_xmpp_response = -1;
-gint hf_xmpp_response_content = -1;
 gint hf_xmpp_success = -1;
-gint hf_xmpp_success_content = -1;
+gint hf_xmpp_failure = -1;
 
 gint hf_xmpp_unknown = -1;
+gint hf_xmpp_unknown_attr = -1;
 
 gint hf_xmpp_req = -1;
 gint hf_xmpp_res = -1;
@@ -186,7 +186,8 @@ gint ett_xmpp_iq_query_udpsuccess = -1;
 
 gint ett_xmpp_iq_error = -1;
 gint ett_xmpp_iq_bind = -1;
-gint ett_xmpp_iq_vcard = -1;
+gint ett_xmpp_vcard = -1;
+gint ett_xmpp_vcard_x_update = -1;
 
 gint ett_xmpp_iq_jingle = -1;
 gint ett_xmpp_iq_jingle_content = -1;
@@ -219,6 +220,8 @@ gint ett_xmpp_ibb_data = -1;
 
 gint ett_xmpp_delay = -1;
 
+gint ett_xmpp_x_event = -1;
+
 gint ett_xmpp_message = -1;
 gint ett_xmpp_message_thread = -1;
 gint ett_xmpp_message_body = -1;
@@ -232,6 +235,7 @@ gint ett_xmpp_auth = -1;
 gint ett_xmpp_challenge = -1;
 gint ett_xmpp_response = -1;
 gint ett_xmpp_success = -1;
+gint ett_xmpp_failure = -1;
 
 
 static void
@@ -320,13 +324,16 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
             xmpp_auth(xmpp_tree, tvb, pinfo, packet);
         } else  if(strcmp(packet->name,"challenge") == 0)
         {
-            xmpp_challenge_response_success(xmpp_tree, tvb, pinfo, packet, hf_xmpp_challenge, ett_xmpp_challenge, hf_xmpp_challenge_content, "CHALLENGE");
+            xmpp_challenge_response_success(xmpp_tree, tvb, pinfo, packet, hf_xmpp_challenge, ett_xmpp_challenge, "CHALLENGE");
         } else  if(strcmp(packet->name,"response") == 0)
         {
-            xmpp_challenge_response_success(xmpp_tree, tvb, pinfo, packet, hf_xmpp_response, ett_xmpp_response, hf_xmpp_response_content, "RESPONSE");
+            xmpp_challenge_response_success(xmpp_tree, tvb, pinfo, packet, hf_xmpp_response, ett_xmpp_response, "RESPONSE");
         } else  if(strcmp(packet->name,"success") == 0)
         {
-            xmpp_challenge_response_success(xmpp_tree, tvb, pinfo, packet, hf_xmpp_success, ett_xmpp_success, hf_xmpp_success_content, "SUCCESS");
+            xmpp_challenge_response_success(xmpp_tree, tvb, pinfo, packet, hf_xmpp_success, ett_xmpp_success, "SUCCESS");
+        } else  if(strcmp(packet->name,"failure") == 0)
+        {
+            xmpp_failure(xmpp_tree, tvb, pinfo, packet);
         } else
         {
             proto_tree_show_first_child(xmpp_tree);
@@ -485,32 +492,32 @@ proto_register_xmpp(void) {
                 "iq query streamhost-used", HFILL
 
             }},
-            { &hf_xmpp_iq_error,
+            { &hf_xmpp_error,
             {
-                "ERROR", "xmpp.iq.error", FT_NONE, BASE_NONE, NULL, 0x0,
+                "ERROR", "xmpp.error", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq error", HFILL
             }},
-            { &hf_xmpp_iq_error_code,
+            { &hf_xmpp_error_code,
             {
-                "code", "xmpp.iq.error.code", FT_STRING, BASE_NONE, NULL, 0x0,
+                "code", "xmpp.error.code", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq stanza error code", HFILL
 
             }},
-            { &hf_xmpp_iq_error_type,
+            { &hf_xmpp_error_type,
             {
-                "type", "xmpp.iq.error.type", FT_STRING, BASE_NONE, NULL, 0x0,
+                "type", "xmpp.error.type", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq error type", HFILL
 
             }},
-            { &hf_xmpp_iq_error_condition,
+            { &hf_xmpp_error_condition,
             {
-                "CONDITION", "xmpp.iq.error.condition", FT_STRING, BASE_NONE, NULL, 0x0,
+                "CONDITION", "xmpp.error.condition", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq error condition", HFILL
 
             }},
-            { &hf_xmpp_iq_error_text,
+            { &hf_xmpp_error_text,
             {
-                "TEXT", "xmpp.iq.error.text", FT_STRING, BASE_NONE, NULL, 0x0,
+                "TEXT", "xmpp.error.text", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq error text", HFILL
 
             }},
@@ -542,15 +549,15 @@ proto_register_xmpp(void) {
                 "SESSION", "xmpp.iq.session", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq session", HFILL
             }},
-            { &hf_xmpp_iq_vcard,
+            { &hf_xmpp_vcard,
             {
-                "VCARD", "xmpp.iq.vcard", FT_NONE, BASE_NONE, NULL, 0x0,
-                "iq vCard", HFILL
+                "VCARD", "xmpp.vcard", FT_NONE, BASE_NONE, NULL, 0x0,
+                "vcard-temp", HFILL
             }},
-            { &hf_xmpp_iq_vcard_content,
+            { &hf_xmpp_vcard_x_update,
             {
-                "CONTENT", "xmpp.iq.vcard.content", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq vCard content", HFILL
+                "X VCARD-UPDATE", "xmpp.vcard-update", FT_NONE, BASE_NONE, NULL, 0x0,
+                "vcard-temp:x:update", HFILL
             }},
             { &hf_xmpp_iq_jingle,
             {
@@ -749,7 +756,7 @@ proto_register_xmpp(void) {
             }},
             { &hf_xmpp_iq_feature_neg,
             {
-                "FEATURE", "xmpp.feature-feg", FT_NONE, BASE_NONE, NULL, 0x0,
+                "FEATURE", "xmpp.feature-neg", FT_NONE, BASE_NONE, NULL, 0x0,
                 "http://jabber.org/protocol/feature-neg", HFILL
             }},
             { &hf_xmpp_x_data,
@@ -771,6 +778,16 @@ proto_register_xmpp(void) {
             {
                 "DELAY", "xmpp.delay", FT_NONE, BASE_NONE, NULL, 0x0,
                 "urn:xmpp:delay", HFILL
+            }},
+            { &hf_xmpp_x_event,
+            {
+                "X EVENT", "xmpp.x-event", FT_NONE, BASE_NONE, NULL, 0x0,
+                "jabber:x:event", HFILL
+            }},
+            { &hf_xmpp_x_event_condition,
+            {
+                "CONDITION", "xmpp.x-event.condition", FT_STRING, BASE_NONE, NULL, 0x0,
+                "jabber:x:event condition", HFILL
             }},
             { &hf_xmpp_presence,
             {
@@ -827,50 +844,35 @@ proto_register_xmpp(void) {
                 "AUTH", "xmpp.auth", FT_NONE, BASE_NONE, NULL, 0x0,
                 "auth", HFILL
             }},
-            { &hf_xmpp_auth_mechanism,
-            {
-                "mechanism", "xmpp.auth.mechanism", FT_STRING, BASE_NONE, NULL, 0x0,
-                "auth mechanism", HFILL
-            }},
-            { &hf_xmpp_auth_content,
-            {
-                "CONTENT", "xmpp.auth.content", FT_STRING, BASE_NONE, NULL, 0x0,
-                "auth content", HFILL
-            }},
             { &hf_xmpp_challenge,
             {
                 "CHALLENGE", "xmpp.challenge", FT_NONE, BASE_NONE, NULL, 0x0,
                 "challenge", HFILL
-            }},
-            { &hf_xmpp_challenge_content,
-            {
-                "CONTENT", "xmpp.challenge.content", FT_STRING, BASE_NONE, NULL, 0x0,
-                "challenge content", HFILL
             }},
             { &hf_xmpp_response,
             {
                 "RESPONSE", "xmpp.response", FT_NONE, BASE_NONE, NULL, 0x0,
                 "response", HFILL
             }},
-            { &hf_xmpp_response_content,
-            {
-                "CONTENT", "xmpp.response.content", FT_STRING, BASE_NONE, NULL, 0x0,
-                "response content", HFILL
-            }},
             { &hf_xmpp_success,
             {
                 "SUCCESS", "xmpp.success", FT_NONE, BASE_NONE, NULL, 0x0,
                 "success", HFILL
             }},
-            { &hf_xmpp_success_content,
+            { &hf_xmpp_failure,
             {
-                "CONTENT", "xmpp.success.content", FT_STRING, BASE_NONE, NULL, 0x0,
-                "success content", HFILL
+                "FAILURE", "xmpp.failure", FT_NONE, BASE_NONE, NULL, 0x0,
+                "failure", HFILL
             }},
             { &hf_xmpp_unknown,
             {
                 "UNKNOWN", "xmpp.unknown", FT_STRING, BASE_NONE, NULL, 0x0,
                 "unknown", HFILL
+            }},
+            { &hf_xmpp_unknown_attr,
+            {
+                "UNKNOWN ATTR", "xmpp.unknown_attr", FT_STRING, BASE_NONE, NULL, 0x0,
+                "unknown attribute", HFILL
             }},
             { &hf_xmpp_ibb_open,
             {
@@ -931,7 +933,8 @@ proto_register_xmpp(void) {
         &ett_xmpp_iq_query_udpsuccess,
         &ett_xmpp_iq_error,
         &ett_xmpp_iq_bind,
-        &ett_xmpp_iq_vcard,
+        &ett_xmpp_vcard,
+        &ett_xmpp_vcard_x_update,
         &ett_xmpp_iq_jingle,
         &ett_xmpp_iq_jingle_content,
         &ett_xmpp_iq_jingle_content_description,
@@ -958,6 +961,7 @@ proto_register_xmpp(void) {
         &ett_xmpp_ibb_close,
         &ett_xmpp_ibb_data,
         &ett_xmpp_delay,
+        &ett_xmpp_x_event,
         &ett_xmpp_message,
         &ett_xmpp_message_thread,
         &ett_xmpp_message_subject,
@@ -969,6 +973,7 @@ proto_register_xmpp(void) {
         &ett_xmpp_challenge,
         &ett_xmpp_response,
         &ett_xmpp_success,
+        &ett_xmpp_failure,
     };
 
     proto_xmpp = proto_register_protocol(
