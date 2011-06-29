@@ -66,7 +66,9 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
         {"xml:lang", -1, FALSE, FALSE, NULL, NULL}
     };
 
-    element_t *query_element, *error_element, *bind_element, *services_element,
+    element_t *ditem_query, *roster_query, *dinfo_query, *bytestreams_query;
+
+    element_t *error_element, *bind_element, *services_element,
         *session_element, *vcard_element, *jingle_element, *ibb_open_element,
         *ibb_close_element, *ibb_data_element, *si;
 
@@ -90,14 +92,32 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
     col_clear(pinfo->cinfo, COL_INFO);
     col_add_fstr(pinfo->cinfo, COL_INFO, "IQ(%s) ", attr_type?attr_type->value:"");
 
-    if((query_element = steal_element_by_name(packet,"query")) != NULL)
+    if((ditem_query = steal_element_by_name_and_attr(packet,"query","xmlns","http://jabber.org/protocol/disco#items")) != NULL)
     {
+        col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(http://jabber.org/protocol/disco#items) ");
 
-        attr_t *xmlns = g_hash_table_lookup(query_element->attrs, "xmlns");
+        xmpp_disco_items_query(xmpp_iq_tree, tvb, pinfo, ditem_query);
+    }
 
-        col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(%s) ",xmlns?xmlns->value:"");
+    if((roster_query = steal_element_by_name_and_attr(packet,"query","xmlns","jabber:iq:roster")) != NULL)
+    {
+        col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(jabber:iq:roster) ");
 
-        xmpp_iq_query(xmpp_iq_tree,tvb,pinfo,query_element);
+        xmpp_roster_query(xmpp_iq_tree, tvb, pinfo, roster_query);
+    }
+
+    if((dinfo_query = steal_element_by_name_and_attr(packet,"query","xmlns","http://jabber.org/protocol/disco#info")) != NULL)
+    {
+        col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(http://jabber.org/protocol/disco#info) ");
+
+        xmpp_disco_info_query(xmpp_iq_tree, tvb, pinfo, dinfo_query);
+    }
+
+     if((bytestreams_query = steal_element_by_name_and_attr(packet,"query","xmlns","http://jabber.org/protocol/bytestreams")) != NULL)
+    {
+        col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(http://jabber.org/protocol/bytestreams) ");
+
+        xmpp_bytestreams_query(xmpp_iq_tree, tvb, pinfo, dinfo_query);
     }
 
     if((bind_element = steal_element_by_name(packet,"bind")) != NULL)
