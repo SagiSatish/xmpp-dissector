@@ -105,7 +105,7 @@ xmpp_iq_jingle_content(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, elem
         {"creator", hf_xmpp_iq_jingle_content_creator, TRUE, FALSE, val_enum_list, creator_enums_array},
         {"name", hf_xmpp_iq_jingle_content_name, TRUE, TRUE, NULL, NULL},
         {"disposition", hf_xmpp_iq_jingle_content_disposition, FALSE, FALSE, NULL, NULL},
-        {"sensers", hf_xmpp_iq_jingle_content_senders, FALSE, FALSE, NULL, NULL}
+        {"senders", hf_xmpp_iq_jingle_content_senders, FALSE, FALSE, NULL, NULL}
     };
 
     element_t *description, *transport;
@@ -169,6 +169,7 @@ xmpp_iq_jingle_cont_desc_payload(proto_tree* tree, tvbuff_t* tvb, packet_info* p
     proto_tree *payload_tree;
 
     attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, FALSE, FALSE, NULL, NULL},
         {"id", hf_xmpp_iq_jingle_cont_desc_payload_id, TRUE, TRUE, NULL, NULL},
         {"channels", hf_xmpp_iq_jingle_cont_desc_payload_channels, FALSE, FALSE, NULL, NULL},
         {"clockrate", hf_xmpp_iq_jingle_cont_desc_payload_clockrate, FALSE, FALSE, NULL, NULL},
@@ -202,6 +203,7 @@ xmpp_iq_jingle_cont_desc_payload_param(proto_tree* tree, tvbuff_t* tvb, packet_i
     attr_t *name, *value;
 
     attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, FALSE, FALSE, NULL, NULL},
         {"name", hf_xmpp_iq_jingle_cont_desc_payload_param_name, TRUE, TRUE, NULL, NULL},
         {"value", hf_xmpp_iq_jingle_cont_desc_payload_param_value, TRUE, TRUE, NULL, NULL}
     };
@@ -394,6 +396,7 @@ xmpp_iq_jingle_cont_trans_candidate(proto_tree* tree, tvbuff_t* tvb, packet_info
     array_t *type_enums_array = ep_init_array_t(type_enums,array_length(type_enums));
 
     attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, FALSE, FALSE, NULL, NULL},
         {"component", -1, TRUE, FALSE, NULL, NULL},
         {"foundation", -1, TRUE, FALSE, NULL, NULL},
         {"generation", -1, TRUE, FALSE, NULL, NULL},

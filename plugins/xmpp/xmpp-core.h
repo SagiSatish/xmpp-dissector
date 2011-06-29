@@ -6,8 +6,8 @@ extern void xmpp_presence(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, e
 extern void xmpp_message(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
 extern void xmpp_auth(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
 extern void xmpp_challenge_response_success(proto_tree *tree, tvbuff_t *tvb,
-    packet_info *pinfo, element_t *packet, gint hf, gint ett,
-    gint hf_content, const char *col_info);
+    packet_info *pinfo, element_t *packet, gint hf, gint ett, const char *col_info);
+extern void xmpp_failure(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
 
 #endif	/* XMPP_CORE_H */
 

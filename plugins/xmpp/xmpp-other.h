@@ -4,7 +4,7 @@
 extern void xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 extern void xmpp_iq_services(proto_tree *tree, tvbuff_t *tvb, element_t *element);
 extern void xmpp_iq_session(proto_tree *tree, tvbuff_t *tvb, element_t *element);
-extern void xmpp_iq_vcard(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+extern void xmpp_vcard(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
 extern void xmpp_iq_query(proto_tree *tree,  tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
@@ -20,6 +20,10 @@ extern void xmpp_ibb_data(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, e
 extern void xmpp_delay(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
 extern void xmpp_presence_caps(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+
+extern void xmpp_vcard_x_update(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+
+extern void xmpp_x_event(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
 #endif	/* XMPP_OTHER_H */
 
