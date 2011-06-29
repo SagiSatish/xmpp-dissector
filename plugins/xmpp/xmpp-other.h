@@ -6,7 +6,10 @@ extern void xmpp_iq_services(proto_tree *tree, tvbuff_t *tvb, element_t *element
 extern void xmpp_iq_session(proto_tree *tree, tvbuff_t *tvb, element_t *element);
 extern void xmpp_vcard(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
-extern void xmpp_iq_query(proto_tree *tree,  tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+extern void xmpp_disco_items_query(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t *element);
+extern void xmpp_roster_query(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t *element);
+extern void xmpp_disco_info_query(proto_tree *tree,  tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+extern void xmpp_bytestreams_query(proto_tree *tree,  tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
 extern void xmpp_si(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 
