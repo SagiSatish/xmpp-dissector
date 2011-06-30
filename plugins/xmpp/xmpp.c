@@ -470,13 +470,12 @@ element_tree_delete()
 
 
 void
-display_attrs(proto_tree *tree, proto_item *item, element_t *element, packet_info *pinfo, tvbuff_t *tvb, attr_info *attrs, guint n)
+display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t *tvb, attr_info *attrs, guint n)
 {
+    proto_item *item = proto_tree_get_parent(tree);
     attr_t *attr;
-
     guint i;
     gboolean short_list_started = FALSE;
-
     GList *attrs_copy = g_hash_table_get_values(element->attrs);
 
     proto_item_append_text(item," [");

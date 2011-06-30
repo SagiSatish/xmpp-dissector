@@ -50,6 +50,7 @@ static void xmpp_si_file(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, el
 static void xmpp_si_file_range(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 void xmpp_feature_neg(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 
+void xmpp_x_data(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_x_data_field(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_x_data_field_option(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_x_data_field_value(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
@@ -62,6 +63,14 @@ void xmpp_delay(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *
 void xmpp_presence_caps(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
 void xmpp_vcard_x_update(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+
+void xmpp_muc_x(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+static void xmpp_muc_history(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+
+void xmpp_muc_user_x(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+static void xmpp_muc_user_item(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+static void xmpp_muc_user_status(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+static void xmpp_muc_user_invite(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
 void
 xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
@@ -101,7 +110,7 @@ xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
         g_hash_table_insert(element->attrs, "jid", fake_attr_jid);
     }
 
-    display_attrs(bind_tree, bind_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(bind_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(bind_tree, tvb, pinfo, element);
 }
@@ -146,7 +155,7 @@ xmpp_vcard(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *eleme
         attr_t *fake_cdata = ep_init_attr_t(element_to_string(tvb, cdata), cdata->offset, cdata->length);
         g_hash_table_insert(element->attrs,"value", fake_cdata);
     }
-    display_attrs(vcard_tree, vcard_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(vcard_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
 }
 
@@ -172,7 +181,7 @@ xmpp_vcard_x_update(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element
         g_hash_table_insert(element->attrs, "photo", fake_photo);
     }
 
-    display_attrs(x_tree, x_item, element,pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(x_tree, element,pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(x_tree, tvb, pinfo, element);
 }
@@ -193,7 +202,7 @@ xmpp_disco_items_query(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, elem
     query_item = proto_tree_add_item(tree, hf_xmpp_iq_query, tvb, element->offset, element->length, FALSE);
     query_tree = proto_item_add_subtree(query_item, ett_xmpp_iq_query);
 
-    display_attrs(query_tree, query_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(query_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     while((item = steal_element_by_name(element, "item")) != NULL)
     {
@@ -218,7 +227,7 @@ xmpp_disco_items_item(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, eleme
     item_item = proto_tree_add_item(tree, hf_xmpp_iq_query_item, tvb, element->offset, element->length, FALSE);
     item_tree = proto_item_add_subtree(item_item, ett_xmpp_iq_query_item);
 
-    display_attrs(item_tree, item_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(item_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(item_tree, tvb, pinfo, element);
 }
@@ -239,7 +248,7 @@ xmpp_roster_query(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t
     query_item = proto_tree_add_item(tree, hf_xmpp_iq_query, tvb, element->offset, element->length, FALSE);
     query_tree = proto_item_add_subtree(query_item, ett_xmpp_iq_query);
 
-    display_attrs(query_tree, query_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(query_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     while ((item = steal_element_by_name(element, "item")) != NULL) {
         xmpp_roster_item(query_tree, tvb, pinfo, item);
@@ -281,7 +290,7 @@ xmpp_roster_item(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t 
     item_item = proto_tree_add_item(tree, hf_xmpp_iq_query_item, tvb, element->offset, element->length, FALSE);
     item_tree = proto_item_add_subtree(item_item, ett_xmpp_iq_query_item);
 
-    display_attrs(item_tree, item_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(item_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(item_tree, tvb, pinfo, element);
 }
@@ -302,7 +311,7 @@ xmpp_disco_info_query(proto_tree *tree,  tvbuff_t *tvb, packet_info *pinfo, elem
     query_item = proto_tree_add_item(tree, hf_xmpp_iq_query, tvb, element->offset, element->length, FALSE);
     query_tree = proto_item_add_subtree(query_item, ett_xmpp_iq_query);
 
-    display_attrs(query_tree, query_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(query_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
 
     while((identity = steal_element_by_name(element, "identity")) != NULL)
@@ -338,7 +347,7 @@ xmpp_disco_info_identity(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, el
     identity_item = proto_tree_add_item(tree, hf_xmpp_iq_query_identity, tvb, element->offset, element->length, FALSE);
     identity_tree = proto_item_add_subtree(identity_item, ett_xmpp_iq_query_identity);
 
-    display_attrs(identity_tree, identity_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(identity_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(identity_tree, tvb, pinfo, element);
 
@@ -377,7 +386,7 @@ xmpp_bytestreams_query(proto_tree *tree,  tvbuff_t *tvb, packet_info *pinfo, ele
     query_item = proto_tree_add_item(tree, hf_xmpp_iq_query, tvb, element->offset, element->length, FALSE);
     query_tree = proto_item_add_subtree(query_item, ett_xmpp_iq_query);
 
-    display_attrs(query_tree, query_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(query_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
 
     while((streamhost = steal_element_by_name(element, "streamhost")) != NULL)
@@ -418,7 +427,7 @@ xmpp_bytestreams_streamhost(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo,
     sh_item = proto_tree_add_item(tree, hf_xmpp_iq_query_streamhost, tvb, element->offset, element->length, FALSE);
     sh_tree = proto_item_add_subtree(sh_item, ett_xmpp_iq_query_streamhost);
 
-    display_attrs(sh_tree, sh_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(sh_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(sh_tree, tvb, pinfo, element);
 }
@@ -436,7 +445,7 @@ xmpp_bytestreams_streamhost_used(proto_tree *tree, tvbuff_t *tvb, packet_info *p
     shu_item = proto_tree_add_item(tree, hf_xmpp_iq_query_streamhost_used, tvb, element->offset, element->length, FALSE);
     shu_tree = proto_item_add_subtree(shu_item, ett_xmpp_iq_query_streamhost_used);
 
-    display_attrs(shu_tree, shu_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(shu_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(shu_tree, tvb, pinfo, element);
 }
@@ -461,7 +470,7 @@ xmpp_bytestreams_udpsuccess(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo,
     udps_item = proto_tree_add_item(tree, hf_xmpp_iq_query_udpsuccess, tvb, element->offset, element->length, FALSE);
     udps_tree =proto_item_add_subtree(udps_item, ett_xmpp_iq_query_udpsuccess);
 
-    display_attrs(udps_tree, udps_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(udps_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(udps_tree, tvb, pinfo, element);
 }
@@ -487,7 +496,7 @@ xmpp_si(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
     si_item = proto_tree_add_item(tree, hf_xmpp_iq_si, tvb, element->offset, element->length, FALSE);
     si_tree = proto_item_add_subtree(si_item, ett_xmpp_iq_si);
 
-    display_attrs(si_tree, si_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(si_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     while((file = steal_element_by_name(element, "file"))!=NULL)
     {
@@ -535,7 +544,7 @@ xmpp_si_file(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* ele
         xmpp_si_file_range(file_tree, tvb, pinfo, range);
     }
 
-    display_attrs(file_tree, file_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(file_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(file_tree, tvb, pinfo, element);
 }
@@ -554,7 +563,7 @@ xmpp_si_file_range(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_
     range_item = proto_tree_add_text(tree, tvb, element->offset, element->length, "RANGE: ");
     range_tree = proto_item_add_subtree(range_item, ett_xmpp_iq_si_file_range);
 
-    display_attrs(range_tree, range_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(range_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(range_tree, tvb, pinfo, element);
 
@@ -576,7 +585,7 @@ xmpp_feature_neg(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t*
     feature_item = proto_tree_add_item(tree, hf_xmpp_iq_feature_neg, tvb, element->offset, element->length, FALSE);
     feature_tree = proto_item_add_subtree(feature_item, ett_xmpp_iq_feature_neg);
 
-    display_attrs(feature_tree, feature_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(feature_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     while((x_data = steal_element_by_name_and_attr(element, "x", "xmlns", "jabber:x:data"))!=NULL)
     {
@@ -599,15 +608,22 @@ xmpp_x_data(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* elem
 
     attr_info attrs_info[] = {
         {"xmlns", hf_xmpp_xmlns, TRUE, FALSE, NULL, NULL},
-        {"type", -1, TRUE, TRUE, val_enum_list, type_array}
+        {"type", -1, TRUE, TRUE, val_enum_list, type_array},
+        {"title", -1, FALSE, TRUE, NULL, NULL}
     };
 
-    element_t *field; /*TODO instructions, title, reported, item*/
+    element_t *field, *title; /*TODO instructions, title, reported, item*/
 
     x_item = proto_tree_add_item(tree, hf_xmpp_x_data, tvb, element->offset, element->length, FALSE);
     x_tree = proto_item_add_subtree(x_item, ett_xmpp_x_data);
 
-    display_attrs(x_tree, x_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    if((title = steal_element_by_name(element, "title"))!=NULL)
+    {
+        attr_t *fake_title = ep_init_attr_t(title->data?title->data->value:"", title->offset, title->length);
+        g_hash_table_insert(element->attrs, "title", fake_title);
+    }
+
+    display_attrs(x_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     while((field = steal_element_by_name(element, "field"))!=NULL)
     {
@@ -641,7 +657,7 @@ xmpp_x_data_field(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t
     field_item = proto_tree_add_item(tree, hf_xmpp_x_data_field, tvb, element->offset, element->length, FALSE);
     field_tree = proto_item_add_subtree(field_item, ett_xmpp_x_data_field);
 
-    display_attrs(field_tree, field_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(field_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     while((option = steal_element_by_name(element, "option"))!=NULL)
     {
@@ -679,7 +695,7 @@ xmpp_x_data_field_option(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, el
         g_hash_table_insert(element->attrs, "value", fake_value);
     }
 
-    display_attrs(option_tree, option_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(option_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(option_tree, tvb, pinfo, element);
 }
@@ -705,7 +721,7 @@ xmpp_x_data_field_value(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, ele
    g_hash_table_insert(element->attrs, "value", fake_value);
 
 
-    display_attrs(value_tree, value_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(value_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(value_tree, tvb, pinfo, element);
 }
@@ -731,7 +747,7 @@ xmpp_ibb_open(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *el
     open_item = proto_tree_add_item(tree, hf_xmpp_ibb_open, tvb, element->offset, element->length, FALSE);
     open_tree = proto_item_add_subtree(open_item, ett_xmpp_ibb_open);
 
-    display_attrs(open_tree, open_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(open_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
     xmpp_unknown(open_tree, tvb, pinfo, element);
 }
 
@@ -749,7 +765,7 @@ xmpp_ibb_close(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *e
     close_item = proto_tree_add_item(tree, hf_xmpp_ibb_close, tvb, element->offset, element->length, FALSE);
     close_tree = proto_item_add_subtree(close_item, ett_xmpp_ibb_close);
 
-    display_attrs(close_tree, close_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(close_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
     xmpp_unknown(close_tree, tvb, pinfo, element);
 }
 
@@ -775,7 +791,7 @@ xmpp_ibb_data(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *el
         g_hash_table_insert(element->attrs, "value", fake_data);
     }
 
-    display_attrs(data_tree, data_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(data_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
     xmpp_unknown(data_tree, tvb, pinfo, element);
 }
 
@@ -803,7 +819,7 @@ xmpp_delay(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *eleme
         g_hash_table_insert(element->attrs, "value", fake_value);
     }
 
-    display_attrs(delay_tree, delay_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(delay_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(delay_tree, tvb, pinfo, element);
 }
@@ -826,7 +842,7 @@ xmpp_presence_caps(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_
     caps_item = proto_tree_add_item(tree, hf_xmpp_presence_caps, tvb, element->offset, element->length, FALSE);
     caps_tree = proto_item_add_subtree(caps_item, ett_xmpp_presence_caps);
 
-    display_attrs(caps_tree, caps_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(caps_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(caps_tree, tvb, pinfo, element);
 }
@@ -873,7 +889,242 @@ xmpp_x_event(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
     g_hash_table_insert(element->attrs, "condition", fake_cond);
     
 
-    display_attrs(x_tree, x_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(x_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(x_tree, tvb, pinfo, element);
+}
+
+/*Multi-User Chat http://jabber.org/protocol/muc*/
+void
+xmpp_muc_x(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+{
+    proto_item *x_item;
+    proto_tree *x_tree;
+
+    attr_info attrs_info [] ={
+        {"xmlns", hf_xmpp_xmlns, TRUE, FALSE, NULL, NULL},
+        {"password", -1, FALSE, TRUE, NULL, NULL}
+    };
+
+    element_t *pass, *hist;
+
+    x_item = proto_tree_add_item(tree, hf_xmpp_muc_x, tvb, element->offset, element->length, FALSE);
+    x_tree = proto_item_add_subtree(x_item, ett_xmpp_muc_x);
+
+    if((pass = steal_element_by_name(element, "password"))!=NULL)
+    {
+        attr_t *fake_pass = ep_init_attr_t(pass->data?pass->data->value:"",pass->offset, pass->length);
+        g_hash_table_insert(element->attrs, "password", fake_pass);
+    }
+
+    display_attrs(x_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+
+    if((hist = steal_element_by_name(element, "history"))!=NULL)
+    {
+        xmpp_muc_history(x_tree, tvb, pinfo, hist);
+    }
+
+    xmpp_unknown(x_tree, tvb, pinfo, element);
+}
+
+static void
+xmpp_muc_history(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+{
+    proto_item *hist_item;
+    proto_tree *hist_tree;
+
+    attr_info attrs_info[] = {
+        {"maxchars", -1, FALSE, TRUE, NULL, NULL},
+        {"maxstanzas", -1, FALSE, TRUE, NULL, NULL},
+        {"seconds", -1, FALSE, TRUE, NULL, NULL},
+        {"since", -1, FALSE, TRUE, NULL, NULL}
+    };
+
+    hist_item = proto_tree_add_text(tree, tvb, element->offset, element->length, "HISTORY: ");
+    hist_tree = proto_item_add_subtree(hist_item, ett_xmpp_muc_hist);
+
+    display_attrs(hist_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+
+    xmpp_unknown(hist_tree, tvb, pinfo, element);
+}
+
+/*Multi-User Chat http://jabber.org/protocol/muc#user*/
+void
+xmpp_muc_user_x(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+{
+    proto_item *x_item;
+    proto_tree *x_tree;
+
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, FALSE, NULL, NULL},
+        {"password", -1, FALSE, TRUE, NULL, NULL}
+    };
+
+    element_t *item, *status, *invite, *password;
+    /*TODO decline destroy*/
+
+    x_item = proto_tree_add_item(tree, hf_xmpp_muc_user_x, tvb, element->offset, element->length, FALSE);
+    x_tree = proto_item_add_subtree(x_item, ett_xmpp_muc_user_x);
+
+    if((password = steal_element_by_name(element, "password"))!=NULL)
+    {
+        attr_t *fake_pass = ep_init_attr_t(password->data?password->data->value:"",password->offset, password->length);
+        g_hash_table_insert(element->attrs, "password", fake_pass);
+    }
+
+    display_attrs(x_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+
+    while((item = steal_element_by_name(element, "item"))!=NULL)
+    {
+        xmpp_muc_user_item(x_tree, tvb, pinfo, item);
+    }
+
+    while((status = steal_element_by_name(element, "status"))!=NULL)
+    {
+        xmpp_muc_user_status(x_tree, tvb, pinfo, status);
+    }
+
+    while((invite = steal_element_by_name(element, "invite"))!=NULL)
+    {
+        xmpp_muc_user_invite(x_tree, tvb, pinfo, invite);
+    }
+
+    xmpp_unknown(x_tree, tvb, pinfo, element);
+}
+
+static void
+xmpp_muc_user_item(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+{
+    proto_item *item_item;
+    proto_tree *item_tree;
+
+    const gchar *affiliation_enums[] = {"admin", "member", "none", "outcast", "owner"};
+    array_t  *affil_array = ep_init_array_t(affiliation_enums, array_length(affiliation_enums));
+
+    const gchar *role_enums[] = {"none", "moderator", "participant", "visitor"};
+    array_t *role_array = ep_init_array_t(role_enums, array_length(role_enums));
+
+    attr_info attrs_info [] ={
+        {"affiliation", -1, FALSE, TRUE, val_enum_list, affil_array},
+        {"jid", -1, FALSE, TRUE, NULL, NULL},
+        {"nick", -1, FALSE, TRUE, NULL, NULL},
+        {"role", -1, FALSE, TRUE, val_enum_list, role_array},
+        {"reason", -1, FALSE, TRUE, NULL, NULL},
+        {"actor_jid", -1, FALSE, TRUE, NULL, NULL}
+    };
+
+    element_t *reason, *actor;
+    /*TODO continue - it's not clear to me, in schema it's marked as empty, but in examples it has CDATA*/
+
+    item_item = proto_tree_add_item(tree, hf_xmpp_muc_user_item, tvb, element->offset, element->length, FALSE);
+    item_tree = proto_item_add_subtree(item_item, ett_xmpp_muc_user_item);
+
+    if((reason = steal_element_by_name(element, "reason"))!=NULL)
+    {
+        attr_t *fake_reason = ep_init_attr_t(reason->data?reason->data->value:"",reason->offset, reason->length);
+        g_hash_table_insert(element->attrs,"reason",fake_reason);
+    }
+
+    if((actor = steal_element_by_name(element, "actor"))!=NULL)
+    {
+        attr_t *jid = g_hash_table_lookup(actor->attrs, "jid");
+        attr_t *fake_actor_jid = ep_init_attr_t(jid?jid->value:"",actor->offset, actor->length);
+        g_hash_table_insert(element->attrs, "actor_jid", fake_actor_jid);
+    }
+
+    display_attrs(item_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+
+    xmpp_unknown(item_tree, tvb, pinfo, element);
+}
+
+static void
+xmpp_muc_user_status(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+{
+    attr_t *code = g_hash_table_lookup(element->attrs, "code");
+    proto_tree_add_text(tree, tvb, element->offset, element->length, "STATUS [code=\"%s\"]",code?code->value:"");
+
+    xmpp_unknown(tree, tvb, pinfo, element);
+}
+
+static void
+xmpp_muc_user_invite(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+{
+    proto_item *invite_item;
+    proto_tree *invite_tree;
+
+    attr_info attrs_info[] = {
+        {"from", -1, FALSE, TRUE, NULL, NULL},
+        {"to", -1, FALSE, TRUE, NULL, NULL},
+        {"reason", -1, FALSE, TRUE, NULL, NULL}
+    };
+
+    element_t *reason;
+
+    invite_item = proto_tree_add_item(tree, hf_xmpp_muc_user_invite, tvb, element->offset, element->length, FALSE);
+    invite_tree = proto_item_add_subtree(invite_item, ett_xmpp_muc_user_invite);
+
+    if((reason = steal_element_by_name(element, "reason"))!=NULL)
+    {
+        attr_t *fake_reason = ep_init_attr_t(reason->data?reason->data->value:"",reason->offset, reason->length);
+        g_hash_table_insert(element->attrs, "reason", fake_reason);
+    }
+
+    display_attrs(invite_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+
+    xmpp_unknown(invite_tree, tvb, pinfo, element);
+}
+
+/*Multi-User Chat http://jabber.org/protocol/muc#owner*/
+void
+xmpp_muc_owner_query(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+{
+    proto_item *query_item;
+    proto_tree *query_tree;
+
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL}
+    };
+
+    element_t *x_data;
+    /*TODO destroy*/
+
+    query_item = proto_tree_add_item(tree, hf_xmpp_iq_query, tvb, element->offset, element->length, FALSE);
+    query_tree = proto_item_add_subtree(query_item, ett_xmpp_iq_query);
+
+    display_attrs(query_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+
+    if((x_data = steal_element_by_name_and_attr(element, "x", "xmlns", "jabber:x:data"))!=NULL)
+    {
+        xmpp_x_data(query_tree, tvb, pinfo, x_data);
+    }
+
+    xmpp_unknown(query_tree, tvb, pinfo, element);
+
+}
+
+/*Multi-User Chat http://jabber.org/protocol/muc#admin*/
+void
+xmpp_muc_admin_query(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+{
+    proto_item *query_item;
+    proto_tree *query_tree;
+
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL}
+    };
+
+    element_t *item;
+
+    query_item = proto_tree_add_item(tree, hf_xmpp_iq_query, tvb, element->offset, element->length, FALSE);
+    query_tree = proto_item_add_subtree(query_item, ett_xmpp_iq_query);
+
+    display_attrs(query_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+
+    while((item = steal_element_by_name(element, "item"))!=NULL)
+    {
+        //from muc#user, because it is the same except continue element
+        xmpp_muc_user_item(query_tree, tvb, pinfo, item);
+    }
+
+    xmpp_unknown(query_tree, tvb, pinfo, element);
 }

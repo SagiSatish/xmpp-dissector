@@ -90,7 +90,7 @@ extern void proto_tree_hide_first_child(proto_tree *tree);
 extern void proto_tree_show_first_child(proto_tree *tree);
 extern gchar* proto_item_get_text(proto_item *item);
 
-extern void display_attrs(proto_tree *tree, proto_item *item, element_t *element, packet_info *pinfo, tvbuff_t *tvb, attr_info *attrs, guint n);
+extern void display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t *tvb, attr_info *attrs, guint n);
 
 extern void val_enum_list(packet_info *pinfo, proto_item *item, gchar *name, gchar *value, gpointer data);
 

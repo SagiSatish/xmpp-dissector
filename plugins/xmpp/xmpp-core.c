@@ -66,7 +66,8 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
         {"xml:lang", -1, FALSE, FALSE, NULL, NULL}
     };
 
-    element_t *ditem_query, *roster_query, *dinfo_query, *bytestreams_query;
+    element_t *ditem_query, *roster_query, *dinfo_query, *bytestreams_query,
+            *muc_owner_query, *muc_admin_query;
 
     element_t *error_element, *bind_element, *services_element,
         *session_element, *vcard_element, *jingle_element, *ibb_open_element,
@@ -85,8 +86,7 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
     xmpp_iq_item = proto_tree_add_item(tree, hf_xmpp_iq, tvb, packet->offset, packet->length, TRUE);
     xmpp_iq_tree = proto_item_add_subtree(xmpp_iq_item,ett_xmpp_iq);
 
-    display_attrs(xmpp_iq_tree, xmpp_iq_item, packet, pinfo, tvb, attrs_info,  array_length(attrs_info));
-
+    display_attrs(xmpp_iq_tree, packet, pinfo, tvb, attrs_info,  array_length(attrs_info));
 
 
     col_clear(pinfo->cinfo, COL_INFO);
@@ -94,7 +94,7 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
 
     if((ditem_query = steal_element_by_name_and_attr(packet,"query","xmlns","http://jabber.org/protocol/disco#items")) != NULL)
     {
-        col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(http://jabber.org/protocol/disco#items) ");
+        col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(disco#items) ");
 
         xmpp_disco_items_query(xmpp_iq_tree, tvb, pinfo, ditem_query);
     }
@@ -108,16 +108,30 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
 
     if((dinfo_query = steal_element_by_name_and_attr(packet,"query","xmlns","http://jabber.org/protocol/disco#info")) != NULL)
     {
-        col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(http://jabber.org/protocol/disco#info) ");
+        col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(disco#info) ");
 
         xmpp_disco_info_query(xmpp_iq_tree, tvb, pinfo, dinfo_query);
     }
 
-     if((bytestreams_query = steal_element_by_name_and_attr(packet,"query","xmlns","http://jabber.org/protocol/bytestreams")) != NULL)
+    if((bytestreams_query = steal_element_by_name_and_attr(packet,"query","xmlns","http://jabber.org/protocol/bytestreams")) != NULL)
     {
-        col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(http://jabber.org/protocol/bytestreams) ");
+        col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(bytestreams) ");
 
         xmpp_bytestreams_query(xmpp_iq_tree, tvb, pinfo, bytestreams_query);
+    }
+
+    if((muc_owner_query = steal_element_by_name_and_attr(packet,"query","xmlns","http://jabber.org/protocol/muc#owner")) != NULL)
+    {
+        col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(muc#owner) ");
+
+        xmpp_muc_owner_query(xmpp_iq_tree, tvb, pinfo, muc_owner_query);
+    }
+
+    if((muc_admin_query = steal_element_by_name_and_attr(packet,"query","xmlns","http://jabber.org/protocol/muc#admin")) != NULL)
+    {
+        col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(muc#admin) ");
+
+        xmpp_muc_admin_query(xmpp_iq_tree, tvb, pinfo, muc_admin_query);
     }
 
     if((bind_element = steal_element_by_name(packet,"bind")) != NULL)
@@ -153,7 +167,8 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
 
     if((jingle_element = steal_element_by_name(packet,"jingle")) != NULL)
     {
-        col_append_fstr(pinfo->cinfo, COL_INFO, "JINGLE ");
+        attr_t *action = g_hash_table_lookup(jingle_element->attrs,"action");
+        col_append_fstr(pinfo->cinfo, COL_INFO, "JINGLE(%s) ", action?action->value:"");
 
         xmpp_iq_jingle(xmpp_iq_tree,tvb,pinfo, jingle_element);
     }
@@ -197,6 +212,19 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
 
     xmpp_unknown(xmpp_iq_tree, tvb, pinfo, packet);
 
+    /*appends to COL_INFO information about src or dst*/
+    if (pinfo->match_uint == pinfo->destport)
+    {
+        attr_t *to = g_hash_table_lookup(packet->attrs, "to");
+        if(to)
+            col_append_fstr(pinfo->cinfo, COL_INFO, "> %s ",to->value);
+    } else
+    {
+        attr_t *from = g_hash_table_lookup(packet->attrs, "from");
+        if(from)
+            col_append_fstr(pinfo->cinfo, COL_INFO, "< %s ",from->value);
+    }
+
     /*displays generated info such as req/resp tracking, jingle sid
      * in each packet related to specified jingle session and IBB sid in packet related to it*/
     if(xmpp_info && attr_id)
@@ -225,17 +253,20 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
                 if (reqresp_trans->resp_frame) {
                     proto_item *it = proto_tree_add_uint(tree, hf_xmpp_response_in, tvb, 0, 0, reqresp_trans->resp_frame);
                     PROTO_ITEM_SET_GENERATED(it);
+                } else
+                {
+                    expert_add_info_format(pinfo, xmpp_iq_item , PI_PROTOCOL, PI_CHAT, "Packet without response");
                 }
 
             } else {
                 if (reqresp_trans->req_frame) {
                     proto_item *it = proto_tree_add_uint(tree, hf_xmpp_response_to, tvb, 0, 0, reqresp_trans->req_frame);
                     PROTO_ITEM_SET_GENERATED(it);
+                } else
+                {
+                    expert_add_info_format(pinfo, xmpp_iq_item , PI_PROTOCOL, PI_CHAT, "Packet without response");
                 }
             }
-        } else /*packet without response*/
-        {
-            expert_add_info_format(pinfo, xmpp_iq_item , PI_PROTOCOL, PI_CHAT, "Packet without response");
         }
     }
 
@@ -276,7 +307,7 @@ xmpp_error(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *eleme
     }
 
 
-    display_attrs(error_tree, error_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(error_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     while((text_element = steal_element_by_name(element, "text")) != NULL)
     {
@@ -320,7 +351,8 @@ xmpp_presence(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pa
         {"priority", -1, FALSE, FALSE, NULL, NULL}
     };
 
-    element_t *show, *priority, *status, *caps, *delay, *error, *vcard_x_update;
+    element_t *show, *priority, *status, *caps, *delay, *error, *vcard_x_update,
+            *muc_x, *muc_user_x;
 
     col_clear(pinfo->cinfo, COL_INFO);
     col_append_fstr(pinfo->cinfo, COL_INFO, "PRESENCE");
@@ -339,7 +371,7 @@ xmpp_presence(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pa
         attr_t *fake_priority = ep_init_attr_t(priority->data?priority->data->value:"",priority->offset, priority->length);
         g_hash_table_insert(packet->attrs, "priority", fake_priority);
     }
-    display_attrs(presence_tree, presence_item, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(presence_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     while((status = steal_element_by_name(packet, "status"))!=NULL)
     {
@@ -359,6 +391,16 @@ xmpp_presence(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pa
     if((vcard_x_update = steal_element_by_name_and_attr(packet, "x", "xmlns", "vcard-temp:x:update"))!=NULL)
     {
         xmpp_vcard_x_update(presence_tree, tvb, pinfo, vcard_x_update);
+    }
+
+    if((muc_x = steal_element_by_name_and_attr(packet, "x", "xmlns", "http://jabber.org/protocol/muc"))!=NULL)
+    {
+        xmpp_muc_x(presence_tree, tvb, pinfo, muc_x);
+    }
+
+    if((muc_user_x = steal_element_by_name_and_attr(packet, "x", "xmlns", "http://jabber.org/protocol/muc#user"))!=NULL)
+    {
+        xmpp_muc_user_x(presence_tree, tvb, pinfo, muc_user_x);
     }
 
     if((error = steal_element_by_name(packet, "error"))!=NULL)
@@ -393,7 +435,7 @@ xmpp_presence_status(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, elemen
 
     g_hash_table_insert(element->attrs, "value", fake_value);
 
-    display_attrs(status_tree, status_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(status_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(status_tree, tvb, pinfo, element);
 }
@@ -417,7 +459,8 @@ xmpp_message(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pac
         {"chatstate", hf_xmpp_message_chatstate, FALSE, TRUE, NULL, NULL}
     };
 
-    element_t *ibb_data_element, *thread, *chatstate, *body, *subject, *delay, *x_event;
+    element_t *ibb_data_element, *thread, *chatstate, *body, *subject, *delay, *x_event,
+            *muc_user_x;
 
     attr_t *id = NULL;
 
@@ -441,7 +484,7 @@ xmpp_message(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pac
         g_hash_table_insert(packet->attrs, "chatstate", fake_chatstate_attr);
     }
 
-    display_attrs(message_tree, message_item, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(message_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     if((ibb_data_element = steal_element_by_name_and_attr(packet, "data", "xmlns", "http://jabber.org/protocol/ibb")) != NULL)
     {
@@ -475,6 +518,10 @@ xmpp_message(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pac
         xmpp_x_event(message_tree, tvb, pinfo, x_event);
     }
 
+    if((muc_user_x = steal_element_by_name_and_attr(packet, "x", "xmlns", "http://jabber.org/protocol/muc#user"))!=NULL)
+    {
+        xmpp_muc_user_x(message_tree, tvb, pinfo, muc_user_x);
+    }
 
     xmpp_unknown(message_tree, tvb, pinfo, packet);
 
@@ -513,7 +560,7 @@ xmpp_message_body(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t
     g_hash_table_insert(element->attrs, "value", fake_data_attr);
 
 
-    display_attrs(body_tree, body_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(body_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(body_tree, tvb, pinfo, element);
 }
@@ -538,7 +585,7 @@ xmpp_message_subject(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, elemen
     g_hash_table_insert(element->attrs, "value", fake_data_attr);
 
 
-    display_attrs(subject_tree, subject_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(subject_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(subject_tree, tvb, pinfo, element);
 }
@@ -563,7 +610,7 @@ xmpp_message_thread(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element
     g_hash_table_insert(element->attrs, "value", fake_value);
 
 
-    display_attrs(thread_tree, thread_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(thread_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(thread_tree, tvb, pinfo, element);
 }
@@ -591,7 +638,7 @@ xmpp_auth(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet
     fake_cdata = ep_init_attr_t(packet->data?packet->data->value:"", packet->offset, packet->length);
     g_hash_table_insert(packet->attrs,"value",fake_cdata);
 
-    display_attrs(auth_tree, auth_item, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(auth_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(auth_tree, tvb, pinfo, packet);
 }
@@ -620,7 +667,7 @@ xmpp_challenge_response_success(proto_tree *tree, tvbuff_t *tvb,
         g_hash_table_insert(packet->attrs, "value", fake_cdata);
     }
     
-    display_attrs(subtree, item, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(subtree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
    
     xmpp_unknown(subtree, tvb, pinfo, packet);
 }
@@ -661,7 +708,7 @@ xmpp_failure(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pac
         xmpp_failure_text(fail_tree, tvb, text);
     }
 
-    display_attrs(fail_tree, fail_item, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(fail_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(fail_tree, tvb, pinfo, packet);
 }

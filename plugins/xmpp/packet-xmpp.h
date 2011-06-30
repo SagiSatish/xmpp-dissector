@@ -140,11 +140,16 @@ extern gint hf_xmpp_response;
 extern gint hf_xmpp_success;
 extern gint hf_xmpp_failure;
 
+extern gint hf_xmpp_muc_x;
+extern gint hf_xmpp_muc_user_x;
+extern gint hf_xmpp_muc_user_item;
+extern gint hf_xmpp_muc_user_invite;
+
 extern gint hf_xmpp_unknown;
 extern gint hf_xmpp_unknown_attr;
 
-extern gint hf_xmpp_req;
-extern gint hf_xmpp_res;
+extern gint hf_xmpp_out;
+extern gint hf_xmpp_in;
 extern gint hf_xmpp_response_in;
 extern gint hf_xmpp_response_to;
 extern gint hf_xmpp_jingle_session;
@@ -214,6 +219,10 @@ extern gint ett_xmpp_response;
 extern gint ett_xmpp_success;
 extern gint ett_xmpp_failure;
 
-
+extern gint ett_xmpp_muc_x;
+extern gint ett_xmpp_muc_hist;
+extern gint ett_xmpp_muc_user_x;
+extern gint ett_xmpp_muc_user_item;
+extern gint ett_xmpp_muc_user_invite;
 #endif	/* PACKET_XMPP_H */
 
