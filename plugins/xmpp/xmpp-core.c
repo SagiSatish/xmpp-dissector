@@ -117,7 +117,7 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
     {
         col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(http://jabber.org/protocol/bytestreams) ");
 
-        xmpp_bytestreams_query(xmpp_iq_tree, tvb, pinfo, dinfo_query);
+        xmpp_bytestreams_query(xmpp_iq_tree, tvb, pinfo, bytestreams_query);
     }
 
     if((bind_element = steal_element_by_name(packet,"bind")) != NULL)
@@ -233,6 +233,9 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
                     PROTO_ITEM_SET_GENERATED(it);
                 }
             }
+        } else /*packet without response*/
+        {
+            expert_add_info_format(pinfo, xmpp_iq_item , PI_PROTOCOL, PI_CHAT, "Packet without response");
         }
     }
 

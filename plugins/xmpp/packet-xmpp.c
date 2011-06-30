@@ -312,7 +312,9 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
 
         if(strcmp(packet->name,"iq") == 0)
         {
+            printf("debug1\n");
             xmpp_iq(xmpp_tree,tvb, pinfo, packet);
+            printf("debug2\n");
         } else if(strcmp(packet->name,"presence") == 0)
         {
             xmpp_presence(xmpp_tree,tvb, pinfo, packet);
