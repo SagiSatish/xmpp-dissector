@@ -28,5 +28,10 @@ extern void xmpp_vcard_x_update(proto_tree* tree, tvbuff_t* tvb, packet_info* pi
 
 extern void xmpp_x_event(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
+extern void xmpp_muc_x(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+extern void xmpp_muc_user_x(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+extern void xmpp_muc_owner_query(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+extern void xmpp_muc_admin_query(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+
 #endif	/* XMPP_OTHER_H */
 

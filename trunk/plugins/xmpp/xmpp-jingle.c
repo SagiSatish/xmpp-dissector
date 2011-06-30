@@ -72,7 +72,7 @@ xmpp_iq_jingle(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *e
     jingle_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle, tvb, element->offset, element->length, FALSE);
     jingle_tree = proto_item_add_subtree(jingle_item, ett_xmpp_iq_jingle);
 
-    display_attrs(jingle_tree, jingle_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(jingle_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     while((content=steal_element_by_name(element, "content"))!=NULL)
     {
@@ -113,7 +113,7 @@ xmpp_iq_jingle_content(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, elem
     content_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_content, tvb, element->offset, element->length, FALSE);
     content_tree = proto_item_add_subtree(content_item, ett_xmpp_iq_jingle_content);
 
-    display_attrs(content_tree, content_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(content_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     while((description = steal_element_by_name(element, "description"))!=NULL)
         xmpp_iq_jingle_content_description(content_tree, tvb, pinfo, description);
@@ -141,7 +141,7 @@ xmpp_iq_jingle_content_description(proto_tree* tree, tvbuff_t* tvb, packet_info*
     desc_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_content_description, tvb, element->offset, element->length, FALSE);
     desc_tree = proto_item_add_subtree(desc_item, ett_xmpp_iq_jingle_content_description);
 
-    display_attrs(desc_tree, desc_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(desc_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     while((payload = steal_element_by_name(element, "payload-type"))!=NULL)
         xmpp_iq_jingle_cont_desc_payload(desc_tree, tvb, pinfo, payload);
@@ -183,7 +183,7 @@ xmpp_iq_jingle_cont_desc_payload(proto_tree* tree, tvbuff_t* tvb, packet_info* p
     payload_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_desc_payload, tvb, element->offset, element->length, FALSE);
     payload_tree = proto_item_add_subtree(payload_item, ett_xmpp_iq_jingle_cont_desc_payload);
 
-    display_attrs(payload_tree, payload_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(payload_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     while((param = steal_element_by_name(element,"parameter"))!=NULL)
     {
@@ -231,7 +231,7 @@ xmpp_iq_jingle_cont_desc_payload_param(proto_tree* tree, tvbuff_t* tvb, packet_i
     param_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_desc_payload_param, tvb, element->offset, element->length, FALSE);
     param_tree = proto_item_add_subtree(param_item, ett_xmpp_iq_jingle_cont_desc_payload_param);
 
-    display_attrs(param_tree, param_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(param_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
 }
 
@@ -280,7 +280,7 @@ xmpp_iq_jingle_cont_desc_enc_zrtp_hash(proto_tree* tree, tvbuff_t* tvb, packet_i
         g_hash_table_insert(element->attrs, "hash", fake_hash);
     }
 
-    display_attrs(zrtp_hash_tree, zrtp_hash_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(zrtp_hash_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(zrtp_hash_tree, tvb, pinfo, element);
 }
@@ -302,7 +302,7 @@ xmpp_iq_jingle_cont_desc_enc_crypto(proto_tree* tree, tvbuff_t* tvb, packet_info
     crypto_tree = proto_item_add_subtree(crypto_item, ett_xmpp_iq_jingle_cont_desc_enc_crypto);
 
 
-    display_attrs(crypto_tree, crypto_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(crypto_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(crypto_tree, tvb, pinfo, element);
 }
@@ -327,7 +327,7 @@ xmpp_iq_jingle_cont_desc_bandwidth(proto_tree* tree, tvbuff_t* tvb, packet_info 
         g_hash_table_insert(element->attrs, "value", fake_value);
     }
 
-    display_attrs(bandwidth_tree, bandwidth_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(bandwidth_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 }
 
 static void
@@ -349,7 +349,7 @@ xmpp_iq_jingle_cont_desc_rtp_hdrext(proto_tree* tree, tvbuff_t* tvb, packet_info
     rtp_hdr_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_desc_rtp_hdr, tvb, element->offset, element->length, FALSE);
     rtp_hdr_tree = proto_item_add_subtree(rtp_hdr_item, ett_xmpp_iq_jingle_cont_desc_rtp_hdr);
 
-    display_attrs(rtp_hdr_tree, rtp_hdr_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(rtp_hdr_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
 }
 
@@ -370,7 +370,7 @@ xmpp_iq_jingle_cont_trans(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, e
     trans_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_trans, tvb, element->offset, element->length, FALSE);
     trans_tree = proto_item_add_subtree(trans_item, ett_xmpp_iq_jingle_cont_trans);
 
-    display_attrs(trans_tree, trans_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(trans_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     while((candidate = steal_element_by_name(element, "candidate"))!=NULL)
     {
@@ -414,7 +414,7 @@ xmpp_iq_jingle_cont_trans_candidate(proto_tree* tree, tvbuff_t* tvb, packet_info
     cand_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_trans_cand, tvb, element->offset, element->length, FALSE);
     cand_tree = proto_item_add_subtree(cand_item, ett_xmpp_iq_jingle_cont_trans_cand);
 
-    display_attrs(cand_tree, cand_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(cand_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(cand_tree, tvb, pinfo, element);
 }
@@ -434,7 +434,7 @@ xmpp_iq_jingle_cont_trans_remote_candidate(proto_tree* tree, tvbuff_t* tvb, pack
     remote_cand_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_trans_rem_cand, tvb, element->offset, element->length, FALSE);
     remote_cand_tree = proto_item_add_subtree(remote_cand_item, ett_xmpp_iq_jingle_cont_trans_rem_cand);
 
-    display_attrs(remote_cand_tree, remote_cand_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(remote_cand_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(remote_cand_tree, tvb, pinfo, element);
 }
@@ -501,7 +501,7 @@ xmpp_iq_jingle_reason(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, eleme
         g_hash_table_insert(element->attrs, "text", fake_text);
     }
 
-    display_attrs(reason_tree, reason_item, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(reason_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
     xmpp_unknown(reason_tree, tvb, pinfo, element);
 }
@@ -524,5 +524,5 @@ xmpp_iq_jingle_rtp_info(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, ele
     rtp_info_tree = proto_item_add_subtree(rtp_info_item, ett_xmpp_iq_jingle_rtp_info);
 
     if(strcmp("mute", element->name) == 0 || strcmp("unmute", element->name) == 0)
-        display_attrs(rtp_info_tree, rtp_info_item, element, pinfo, tvb, mute_attrs_info, array_length(mute_attrs_info));
+        display_attrs(rtp_info_tree, element, pinfo, tvb, mute_attrs_info, array_length(mute_attrs_info));
 }
