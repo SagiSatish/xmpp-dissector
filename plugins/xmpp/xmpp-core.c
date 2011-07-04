@@ -26,6 +26,7 @@
 #include <plugins/xmpp/xmpp-core.h>
 #include <plugins/xmpp/xmpp-jingle.h>
 #include <plugins/xmpp/xmpp-other.h>
+#include <plugins/xmpp/xmpp-gtalk.h>
 
 #include <epan/strutil.h>
 
@@ -86,7 +87,8 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
         {NAME_AND_ATTR, name_attr_struct("close", "xmlns", "http://jabber.org/protocol/ibb"), xmpp_ibb_close, ONE},
         {NAME_AND_ATTR, name_attr_struct("data", "xmlns", "http://jabber.org/protocol/ibb"), xmpp_ibb_data, ONE},
         {NAME, "si", xmpp_si, ONE},
-        {NAME, "error", xmpp_error, ONE}
+        {NAME, "error", xmpp_error, ONE},
+        {NAME_AND_ATTR, name_attr_struct("session", "xmlns", "http://www.google.com/session"), xmpp_gtalk_session, ONE}
     };
 
     attr_id = g_hash_table_lookup(packet->attrs, "id");
@@ -123,7 +125,7 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
      * in each packet related to specified jingle session and IBB sid in packet related to it*/
     if(xmpp_info && attr_id)
     {
-        gchar *jingle_sid, *ibb_sid;
+        gchar *jingle_sid, *ibb_sid, *gtalk_sid;
 
         jingle_sid = se_tree_lookup_string(xmpp_info->jingle_sessions, attr_id->value, EMEM_TREE_STRING_NOCASE);
 
@@ -136,6 +138,13 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
 
         if (ibb_sid) {
             proto_item *it = proto_tree_add_string(tree, hf_xmpp_ibb, tvb, 0, 0, ibb_sid);
+            PROTO_ITEM_SET_GENERATED(it);
+        }
+
+        gtalk_sid = se_tree_lookup_string(xmpp_info->gtalk_sessions, attr_id->value, EMEM_TREE_STRING_NOCASE);
+
+        if (gtalk_sid) {
+            proto_item *it = proto_tree_add_string(tree, hf_xmpp_gtalk, tvb, 0, 0, gtalk_sid);
             PROTO_ITEM_SET_GENERATED(it);
         }
 

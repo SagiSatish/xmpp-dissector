@@ -18,7 +18,6 @@
 
 #include <plugins/xmpp/xmpp.h>
 #include <plugins/xmpp/packet-xmpp.h>
-#include <plugins/xmpp/xmpp-core.h>
 #include <plugins/xmpp/xmpp-jingle.h>
 #include <plugins/xmpp/xmpp-other.h>
 

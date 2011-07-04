@@ -145,6 +145,10 @@ extern gint hf_xmpp_muc_user_x;
 extern gint hf_xmpp_muc_user_item;
 extern gint hf_xmpp_muc_user_invite;
 
+extern gint hf_xmpp_gtalk_session;
+extern gint hf_xmpp_gtalk_session_type;
+extern gint hf_xmpp_gtalk;
+
 extern gint hf_xmpp_unknown;
 extern gint hf_xmpp_unknown_attr;
 
@@ -224,5 +228,12 @@ extern gint ett_xmpp_muc_hist;
 extern gint ett_xmpp_muc_user_x;
 extern gint ett_xmpp_muc_user_item;
 extern gint ett_xmpp_muc_user_invite;
+
+extern gint ett_xmpp_gtalk_session;
+extern gint ett_xmpp_gtalk_session_desc;
+extern gint ett_xmpp_gtalk_session_desc_payload;
+extern gint ett_xmpp_gtalk_session_cand;
+extern gint ett_xmpp_gtalk_session_reason;
+
 #endif	/* PACKET_XMPP_H */
 

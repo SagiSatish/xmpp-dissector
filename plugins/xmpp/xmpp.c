@@ -81,6 +81,38 @@ xmpp_jingle_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_
 }
 
 void
+xmpp_gtalk_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info)
+{
+    element_t *gtalk_packet;
+    GList *gtalk_packet_l;
+
+    gtalk_packet_l = find_element_by_name(packet,"session");
+    gtalk_packet = gtalk_packet_l?gtalk_packet_l->data:NULL;
+
+
+    if (gtalk_packet && !pinfo->fd->flags.visited) {
+        attr_t *attr_id;
+        attr_t *attr_sid;
+
+        char *se_id;
+        char *se_sid;
+
+        attr_t *xmlns = g_hash_table_lookup(gtalk_packet->attrs, "xmlns");
+        if(xmlns && strcmp(xmlns->value,"http://www.google.com/session") != 0)
+            return;
+
+
+        attr_id = g_hash_table_lookup(packet->attrs, "id");
+        se_id = se_strdup(attr_id->value);
+
+        attr_sid = g_hash_table_lookup(gtalk_packet->attrs, "id");
+        se_sid = se_strdup(attr_sid->value);
+
+        se_tree_insert_string(xmpp_info->gtalk_sessions, se_id, (void*) se_sid, EMEM_TREE_STRING_NOCASE);
+    }
+}
+
+void
 xmpp_ibb_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info)
 {
     element_t *ibb_packet = NULL;

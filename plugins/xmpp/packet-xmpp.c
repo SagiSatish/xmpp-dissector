@@ -168,6 +168,10 @@ gint hf_xmpp_muc_user_x  = -1;
 gint hf_xmpp_muc_user_item  = -1;
 gint hf_xmpp_muc_user_invite  = -1;
 
+gint hf_xmpp_gtalk_session = -1;
+gint hf_xmpp_gtalk_session_type = -1;
+gint hf_xmpp_gtalk = -1;
+
 gint hf_xmpp_unknown = -1;
 gint hf_xmpp_unknown_attr = -1;
 
@@ -248,6 +252,12 @@ gint ett_xmpp_muc_user_x = -1;
 gint ett_xmpp_muc_user_item = -1;
 gint ett_xmpp_muc_user_invite = -1;
 
+gint ett_xmpp_gtalk_session = -1;
+gint ett_xmpp_gtalk_session_desc = -1;
+gint ett_xmpp_gtalk_session_cand = -1;
+gint ett_xmpp_gtalk_session_desc_payload = -1;
+gint ett_xmpp_gtalk_session_reason = -1;
+
 
 static void
 dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
@@ -287,6 +297,7 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
         xmpp_info->req_resp = se_tree_create_non_persistent(EMEM_TREE_TYPE_RED_BLACK, "xmpp_req_resp");
         xmpp_info->jingle_sessions = se_tree_create_non_persistent(EMEM_TREE_TYPE_RED_BLACK, "xmpp_jingle_sessions");
         xmpp_info->ibb_sessions = se_tree_create_non_persistent(EMEM_TREE_TYPE_RED_BLACK, "xmpp_ibb_sessions");
+        xmpp_info->gtalk_sessions = se_tree_create_non_persistent(EMEM_TREE_TYPE_RED_BLACK, "xmpp_gtalk_sessions");
         conversation_add_proto_data(conversation, proto_xmpp, (void *) xmpp_info);
     }
 
@@ -300,6 +311,7 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
     {
         xmpp_iq_reqresp_track(pinfo, packet, xmpp_info);
         xmpp_jingle_session_track(pinfo, packet, xmpp_info);
+        xmpp_gtalk_session_track(pinfo, packet, xmpp_info);
     }
 
     if (strcmp(packet->name,"iq") == 0 || strcmp(packet->name,"message") == 0)
@@ -920,6 +932,21 @@ proto_register_xmpp(void) {
                 "INVITE", "xmpp.muc-user-x.invite", FT_NONE, BASE_NONE, NULL, 0x0,
                 "muc#user invite", HFILL
             }},
+            { &hf_xmpp_gtalk_session,
+            {
+                "GTALK-SESSION", "xmpp.gtalk.session", FT_NONE, BASE_NONE, NULL, 0x0,
+                "GTalk session", HFILL
+            }},
+            { &hf_xmpp_gtalk_session_type,
+            {
+                "type", "xmpp.gtalk.session.type", FT_STRING, BASE_NONE, NULL, 0x0,
+                "GTalk session type", HFILL
+            }},
+            { &hf_xmpp_gtalk,
+            {
+                "session ID", "xmpp.gtalk", FT_STRING, BASE_NONE, NULL, 0x0,
+                "GTalk session id", HFILL
+            }},
             { &hf_xmpp_response_in,
 		{ "Response In", "xmpp.response_in",
 		FT_FRAMENUM, BASE_NONE, NULL, 0x0,
@@ -1010,6 +1037,11 @@ proto_register_xmpp(void) {
         &ett_xmpp_muc_user_x,
         &ett_xmpp_muc_user_item,
         &ett_xmpp_muc_user_invite,
+        &ett_xmpp_gtalk_session,
+        &ett_xmpp_gtalk_session_desc,
+        &ett_xmpp_gtalk_session_desc_payload,
+        &ett_xmpp_gtalk_session_cand,
+        &ett_xmpp_gtalk_session_reason,
     };
 
     proto_xmpp = proto_register_protocol(
