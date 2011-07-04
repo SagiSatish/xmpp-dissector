@@ -81,6 +81,7 @@ typedef struct _xmpp_conv_info_t {
     emem_tree_t *req_resp;
     emem_tree_t *jingle_sessions;
     emem_tree_t *ibb_sessions;
+    emem_tree_t *gtalk_sessions;
 } xmpp_conv_info_t;
 
 typedef struct _xmpp_reqresp_transaction_t {
@@ -91,6 +92,7 @@ typedef struct _xmpp_reqresp_transaction_t {
 extern void xmpp_iq_reqresp_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info);
 extern void xmpp_jingle_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info);
 extern void xmpp_ibb_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info);
+extern void xmpp_gtalk_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info);
 extern void xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
 extern array_t* ep_init_array_t(const gchar** array, gint len);
