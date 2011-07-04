@@ -22,52 +22,27 @@
 #include <plugins/xmpp/xmpp-jingle.h>
 #include <plugins/xmpp/xmpp-other.h>
 
-void xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
-void xmpp_iq_services(proto_tree *tree, tvbuff_t *tvb, element_t *element);
-void xmpp_iq_session(proto_tree *tree, tvbuff_t *tvb, element_t *element);
-
-void xmpp_vcard(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
-void xmpp_vcard_x_update(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
-
-void xmpp_disco_items_query(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t *element);
 static void xmpp_disco_items_item(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t *element);
 
-void xmpp_roster_query(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t *element);
 static void xmpp_roster_item(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t *element);
 
-void xmpp_disco_info_query(proto_tree *tree,  tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 static void xmpp_disco_info_identity(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t *element);
 static void xmpp_disco_info_feature(proto_tree *tree, tvbuff_t *tvb, element_t *element);
 
-void xmpp_bytestreams_query(proto_tree *tree,  tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 static void xmpp_bytestreams_streamhost(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 static void xmpp_bytestreams_streamhost_used(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 static void xmpp_bytestreams_activate(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 static void xmpp_bytestreams_udpsuccess(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
-void xmpp_si(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_si_file(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_si_file_range(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
-void xmpp_feature_neg(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 
-void xmpp_x_data(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_x_data_field(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_x_data_field_option(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_x_data_field_value(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 
-void xmpp_ibb_open(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
-void xmpp_ibb_close(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
-void xmpp_ibb_data(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
-
-void xmpp_delay(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
-void xmpp_presence_caps(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
-
-void xmpp_vcard_x_update(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
-
-void xmpp_muc_x(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 static void xmpp_muc_history(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
-void xmpp_muc_user_x(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 static void xmpp_muc_user_item(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 static void xmpp_muc_user_status(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 static void xmpp_muc_user_invite(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
@@ -116,19 +91,24 @@ xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
 }
 
 void
-xmpp_iq_services(proto_tree *tree, tvbuff_t *tvb, element_t *element)
+xmpp_iq_services(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
     proto_item *services_item;
 
     attr_t *xmlns = g_hash_table_lookup(element->attrs, "xmlns");
 
+    col_append_fstr(pinfo->cinfo, COL_INFO, "SERVICES ");
+
     services_item = proto_tree_add_string_format(tree, hf_xmpp_iq_services, tvb, element->offset, element->length, xmlns?xmlns->value:"", "SERVICES (%s)", xmlns?xmlns->value:"");
 }
 
 void
-xmpp_iq_session(proto_tree *tree, tvbuff_t *tvb, element_t *element)
+xmpp_session(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
     attr_t *xmlns  = g_hash_table_lookup(element->attrs, "xmlns");
+
+    col_append_fstr(pinfo->cinfo, COL_INFO, "SESSION ");
+
     proto_tree_add_string_format(tree, hf_xmpp_iq_session, tvb, element->offset, element->length, xmlns?xmlns->value:"","SESSION (%s)",xmlns?xmlns->value:"");
 }
 
@@ -144,6 +124,8 @@ xmpp_vcard(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *eleme
     };
 
     element_t *cdata;
+
+    col_append_fstr(pinfo->cinfo, COL_INFO, "VCARD ");
 
     vcard_item = proto_tree_add_item(tree, hf_xmpp_vcard, tvb, element->offset, element->length, FALSE);\
     vcard_tree = proto_item_add_subtree(vcard_item, ett_xmpp_vcard);
@@ -199,6 +181,8 @@ xmpp_disco_items_query(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, elem
 
     element_t *item;
 
+    col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(disco#items) ");
+
     query_item = proto_tree_add_item(tree, hf_xmpp_iq_query, tvb, element->offset, element->length, FALSE);
     query_tree = proto_item_add_subtree(query_item, ett_xmpp_iq_query);
 
@@ -244,6 +228,8 @@ xmpp_roster_query(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t
     };
 
     element_t *item;
+
+     col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(jabber:iq:roster) ");
 
     query_item = proto_tree_add_item(tree, hf_xmpp_iq_query, tvb, element->offset, element->length, FALSE);
     query_tree = proto_item_add_subtree(query_item, ett_xmpp_iq_query);
@@ -307,6 +293,8 @@ xmpp_disco_info_query(proto_tree *tree,  tvbuff_t *tvb, packet_info *pinfo, elem
     };
 
     element_t *identity, *feature, *x_data;
+
+    col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(disco#info) ");
 
     query_item = proto_tree_add_item(tree, hf_xmpp_iq_query, tvb, element->offset, element->length, FALSE);
     query_tree = proto_item_add_subtree(query_item, ett_xmpp_iq_query);
@@ -382,6 +370,8 @@ xmpp_bytestreams_query(proto_tree *tree,  tvbuff_t *tvb, packet_info *pinfo, ele
     };
 
     element_t *streamhost, *streamhost_used, *activate, *udpsuccess;
+
+    col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(bytestreams) ");
 
     query_item = proto_tree_add_item(tree, hf_xmpp_iq_query, tvb, element->offset, element->length, FALSE);
     query_tree = proto_item_add_subtree(query_item, ett_xmpp_iq_query);
@@ -492,6 +482,8 @@ xmpp_si(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
     };
 
     element_t *file, *feature_neg;
+
+    col_append_fstr(pinfo->cinfo, COL_INFO, "SI ");
 
     si_item = proto_tree_add_item(tree, hf_xmpp_iq_si, tvb, element->offset, element->length, FALSE);
     si_tree = proto_item_add_subtree(si_item, ett_xmpp_iq_si);
@@ -744,6 +736,8 @@ xmpp_ibb_open(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *el
         {"stanza", -1, FALSE, TRUE, val_enum_list, stanza_array}
     };
 
+    col_append_fstr(pinfo->cinfo, COL_INFO, "IBB-OPEN ");
+
     open_item = proto_tree_add_item(tree, hf_xmpp_ibb_open, tvb, element->offset, element->length, FALSE);
     open_tree = proto_item_add_subtree(open_item, ett_xmpp_ibb_open);
 
@@ -761,6 +755,8 @@ xmpp_ibb_close(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *e
         {"xmlns", hf_xmpp_xmlns, TRUE, FALSE, NULL, NULL},
         {"sid", -1, TRUE, TRUE, NULL, NULL}
     };
+
+    col_append_fstr(pinfo->cinfo, COL_INFO, "IBB-CLOSE ");
 
     close_item = proto_tree_add_item(tree, hf_xmpp_ibb_close, tvb, element->offset, element->length, FALSE);
     close_tree = proto_item_add_subtree(close_item, ett_xmpp_ibb_close);
@@ -781,6 +777,8 @@ xmpp_ibb_data(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *el
         {"seq", -1, TRUE, TRUE, NULL, NULL},
         {"value", -1, FALSE, FALSE, NULL, NULL}
     };
+
+    col_append_fstr(pinfo->cinfo, COL_INFO, "IBB-DATA ");
 
     data_item = proto_tree_add_item(tree, hf_xmpp_ibb_data, tvb, element->offset, element->length, FALSE);
     data_tree = proto_item_add_subtree(data_item, ett_xmpp_ibb_data);
@@ -1088,6 +1086,8 @@ xmpp_muc_owner_query(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, elemen
     element_t *x_data;
     /*TODO destroy*/
 
+    col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(muc#owner) ");
+
     query_item = proto_tree_add_item(tree, hf_xmpp_iq_query, tvb, element->offset, element->length, FALSE);
     query_tree = proto_item_add_subtree(query_item, ett_xmpp_iq_query);
 
@@ -1114,6 +1114,8 @@ xmpp_muc_admin_query(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, elemen
     };
 
     element_t *item;
+
+    col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(muc#admin) ");
 
     query_item = proto_tree_add_item(tree, hf_xmpp_iq_query, tvb, element->offset, element->length, FALSE);
     query_tree = proto_item_add_subtree(query_item, ett_xmpp_iq_query);

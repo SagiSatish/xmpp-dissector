@@ -528,6 +528,99 @@ display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t
 
 }
 
+struct name_attr_t
+{
+    gchar *name;
+    gchar *attr_name;
+    gchar *attr_value;
+};
+
+//returns pointer struct that contains 3 strings(element name, attribute name, attribute value)
+gpointer
+name_attr_struct(gchar *name, gchar *attr_name, gchar *attr_value)
+{
+    struct name_attr_t *result;
+
+    result = ep_alloc(sizeof(struct name_attr_t));
+    result->name = name;
+    result->attr_name = attr_name;
+    result->attr_value = attr_value;
+    return result;
+}
+
+void
+display_elems(proto_tree *tree, packet_info *pinfo, tvbuff_t *tvb, element_t *parent, elem_info *elems, guint n)
+{
+    guint i;
+
+    for(i = 0; i < n; i++)
+    {
+        element_t *elem = NULL;
+
+        if(elems[i].type == NAME_AND_ATTR)
+        {
+            gboolean loop = TRUE;
+
+            struct
+            {
+                gchar *name;
+                gchar *attr_name;
+                gchar *attr_value;
+            } *a;
+
+            a = elems[i].data;
+
+            while(loop && (elem = steal_element_by_name_and_attr(parent, a->name, a->attr_name, a->attr_value))!=NULL)
+            {
+                elems[i].elem_func(tree, tvb, pinfo, elem);
+                if(elems[i].occurrence == ONE)
+                    loop = FALSE;
+            }
+        } else if(elems[i].type == NAME)
+        {
+            gboolean loop = TRUE;
+            gchar *name = elems[i].data;
+
+            while(loop && (elem = steal_element_by_name(parent, name))!=NULL)
+            {
+                elems[i].elem_func(tree, tvb, pinfo, elem);
+                if(elems[i].occurrence == ONE)
+                    loop = FALSE;
+            }
+        }
+        else if(elems[i].type == ATTR)
+        {
+            gboolean loop = TRUE;
+            struct {
+                gchar *name;
+                gchar *attr_name;
+                gchar *attr_value;
+            } *attr = elems[i].data;
+            
+            while(loop && (elem = steal_element_by_attr(parent, attr->attr_name, attr->attr_value))!=NULL)
+            {
+                elems[i].elem_func(tree, tvb, pinfo, elem);
+                if(elems[i].occurrence == ONE)
+                    loop = FALSE;
+            }
+
+        } else if(elems[i].type == NAMES)
+        {
+            gboolean loop = TRUE;
+            array_t *names = elems[i].data;
+
+            while(loop && (elem =  steal_element_by_names(parent, (const gchar**)names->data, names->length))!=NULL)
+            {
+                elems[i].elem_func(tree, tvb, pinfo, elem);
+                if(elems[i].occurrence == ONE)
+                    loop = FALSE;
+            }
+        }           
+    }
+
+    xmpp_unknown(tree, tvb, pinfo, parent);
+}
+
 //function checks that variable value is in array ((array_t)data)->data
 void
 val_enum_list(packet_info *pinfo, proto_item *item, gchar *name, gchar *value, gpointer data)

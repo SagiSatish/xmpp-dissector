@@ -55,7 +55,8 @@ xmpp_iq_jingle(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *e
         "transport-accept", "transport-info", "transport-reject", "transport-replace"
     };
 
-    array_t *action_array = ep_init_array_t(action_enums,sizeof(action_enums)/sizeof(gchar*));
+    array_t *action_array = ep_init_array_t(action_enums,array_length(action_enums));
+    array_t *rtp_info_array = ep_init_array_t(rtp_info_msgs, array_length(rtp_info_msgs));
 
     attr_info attrs_info[] = {
         {"xmlns", hf_xmpp_xmlns, TRUE, FALSE, NULL, NULL},
@@ -65,31 +66,22 @@ xmpp_iq_jingle(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *e
         {"responder", hf_xmpp_iq_jingle_responder, FALSE, FALSE, NULL, NULL}
     };
 
-    element_t *content; /*0-inf*/
-    element_t *reason; /*0-1*/
-    element_t *rtp_info;
+    elem_info elems_info [] = {
+        {NAME, "content", xmpp_iq_jingle_content, MANY},
+        {NAME, "reason", xmpp_iq_jingle_reason, MANY},
+        {NAMES, rtp_info_array, xmpp_iq_jingle_rtp_info, ONE}
+    };
+
+     attr_t *action = g_hash_table_lookup(element->attrs,"action");
+     col_append_fstr(pinfo->cinfo, COL_INFO, "JINGLE(%s) ", action?action->value:"");
+
 
     jingle_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle, tvb, element->offset, element->length, FALSE);
     jingle_tree = proto_item_add_subtree(jingle_item, ett_xmpp_iq_jingle);
 
     display_attrs(jingle_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
-    while((content=steal_element_by_name(element, "content"))!=NULL)
-    {
-        xmpp_iq_jingle_content(jingle_tree, tvb, pinfo, content);
-    }
-
-    while((reason=steal_element_by_name(element, "reason"))!=NULL)
-    {
-        xmpp_iq_jingle_reason(jingle_tree, tvb, pinfo, reason);
-    }
-
-    if((rtp_info = steal_element_by_names(element, rtp_info_msgs, array_length(rtp_info_msgs)))!=NULL)
-    {
-        xmpp_iq_jingle_rtp_info(jingle_tree, tvb, pinfo, rtp_info);
-    }
-
-    xmpp_unknown(jingle_tree, tvb, pinfo, element);
+    display_elems(jingle_item, pinfo, tvb, element, elems_info, array_length(elems_info));
 }
 
 static void
@@ -108,20 +100,17 @@ xmpp_iq_jingle_content(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, elem
         {"senders", hf_xmpp_iq_jingle_content_senders, FALSE, FALSE, NULL, NULL}
     };
 
-    element_t *description, *transport;
+    elem_info elems_info [] = {
+        {NAME, "description", xmpp_iq_jingle_content_description, MANY},
+        {NAME, "transport", xmpp_iq_jingle_cont_trans, MANY}
+    };
 
     content_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_content, tvb, element->offset, element->length, FALSE);
     content_tree = proto_item_add_subtree(content_item, ett_xmpp_iq_jingle_content);
 
     display_attrs(content_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
-    while((description = steal_element_by_name(element, "description"))!=NULL)
-        xmpp_iq_jingle_content_description(content_tree, tvb, pinfo, description);
-
-    while((transport = steal_element_by_name(element, "transport"))!=NULL)
-        xmpp_iq_jingle_cont_trans(content_tree, tvb, pinfo, transport);
-
-    xmpp_unknown(content_tree, tvb, pinfo, element);
+    display_elems(content_tree, pinfo, tvb, element, elems_info, array_length(elems_info));
 }
 
 static void
@@ -136,30 +125,21 @@ xmpp_iq_jingle_content_description(proto_tree* tree, tvbuff_t* tvb, packet_info*
         {"ssrc", hf_xmpp_iq_jingle_content_description_ssrc , FALSE, TRUE, NULL, NULL}
     };
 
-    element_t *payload, *encryption, *rtp_hdr, *bandwidth, *zrtp_hash /*IMHO it shouldn't appear in description*/;
+    elem_info elems_info[] = {
+        {NAME, "payload-type", xmpp_iq_jingle_cont_desc_payload, MANY},
+        {NAME, "bandwidth", xmpp_iq_jingle_cont_desc_bandwidth, ONE},
+        {NAME, "encryption", xmpp_iq_jingle_cont_desc_enc, ONE},
+        {NAME, "rtp-hdrext", xmpp_iq_jingle_cont_desc_rtp_hdrext, MANY},
+        {NAME, "zrtp-hash", xmpp_iq_jingle_cont_desc_enc_zrtp_hash, MANY}/*IMHO it shouldn't appear in description*/
+        
+    };
 
     desc_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_content_description, tvb, element->offset, element->length, FALSE);
     desc_tree = proto_item_add_subtree(desc_item, ett_xmpp_iq_jingle_content_description);
 
     display_attrs(desc_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
-    while((payload = steal_element_by_name(element, "payload-type"))!=NULL)
-        xmpp_iq_jingle_cont_desc_payload(desc_tree, tvb, pinfo, payload);
-
-    if((bandwidth= steal_element_by_name(element, "bandwidth"))!=NULL)
-        xmpp_iq_jingle_cont_desc_bandwidth(desc_tree, tvb, pinfo, bandwidth);
-
-    if((encryption = steal_element_by_name(element, "encryption"))!=NULL)
-        xmpp_iq_jingle_cont_desc_enc(desc_tree, tvb, pinfo, encryption);
-
-    while((rtp_hdr = steal_element_by_name(element, "rtp-hdrext"))!=NULL)
-        xmpp_iq_jingle_cont_desc_rtp_hdrext(desc_tree, tvb, pinfo, rtp_hdr);
-
-    while((zrtp_hash = steal_element_by_name(element,"zrtp-hash"))!=NULL)
-        xmpp_iq_jingle_cont_desc_enc_zrtp_hash(desc_tree, tvb, pinfo, zrtp_hash);
-
-
-    xmpp_unknown(desc_tree, tvb, pinfo, element);
+    display_elems(desc_tree, pinfo, tvb, element, elems_info, array_length(elems_info));
 }
 
 static void
@@ -178,19 +158,17 @@ xmpp_iq_jingle_cont_desc_payload(proto_tree* tree, tvbuff_t* tvb, packet_info* p
         {"ptime", hf_xmpp_iq_jingle_cont_desc_payload_ptime, FALSE, FALSE, NULL, NULL}
     };
 
-    element_t *param;
+    elem_info elems_info [] =
+    {
+        {NAME, "parameter", xmpp_iq_jingle_cont_desc_payload_param, MANY}
+    };
 
     payload_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_desc_payload, tvb, element->offset, element->length, FALSE);
     payload_tree = proto_item_add_subtree(payload_item, ett_xmpp_iq_jingle_cont_desc_payload);
 
     display_attrs(payload_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
-    while((param = steal_element_by_name(element,"parameter"))!=NULL)
-    {
-        xmpp_iq_jingle_cont_desc_payload_param(payload_tree, tvb, pinfo, param);
-    }
-
-    xmpp_unknown(payload_tree, tvb, pinfo, element);
+    display_elems(payload_tree, pinfo, tvb, element, elems_info, array_length(elems_info));
 }
 
 static void
@@ -233,6 +211,8 @@ xmpp_iq_jingle_cont_desc_payload_param(proto_tree* tree, tvbuff_t* tvb, packet_i
 
     display_attrs(param_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
+    xmpp_unknown(param_tree, tvb, pinfo, element);
+
 }
 
 static void
@@ -241,22 +221,18 @@ xmpp_iq_jingle_cont_desc_enc(proto_tree* tree, tvbuff_t* tvb, packet_info *pinfo
     proto_item *enc_item;
     proto_tree *enc_tree;
 
-    element_t *zrtp_hash, *crypto;
+    attr_info attrs_info [] = {};
+
+    elem_info elems_info [] = {
+        {NAME, "zrtp-hash", xmpp_iq_jingle_cont_desc_enc_zrtp_hash, MANY},
+        {NAME, "crypto", xmpp_iq_jingle_cont_desc_enc_crypto, MANY}
+    };
 
     enc_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_desc_enc, tvb, element->offset, element->length, FALSE);
     enc_tree = proto_item_add_subtree(enc_item, ett_xmpp_iq_jingle_cont_desc_enc);
 
-    while((zrtp_hash = steal_element_by_name(element,"zrtp-hash"))!=NULL)
-    {
-        xmpp_iq_jingle_cont_desc_enc_zrtp_hash(enc_tree, tvb, pinfo, zrtp_hash);
-    }
-
-    while((crypto = steal_element_by_name(element,"crypto"))!=NULL)
-    {
-        xmpp_iq_jingle_cont_desc_enc_crypto(enc_tree, tvb, pinfo, crypto);
-    }
-
-    xmpp_unknown(enc_tree, tvb, pinfo, element);
+    display_attrs(enc_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(enc_tree, pinfo, tvb, element, elems_info, array_length(elems_info));
 }
 
 static void
@@ -328,6 +304,7 @@ xmpp_iq_jingle_cont_desc_bandwidth(proto_tree* tree, tvbuff_t* tvb, packet_info 
     }
 
     display_attrs(bandwidth_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    xmpp_unknown(bandwidth_tree, tvb, pinfo, element);
 }
 
 static void
@@ -351,6 +328,7 @@ xmpp_iq_jingle_cont_desc_rtp_hdrext(proto_tree* tree, tvbuff_t* tvb, packet_info
 
     display_attrs(rtp_hdr_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
+    xmpp_unknown(rtp_hdr_tree, tvb, pinfo, element);
 }
 
 static void
@@ -365,25 +343,17 @@ xmpp_iq_jingle_cont_trans(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, e
         {"ufrag", hf_xmpp_iq_jingle_cont_trans_ufrag, FALSE, TRUE, NULL, NULL}
     };
 
-    element_t *candidate, *remote_candidate;
+    elem_info elems_info [] = {
+        {NAME, "candidate", xmpp_iq_jingle_cont_trans_candidate, MANY},
+        {NAME, "remote-candidate", xmpp_iq_jingle_cont_trans_remote_candidate, MANY}
+    };
 
     trans_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_trans, tvb, element->offset, element->length, FALSE);
     trans_tree = proto_item_add_subtree(trans_item, ett_xmpp_iq_jingle_cont_trans);
 
     display_attrs(trans_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
-    while((candidate = steal_element_by_name(element, "candidate"))!=NULL)
-    {
-        xmpp_iq_jingle_cont_trans_candidate(trans_tree, tvb, pinfo, candidate);
-    }
-
-    while((remote_candidate = steal_element_by_name(element, "remote-candidate"))!=NULL)
-    {
-        xmpp_iq_jingle_cont_trans_remote_candidate(trans_tree, tvb, pinfo, remote_candidate);
-    }
-
-    xmpp_unknown(trans_tree, tvb, pinfo, element);
-
+    display_elems(trans_tree, pinfo, tvb, element, elems_info, array_length(elems_info));
 }
 
 static void
@@ -525,4 +495,6 @@ xmpp_iq_jingle_rtp_info(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, ele
 
     if(strcmp("mute", element->name) == 0 || strcmp("unmute", element->name) == 0)
         display_attrs(rtp_info_tree, element, pinfo, tvb, mute_attrs_info, array_length(mute_attrs_info));
+
+    xmpp_unknown(rtp_info_tree, tvb, pinfo, element);
 }
