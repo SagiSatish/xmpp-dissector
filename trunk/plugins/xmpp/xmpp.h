@@ -56,6 +56,27 @@ typedef struct _attr_info{
     gpointer data;
 } attr_info;
 
+typedef enum _elem_info_type{
+    NAME,
+    ATTR,
+    NAME_AND_ATTR,
+    NAMES
+} elem_info_type;
+
+typedef enum _elem_info_occurrence
+{
+    ONE,MANY
+} elem_info_occurrence;
+
+//informations about elements that are displayed in proto tree
+typedef struct _elem_info{
+    elem_info_type type;
+    gpointer data;
+    //function that displays element in tree
+    void (*elem_func)(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+    elem_info_occurrence occurrence;
+} elem_info;
+
 typedef struct _xmpp_conv_info_t {
     emem_tree_t *req_resp;
     emem_tree_t *jingle_sessions;
@@ -90,8 +111,12 @@ extern void proto_tree_hide_first_child(proto_tree *tree);
 extern void proto_tree_show_first_child(proto_tree *tree);
 extern gchar* proto_item_get_text(proto_item *item);
 
+extern gpointer name_attr_struct(gchar *name, gchar *attr_name, gchar *attr_value);
+
 extern void display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t *tvb, attr_info *attrs, guint n);
+extern void display_elems(proto_tree *tree, packet_info *pinfo, tvbuff_t *tvb, element_t *parent, elem_info *elems, guint n);
 
 extern void val_enum_list(packet_info *pinfo, proto_item *item, gchar *name, gchar *value, gpointer data);
 
 #endif
+
