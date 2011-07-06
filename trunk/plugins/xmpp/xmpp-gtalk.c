@@ -28,6 +28,7 @@ static void xmpp_gtalk_jingleinfo_stun(proto_tree* tree, tvbuff_t* tvb, packet_i
 static void xmpp_gtalk_jingleinfo_server(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_gtalk_jingleinfo_relay(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_gtalk_jingleinfo_relay_serv(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+static void xmpp_gtalk_nosave_item(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 
 void
 xmpp_gtalk_session(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
@@ -50,7 +51,7 @@ xmpp_gtalk_session(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_
 
     attr_t *attr_type = g_hash_table_lookup(element->attrs, "type");
 
-    col_append_fstr(pinfo->cinfo, COL_INFO, "GTALK(%s) ", attr_type?attr_type->value:"");
+    col_append_fstr(pinfo->cinfo, COL_INFO, "GTALK-SESSION(%s) ", attr_type?attr_type->value:"");
 
     session_item = proto_tree_add_item(tree, hf_xmpp_gtalk_session, tvb, element->offset, element->length, FALSE);
     session_tree = proto_item_add_subtree(session_item, ett_xmpp_gtalk_session);
@@ -190,8 +191,8 @@ xmpp_gtalk_jingleinfo_query(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo,
 
     col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(google:jingleinfo) ");
 
-    query_item = proto_tree_add_item(tree, hf_xmpp_iq_query, tvb, element->offset, element->length, FALSE);
-    query_tree = proto_item_add_subtree(query_item, ett_xmpp_iq_query);
+    query_item = proto_tree_add_item(tree, hf_xmpp_query, tvb, element->offset, element->length, FALSE);
+    query_tree = proto_item_add_subtree(query_item, ett_xmpp_query);
 
     display_attrs(query_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
     display_elems(query_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
@@ -280,4 +281,96 @@ xmpp_gtalk_jingleinfo_relay_serv(proto_tree* tree, tvbuff_t* tvb, packet_info* p
 
     display_attrs(serv_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
     display_elems(serv_tree, element, pinfo, tvb, NULL, 0);
+}
+
+void
+xmpp_gtalk_usersetting(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+{
+    proto_item *sett_item;
+    proto_tree *sett_tree;
+
+    attr_info attrs_info [] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL}
+    };
+
+    guint i;
+
+    sett_item = proto_tree_add_item(tree, hf_xmpp_gtalk_setting, tvb, element->offset, element->length, FALSE);
+    sett_tree = proto_item_add_subtree(sett_item, ett_xmpp_gtalk_setting);
+
+    display_attrs(sett_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+
+    for(i = 0; i < g_list_length(element->elements); i++)
+    {
+        GList *elem_l = g_list_nth(element->elements,i);
+        element_t *elem = elem_l?elem_l->data:NULL;
+
+        if(elem)
+        {
+            attr_t *val = g_hash_table_lookup(elem->attrs,"value");
+            proto_tree_add_text(sett_tree, tvb, elem->offset, elem->length, "%s [%s]",elem->name,val?val->value:"");
+        }
+    }
+    g_list_free(element->elements);
+}
+
+void
+xmpp_gtalk_nosave_query(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element) {
+    proto_item *query_item;
+    proto_tree *query_tree;
+
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL}
+    };
+
+    elem_info elems_info [] = {
+        {NAME, "item", xmpp_gtalk_nosave_item, MANY},
+    };
+
+    col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(google:nosave) ");
+
+    query_item = proto_tree_add_item(tree, hf_xmpp_query, tvb, element->offset, element->length, FALSE);
+    query_tree = proto_item_add_subtree(query_item, ett_xmpp_query);
+
+    display_attrs(query_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(query_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
+}
+
+static void
+xmpp_gtalk_nosave_item(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+{
+    proto_item *item_item;
+    proto_tree *item_tree;
+
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, FALSE, NULL,NULL},
+        {"jid", -1, TRUE, TRUE, NULL, NULL},
+        {"source", -1, FALSE, TRUE, NULL, NULL},
+        {"value", -1, TRUE, TRUE, NULL, NULL}
+    };
+
+    item_item = proto_tree_add_text(tree, tvb, element->offset, element->length, "ITEM");
+    item_tree = proto_item_add_subtree(item_item, ett_xmpp_query_item);
+
+    display_attrs(item_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(item_tree, element, pinfo, tvb, NULL, 0);
+}
+
+void
+xmpp_gtalk_nosave_x(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+{
+    proto_item *x_item;
+    proto_tree *x_tree;
+
+    attr_info attrs_info [] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
+        {"value", -1, FALSE, TRUE, NULL, NULL}
+    };
+
+    x_item = proto_tree_add_item(tree, hf_xmpp_gtalk_nosave_x, tvb, element->offset, element->length, FALSE);
+    x_tree = proto_item_add_subtree(x_item, ett_xmpp_gtalk_nosave_x);
+
+
+    display_attrs(x_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(x_tree, element, pinfo, tvb, NULL, 0);
 }
