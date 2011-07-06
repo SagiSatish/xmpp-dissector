@@ -221,8 +221,6 @@ xmpp_iq_jingle_cont_desc_enc(proto_tree* tree, tvbuff_t* tvb, packet_info *pinfo
     proto_item *enc_item;
     proto_tree *enc_tree;
 
-    attr_info attrs_info [] = {};
-
     elem_info elems_info [] = {
         {NAME, "zrtp-hash", xmpp_iq_jingle_cont_desc_enc_zrtp_hash, MANY},
         {NAME, "crypto", xmpp_iq_jingle_cont_desc_enc_crypto, MANY}
@@ -231,7 +229,7 @@ xmpp_iq_jingle_cont_desc_enc(proto_tree* tree, tvbuff_t* tvb, packet_info *pinfo
     enc_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_desc_enc, tvb, element->offset, element->length, FALSE);
     enc_tree = proto_item_add_subtree(enc_item, ett_xmpp_iq_jingle_cont_desc_enc);
 
-    display_attrs(enc_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_attrs(enc_tree, element, pinfo, tvb, NULL, 0);
     display_elems(enc_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
 }
 
