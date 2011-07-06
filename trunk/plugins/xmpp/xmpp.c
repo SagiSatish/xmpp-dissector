@@ -511,7 +511,7 @@ display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t
     GList *attrs_copy = g_hash_table_get_values(element->attrs);
 
     proto_item_append_text(item," [");
-    for(i = 0; i < n; i++)
+    for(i = 0; i < n && attrs!=NULL; i++)
     {
         attr = g_hash_table_lookup(element->attrs, attrs[i].name);
         if(attr)
@@ -585,7 +585,7 @@ display_elems(proto_tree *tree, element_t *parent, packet_info *pinfo, tvbuff_t 
 {
     guint i;
 
-    for(i = 0; i < n; i++)
+    for(i = 0; i < n && elems!=NULL; i++)
     {
         element_t *elem = NULL;
 
