@@ -81,7 +81,7 @@ xmpp_iq_jingle(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *e
 
     display_attrs(jingle_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
-    display_elems(jingle_item, pinfo, tvb, element, elems_info, array_length(elems_info));
+    display_elems(jingle_item, element, pinfo, tvb, elems_info, array_length(elems_info));
 }
 
 static void
@@ -110,7 +110,7 @@ xmpp_iq_jingle_content(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, elem
 
     display_attrs(content_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
-    display_elems(content_tree, pinfo, tvb, element, elems_info, array_length(elems_info));
+    display_elems(content_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
 }
 
 static void
@@ -139,7 +139,7 @@ xmpp_iq_jingle_content_description(proto_tree* tree, tvbuff_t* tvb, packet_info*
 
     display_attrs(desc_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
-    display_elems(desc_tree, pinfo, tvb, element, elems_info, array_length(elems_info));
+    display_elems(desc_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
 }
 
 static void
@@ -168,7 +168,7 @@ xmpp_iq_jingle_cont_desc_payload(proto_tree* tree, tvbuff_t* tvb, packet_info* p
 
     display_attrs(payload_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
-    display_elems(payload_tree, pinfo, tvb, element, elems_info, array_length(elems_info));
+    display_elems(payload_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
 }
 
 static void
@@ -232,7 +232,7 @@ xmpp_iq_jingle_cont_desc_enc(proto_tree* tree, tvbuff_t* tvb, packet_info *pinfo
     enc_tree = proto_item_add_subtree(enc_item, ett_xmpp_iq_jingle_cont_desc_enc);
 
     display_attrs(enc_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
-    display_elems(enc_tree, pinfo, tvb, element, elems_info, array_length(elems_info));
+    display_elems(enc_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
 }
 
 static void
@@ -353,7 +353,7 @@ xmpp_iq_jingle_cont_trans(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, e
 
     display_attrs(trans_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
-    display_elems(trans_tree, pinfo, tvb, element, elems_info, array_length(elems_info));
+    display_elems(trans_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
 }
 
 static void

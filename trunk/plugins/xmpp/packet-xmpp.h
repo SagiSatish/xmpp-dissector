@@ -234,6 +234,10 @@ extern gint ett_xmpp_gtalk_session_desc;
 extern gint ett_xmpp_gtalk_session_desc_payload;
 extern gint ett_xmpp_gtalk_session_cand;
 extern gint ett_xmpp_gtalk_session_reason;
+extern gint ett_xmpp_gtalk_jingleinfo_stun;
+extern gint ett_xmpp_gtalk_jingleinfo_server;
+extern gint ett_xmpp_gtalk_jingleinfo_relay;
+extern gint ett_xmpp_gtalk_jingleinfo_relay_serv;
 
 #endif	/* PACKET_XMPP_H */
 
