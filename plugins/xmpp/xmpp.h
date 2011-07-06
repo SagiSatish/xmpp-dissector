@@ -116,7 +116,7 @@ extern gchar* proto_item_get_text(proto_item *item);
 extern gpointer name_attr_struct(gchar *name, gchar *attr_name, gchar *attr_value);
 
 extern void display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t *tvb, attr_info *attrs, guint n);
-extern void display_elems(proto_tree *tree, packet_info *pinfo, tvbuff_t *tvb, element_t *parent, elem_info *elems, guint n);
+extern void display_elems(proto_tree *tree, element_t *parent, packet_info *pinfo, tvbuff_t *tvb, elem_info *elems, guint n);
 
 extern void val_enum_list(packet_info *pinfo, proto_item *item, gchar *name, gchar *value, gpointer data);
 

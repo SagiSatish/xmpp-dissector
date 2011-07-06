@@ -13,6 +13,7 @@
 #include <epan/conversation.h>
 #include <epan/strutil.h>
 #include <epan/expert.h>
+#include <epan/prefs.h>
 
 #include <epan/dissectors/packet-xml.h>
 
@@ -257,6 +258,10 @@ gint ett_xmpp_gtalk_session_desc = -1;
 gint ett_xmpp_gtalk_session_cand = -1;
 gint ett_xmpp_gtalk_session_desc_payload = -1;
 gint ett_xmpp_gtalk_session_reason = -1;
+gint ett_xmpp_gtalk_jingleinfo_stun = -1;
+gint ett_xmpp_gtalk_jingleinfo_server = -1;
+gint ett_xmpp_gtalk_jingleinfo_relay = -1;
+gint ett_xmpp_gtalk_jingleinfo_relay_serv = -1;
 
 
 static void
@@ -1042,6 +1047,11 @@ proto_register_xmpp(void) {
         &ett_xmpp_gtalk_session_desc_payload,
         &ett_xmpp_gtalk_session_cand,
         &ett_xmpp_gtalk_session_reason,
+        &ett_xmpp_gtalk_jingleinfo_stun,
+        &ett_xmpp_gtalk_jingleinfo_server,
+        &ett_xmpp_gtalk_jingleinfo_relay,
+        &ett_xmpp_gtalk_jingleinfo_relay_serv,
+
     };
 
     proto_xmpp = proto_register_protocol(

@@ -567,7 +567,7 @@ struct name_attr_t
     gchar *attr_value;
 };
 
-//returns pointer struct that contains 3 strings(element name, attribute name, attribute value)
+//returns pointer to the struct that contains 3 strings(element name, attribute name, attribute value)
 gpointer
 name_attr_struct(gchar *name, gchar *attr_name, gchar *attr_value)
 {
@@ -581,7 +581,7 @@ name_attr_struct(gchar *name, gchar *attr_name, gchar *attr_value)
 }
 
 void
-display_elems(proto_tree *tree, packet_info *pinfo, tvbuff_t *tvb, element_t *parent, elem_info *elems, guint n)
+display_elems(proto_tree *tree, element_t *parent, packet_info *pinfo, tvbuff_t *tvb, elem_info *elems, guint n)
 {
     guint i;
 

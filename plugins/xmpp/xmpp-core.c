@@ -88,7 +88,8 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
         {NAME_AND_ATTR, name_attr_struct("data", "xmlns", "http://jabber.org/protocol/ibb"), xmpp_ibb_data, ONE},
         {NAME, "si", xmpp_si, ONE},
         {NAME, "error", xmpp_error, ONE},
-        {NAME_AND_ATTR, name_attr_struct("session", "xmlns", "http://www.google.com/session"), xmpp_gtalk_session, ONE}
+        {NAME_AND_ATTR, name_attr_struct("session", "xmlns", "http://www.google.com/session"), xmpp_gtalk_session, ONE},
+        {NAME_AND_ATTR, name_attr_struct("query", "xmlns","google:jingleinfo"), xmpp_gtalk_jingleinfo_query, ONE}
     };
 
     attr_id = g_hash_table_lookup(packet->attrs, "id");
@@ -106,7 +107,7 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
     col_clear(pinfo->cinfo, COL_INFO);
     col_add_fstr(pinfo->cinfo, COL_INFO, "IQ(%s) ", attr_type?attr_type->value:"");
 
-    display_elems(xmpp_iq_tree, pinfo, tvb, packet, elems_info, array_length(elems_info));
+    display_elems(xmpp_iq_tree, packet, pinfo, tvb, elems_info, array_length(elems_info));
 
     /*appends to COL_INFO information about src or dst*/
     if (pinfo->match_uint == pinfo->destport)
@@ -286,7 +287,7 @@ xmpp_presence(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pa
     }
     display_attrs(presence_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
 
-    display_elems(presence_tree, pinfo, tvb, packet, elems_info, array_length(elems_info));
+    display_elems(presence_tree, packet, pinfo, tvb, elems_info, array_length(elems_info));
 }
 
 static void
@@ -373,7 +374,7 @@ xmpp_message(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pac
 
     display_attrs(message_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
 
-    display_elems(message_tree, pinfo, tvb, packet, elems_info, array_length(elems_info));
+    display_elems(message_tree, packet, pinfo, tvb, elems_info, array_length(elems_info));
   
     /*Displays data about IBB session*/
     if(xmpp_info && id)
