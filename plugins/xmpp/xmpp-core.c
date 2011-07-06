@@ -89,7 +89,10 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
         {NAME, "si", xmpp_si, ONE},
         {NAME, "error", xmpp_error, ONE},
         {NAME_AND_ATTR, name_attr_struct("session", "xmlns", "http://www.google.com/session"), xmpp_gtalk_session, ONE},
-        {NAME_AND_ATTR, name_attr_struct("query", "xmlns","google:jingleinfo"), xmpp_gtalk_jingleinfo_query, ONE}
+        {NAME_AND_ATTR, name_attr_struct("query", "xmlns","google:jingleinfo"), xmpp_gtalk_jingleinfo_query, ONE},
+        {NAME_AND_ATTR, name_attr_struct("usersetting", "xmlns","google:setting"), xmpp_gtalk_usersetting, ONE},
+        {NAME_AND_ATTR, name_attr_struct("query", "xmlns","jabber:iq:last"), xmpp_last_query, ONE},
+        {NAME_AND_ATTR, name_attr_struct("query", "xmlns","jabber:iq:version"), xmpp_version_query, ONE}
     };
 
     attr_id = g_hash_table_lookup(packet->attrs, "id");
@@ -199,7 +202,7 @@ xmpp_error(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *eleme
     error_info = ep_strdup("Stanza error");
 
     error_item = proto_tree_add_item(tree, hf_xmpp_error, tvb, element->offset, element->length, FALSE);
-    error_tree = proto_item_add_subtree(error_item, ett_xmpp_iq_query_item);
+    error_tree = proto_item_add_subtree(error_item, ett_xmpp_query_item);
 
     cond_element = steal_element_by_attr(element, "xmlns", "urn:ietf:params:xml:ns:xmpp-stanzas");
     if(cond_element)
@@ -259,17 +262,19 @@ xmpp_presence(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pa
         {NAME, "status", xmpp_presence_status, MANY},
         {NAME_AND_ATTR, name_attr_struct("c","xmlns","http://jabber.org/protocol/caps"), xmpp_presence_caps, ONE},
         {NAME, "delay", xmpp_delay, ONE},
+        {NAME_AND_ATTR, name_attr_struct("x","xmlns", "jabber:x:delay"), xmpp_delay, ONE},
         {NAME_AND_ATTR, name_attr_struct("x","xmlns", "vcard-temp:x:update"), xmpp_vcard_x_update, ONE},
         {NAME_AND_ATTR, name_attr_struct("x","xmlns","http://jabber.org/protocol/muc"), xmpp_muc_x, ONE},
         {NAME_AND_ATTR, name_attr_struct("x","xmlns","http://jabber.org/protocol/muc#user"), xmpp_muc_user_x, ONE},
-        {NAME, "error", xmpp_error, ONE}
+        {NAME, "error", xmpp_error, ONE},
+        {NAME_AND_ATTR, name_attr_struct("query", "xmlns","jabber:iq:last"), xmpp_last_query, ONE}
     };
 
 
     element_t *show, *priority;
 
     col_clear(pinfo->cinfo, COL_INFO);
-    col_append_fstr(pinfo->cinfo, COL_INFO, "PRESENCE");
+    col_append_fstr(pinfo->cinfo, COL_INFO, "PRESENCE ");
 
     presence_item = proto_tree_add_item(tree, hf_xmpp_presence, tvb, packet->offset, packet->length, FALSE);
     presence_tree = proto_item_add_subtree(presence_item, ett_xmpp_presence);
@@ -345,7 +350,8 @@ xmpp_message(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pac
         {NAME, "subject", xmpp_message_subject, MANY},
         {NAME, "delay", xmpp_delay, ONE},
         {NAME_AND_ATTR, name_attr_struct("x","xmlns","jabber:x:event"), xmpp_x_event, ONE},
-        {NAME_AND_ATTR, name_attr_struct("x","xmlns","http://jabber.org/protocol/muc#user"), xmpp_muc_user_x, ONE}
+        {NAME_AND_ATTR, name_attr_struct("x","xmlns","http://jabber.org/protocol/muc#user"), xmpp_muc_user_x, ONE},
+        {NAME_AND_ATTR, name_attr_struct("x","xmlns","google:nosave"), xmpp_gtalk_nosave_x, ONE}
     };
 
     element_t *chatstate;

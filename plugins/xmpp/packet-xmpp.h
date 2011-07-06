@@ -12,30 +12,30 @@ extern gint hf_xmpp_type;
 extern gint hf_xmpp_iq;
 
 
-extern gint hf_xmpp_iq_query;
-extern gint hf_xmpp_iq_query_node;
+extern gint hf_xmpp_query;
+extern gint hf_xmpp_query_node;
 
-extern gint hf_xmpp_iq_query_item;
-extern gint hf_xmpp_iq_query_item_jid;
-extern gint hf_xmpp_iq_query_item_name;
-extern gint hf_xmpp_iq_query_item_subscription;
-extern gint hf_xmpp_iq_query_item_ask;
-extern gint hf_xmpp_iq_query_item_group;
-extern gint hf_xmpp_iq_query_item_node;
-extern gint hf_xmpp_iq_query_item_approved;
+extern gint hf_xmpp_query_item;
+extern gint hf_xmpp_query_item_jid;
+extern gint hf_xmpp_query_item_name;
+extern gint hf_xmpp_query_item_subscription;
+extern gint hf_xmpp_query_item_ask;
+extern gint hf_xmpp_query_item_group;
+extern gint hf_xmpp_query_item_node;
+extern gint hf_xmpp_query_item_approved;
 
-extern gint hf_xmpp_iq_query_identity;
-extern gint hf_xmpp_iq_query_identity_category;
-extern gint hf_xmpp_iq_query_identity_type;
-extern gint hf_xmpp_iq_query_identity_name;
-extern gint hf_xmpp_iq_query_identity_lang;
+extern gint hf_xmpp_query_identity;
+extern gint hf_xmpp_query_identity_category;
+extern gint hf_xmpp_query_identity_type;
+extern gint hf_xmpp_query_identity_name;
+extern gint hf_xmpp_query_identity_lang;
 
-extern gint hf_xmpp_iq_query_feature;
+extern gint hf_xmpp_query_feature;
 
-extern gint hf_xmpp_iq_query_streamhost;
-extern gint hf_xmpp_iq_query_streamhost_used;
-extern gint hf_xmpp_iq_query_activate;
-extern gint hf_xmpp_iq_query_udpsuccess;
+extern gint hf_xmpp_query_streamhost;
+extern gint hf_xmpp_query_streamhost_used;
+extern gint hf_xmpp_query_activate;
+extern gint hf_xmpp_query_udpsuccess;
 
 extern gint hf_xmpp_error;
 extern gint hf_xmpp_error_type;
@@ -148,6 +148,8 @@ extern gint hf_xmpp_muc_user_invite;
 extern gint hf_xmpp_gtalk_session;
 extern gint hf_xmpp_gtalk_session_type;
 extern gint hf_xmpp_gtalk;
+extern gint hf_xmpp_gtalk_setting;
+extern gint hf_xmpp_gtalk_nosave_x;
 
 extern gint hf_xmpp_unknown;
 extern gint hf_xmpp_unknown_attr;
@@ -161,14 +163,14 @@ extern gint hf_xmpp_ibb;
 
 extern gint ett_xmpp;
 extern gint ett_xmpp_iq;
-extern gint ett_xmpp_iq_query;
-extern gint ett_xmpp_iq_query_item;
-extern gint ett_xmpp_iq_query_identity;
-extern gint ett_xmpp_iq_query_feature;
+extern gint ett_xmpp_query;
+extern gint ett_xmpp_query_item;
+extern gint ett_xmpp_query_identity;
+extern gint ett_xmpp_query_feature;
 
-extern gint ett_xmpp_iq_query_streamhost;
-extern gint ett_xmpp_iq_query_streamhost_used;
-extern gint ett_xmpp_iq_query_udpsuccess;
+extern gint ett_xmpp_query_streamhost;
+extern gint ett_xmpp_query_streamhost_used;
+extern gint ett_xmpp_query_udpsuccess;
 
 extern gint ett_xmpp_iq_error;
 extern gint ett_xmpp_iq_bind;
@@ -238,6 +240,8 @@ extern gint ett_xmpp_gtalk_jingleinfo_stun;
 extern gint ett_xmpp_gtalk_jingleinfo_server;
 extern gint ett_xmpp_gtalk_jingleinfo_relay;
 extern gint ett_xmpp_gtalk_jingleinfo_relay_serv;
+extern gint ett_xmpp_gtalk_setting;
+extern gint ett_xmpp_gtalk_nosave_x;
 
 #endif	/* PACKET_XMPP_H */
 

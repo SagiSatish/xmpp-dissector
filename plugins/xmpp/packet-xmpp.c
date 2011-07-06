@@ -37,30 +37,30 @@ gint hf_xmpp_type = -1;
 
 gint hf_xmpp_iq = -1;
 
-gint hf_xmpp_iq_query = -1;
-gint hf_xmpp_iq_query_node = -1;
+gint hf_xmpp_query = -1;
+gint hf_xmpp_query_node = -1;
 
-gint hf_xmpp_iq_query_item = -1;
-gint hf_xmpp_iq_query_item_jid = -1;
-gint hf_xmpp_iq_query_item_name = -1;
-gint hf_xmpp_iq_query_item_subscription = -1;
-gint hf_xmpp_iq_query_item_ask = -1;
-gint hf_xmpp_iq_query_item_group = -1;
-gint hf_xmpp_iq_query_item_node = -1;
-gint hf_xmpp_iq_query_item_approved = -1;
+gint hf_xmpp_query_item = -1;
+gint hf_xmpp_query_item_jid = -1;
+gint hf_xmpp_query_item_name = -1;
+gint hf_xmpp_query_item_subscription = -1;
+gint hf_xmpp_query_item_ask = -1;
+gint hf_xmpp_query_item_group = -1;
+gint hf_xmpp_query_item_node = -1;
+gint hf_xmpp_query_item_approved = -1;
 
-gint hf_xmpp_iq_query_identity = -1;
-gint hf_xmpp_iq_query_identity_category = -1;
-gint hf_xmpp_iq_query_identity_type = -1;
-gint hf_xmpp_iq_query_identity_name = -1;
-gint hf_xmpp_iq_query_identity_lang = -1;
+gint hf_xmpp_query_identity = -1;
+gint hf_xmpp_query_identity_category = -1;
+gint hf_xmpp_query_identity_type = -1;
+gint hf_xmpp_query_identity_name = -1;
+gint hf_xmpp_query_identity_lang = -1;
 
-gint hf_xmpp_iq_query_feature = -1;
+gint hf_xmpp_query_feature = -1;
 
-gint hf_xmpp_iq_query_streamhost = -1;
-gint hf_xmpp_iq_query_streamhost_used = -1;
-gint hf_xmpp_iq_query_activate = -1;
-gint hf_xmpp_iq_query_udpsuccess = -1;
+gint hf_xmpp_query_streamhost = -1;
+gint hf_xmpp_query_streamhost_used = -1;
+gint hf_xmpp_query_activate = -1;
+gint hf_xmpp_query_udpsuccess = -1;
 
 gint hf_xmpp_error = -1;
 gint hf_xmpp_error_type = -1;
@@ -172,6 +172,8 @@ gint hf_xmpp_muc_user_invite  = -1;
 gint hf_xmpp_gtalk_session = -1;
 gint hf_xmpp_gtalk_session_type = -1;
 gint hf_xmpp_gtalk = -1;
+gint hf_xmpp_gtalk_setting = -1;
+gint hf_xmpp_gtalk_nosave_x = -1;
 
 gint hf_xmpp_unknown = -1;
 gint hf_xmpp_unknown_attr = -1;
@@ -185,14 +187,14 @@ gint hf_xmpp_ibb = -1;
 
 gint ett_xmpp = -1;
 gint ett_xmpp_iq = -1;
-gint ett_xmpp_iq_query = -1;
-gint ett_xmpp_iq_query_item = -1;
-gint ett_xmpp_iq_query_identity = -1;
-gint ett_xmpp_iq_query_feature = -1;
+gint ett_xmpp_query = -1;
+gint ett_xmpp_query_item = -1;
+gint ett_xmpp_query_identity = -1;
+gint ett_xmpp_query_feature = -1;
 
-gint ett_xmpp_iq_query_streamhost = -1;
-gint ett_xmpp_iq_query_streamhost_used = -1;
-gint ett_xmpp_iq_query_udpsuccess = -1;
+gint ett_xmpp_query_streamhost = -1;
+gint ett_xmpp_query_streamhost_used = -1;
+gint ett_xmpp_query_udpsuccess = -1;
 
 gint ett_xmpp_iq_error = -1;
 gint ett_xmpp_iq_bind = -1;
@@ -262,6 +264,8 @@ gint ett_xmpp_gtalk_jingleinfo_stun = -1;
 gint ett_xmpp_gtalk_jingleinfo_server = -1;
 gint ett_xmpp_gtalk_jingleinfo_relay = -1;
 gint ett_xmpp_gtalk_jingleinfo_relay_serv = -1;
+gint ett_xmpp_gtalk_setting = -1;
+gint ett_xmpp_gtalk_nosave_x = -1;
 
 
 static void
@@ -405,118 +409,118 @@ proto_register_xmpp(void) {
                 "to", "xmpp.to", FT_STRING, BASE_NONE, NULL, 0x0,
                 "packet to", HFILL
             }},
-            { &hf_xmpp_iq_query,
+            { &hf_xmpp_query,
             {
-                "QUERY", "xmpp.iq.query", FT_NONE, BASE_NONE, NULL, 0x0,
+                "QUERY", "xmpp.query", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq query", HFILL
             }},
-            { &hf_xmpp_iq_query_node,
+            { &hf_xmpp_query_node,
             {
-                "node", "xmpp.iq.query.node", FT_STRING, BASE_NONE, NULL, 0x0,
+                "node", "xmpp.query.node", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq query node", HFILL
             }},
-            { &hf_xmpp_iq_query_item,
+            { &hf_xmpp_query_item,
             {
-                "ITEM", "xmpp.iq.query.item", FT_NONE, BASE_NONE, NULL, 0x0,
+                "ITEM", "xmpp.query.item", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq query item", HFILL
 
             }},
-            { &hf_xmpp_iq_query_item_jid,
+            { &hf_xmpp_query_item_jid,
             {
-                "jid", "xmpp.iq.query.item.jid", FT_STRING, BASE_NONE, NULL, 0x0,
+                "jid", "xmpp.query.item.jid", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq query item jid", HFILL
 
             }},
-            { &hf_xmpp_iq_query_item_name,
+            { &hf_xmpp_query_item_name,
             {
-                "name", "xmpp.iq.query.item.name", FT_STRING, BASE_NONE, NULL, 0x0,
+                "name", "xmpp.query.item.name", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq query item name", HFILL
             }},
-            { &hf_xmpp_iq_query_item_subscription,
+            { &hf_xmpp_query_item_subscription,
             {
-                "subscription", "xmpp.iq.query.item.subscription", FT_STRING, BASE_NONE, NULL, 0x0,
+                "subscription", "xmpp.query.item.subscription", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq query item subscription", HFILL
             }},
-            { &hf_xmpp_iq_query_item_ask,
+            { &hf_xmpp_query_item_ask,
             {
-                "ask", "xmpp.iq.query.item.ask", FT_STRING, BASE_NONE, NULL, 0x0,
+                "ask", "xmpp.query.item.ask", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq query item ask", HFILL
             }},
-            { &hf_xmpp_iq_query_item_group,
+            { &hf_xmpp_query_item_group,
             {
-                "GROUP", "xmpp.iq.query.item.group", FT_STRING, BASE_NONE, NULL, 0x0,
+                "GROUP", "xmpp.query.item.group", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq query item group", HFILL
 
             }},
-            { &hf_xmpp_iq_query_item_approved,
+            { &hf_xmpp_query_item_approved,
             {
-                "approved", "xmpp.iq.query.item.approved", FT_STRING, BASE_NONE, NULL, 0x0,
+                "approved", "xmpp.query.item.approved", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq query item approved", HFILL
 
             }},
-            { &hf_xmpp_iq_query_item_node,
+            { &hf_xmpp_query_item_node,
             {
-                "node", "xmpp.iq.query.item.node", FT_STRING, BASE_NONE, NULL, 0x0,
+                "node", "xmpp.query.item.node", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq query item node", HFILL
 
             }},
-            { &hf_xmpp_iq_query_identity,
+            { &hf_xmpp_query_identity,
             {
-                "IDENTITY", "xmpp.iq.query.identity", FT_NONE, BASE_NONE, NULL, 0x0,
+                "IDENTITY", "xmpp.query.identity", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq query identity", HFILL
 
             }},
-            { &hf_xmpp_iq_query_identity_category,
+            { &hf_xmpp_query_identity_category,
             {
-                "category", "xmpp.iq.query.identity.category", FT_STRING, BASE_NONE, NULL, 0x0,
+                "category", "xmpp.query.identity.category", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq query identity category", HFILL
 
             }},
-            { &hf_xmpp_iq_query_identity_type,
+            { &hf_xmpp_query_identity_type,
             {
-                "type", "xmpp.iq.query.identity.type", FT_STRING, BASE_NONE, NULL, 0x0,
+                "type", "xmpp.query.identity.type", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq query identity type", HFILL
 
             }},
-            { &hf_xmpp_iq_query_identity_name,
+            { &hf_xmpp_query_identity_name,
             {
-                "name", "xmpp.iq.query.identity.name", FT_STRING, BASE_NONE, NULL, 0x0,
+                "name", "xmpp.query.identity.name", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq query identity name", HFILL
 
             }},
-            { &hf_xmpp_iq_query_identity_lang,
+            { &hf_xmpp_query_identity_lang,
             {
-                "lang", "xmpp.iq.query.identity.lang", FT_STRING, BASE_NONE, NULL, 0x0,
+                "lang", "xmpp.query.identity.lang", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq query identity lang", HFILL
 
             }},
-            { &hf_xmpp_iq_query_feature,
+            { &hf_xmpp_query_feature,
             {
-                "FEATURE", "xmpp.iq.query.feature", FT_STRING, BASE_NONE, NULL, 0x0,
+                "FEATURE", "xmpp.query.feature", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq query feature", HFILL
 
             }},
-            { &hf_xmpp_iq_query_streamhost,
+            { &hf_xmpp_query_streamhost,
             {
-                "STREAMHOST", "xmpp.iq.query.streamhost", FT_NONE, BASE_NONE, NULL, 0x0,
+                "STREAMHOST", "xmpp.query.streamhost", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq query streamhost", HFILL
 
             }},
-            { &hf_xmpp_iq_query_streamhost_used,
+            { &hf_xmpp_query_streamhost_used,
             {
-                "STREAMHOST-USED", "xmpp.iq.query.streamhost-used", FT_NONE, BASE_NONE, NULL, 0x0,
+                "STREAMHOST-USED", "xmpp.query.streamhost-used", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq query streamhost-used", HFILL
 
             }},
-            { &hf_xmpp_iq_query_activate,
+            { &hf_xmpp_query_activate,
             {
-                "ACTIVATE", "xmpp.iq.query.activate", FT_NONE, BASE_NONE, NULL, 0x0,
+                "ACTIVATE", "xmpp.query.activate", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq query activate", HFILL
 
             }},
-            { &hf_xmpp_iq_query_udpsuccess,
+            { &hf_xmpp_query_udpsuccess,
             {
-                "UDPSUCCESS", "xmpp.iq.query.udpsuccess", FT_NONE, BASE_NONE, NULL, 0x0,
+                "UDPSUCCESS", "xmpp.query.udpsuccess", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq query streamhost-used", HFILL
 
             }},
@@ -952,6 +956,16 @@ proto_register_xmpp(void) {
                 "session ID", "xmpp.gtalk", FT_STRING, BASE_NONE, NULL, 0x0,
                 "GTalk session id", HFILL
             }},
+            { &hf_xmpp_gtalk_setting,
+            {
+                "USERSETTING", "xmpp.gtalk.setting", FT_NONE, BASE_NONE, NULL, 0x0,
+                "google:setting usersetting", HFILL
+            }},
+            { &hf_xmpp_gtalk_nosave_x,
+            {
+                "X-NOSAVE", "xmpp.gtalk.nosave.x", FT_NONE, BASE_NONE, NULL, 0x0,
+                "google:nosave x", HFILL
+            }},
             { &hf_xmpp_response_in,
 		{ "Response In", "xmpp.response_in",
 		FT_FRAMENUM, BASE_NONE, NULL, 0x0,
@@ -987,13 +1001,13 @@ proto_register_xmpp(void) {
     static gint * ett[] = {
         &ett_xmpp,
         &ett_xmpp_iq,
-        &ett_xmpp_iq_query,
-        &ett_xmpp_iq_query_item,
-        &ett_xmpp_iq_query_identity,
-        &ett_xmpp_iq_query_feature,
-        &ett_xmpp_iq_query_streamhost,
-        &ett_xmpp_iq_query_streamhost_used,
-        &ett_xmpp_iq_query_udpsuccess,
+        &ett_xmpp_query,
+        &ett_xmpp_query_item,
+        &ett_xmpp_query_identity,
+        &ett_xmpp_query_feature,
+        &ett_xmpp_query_streamhost,
+        &ett_xmpp_query_streamhost_used,
+        &ett_xmpp_query_udpsuccess,
         &ett_xmpp_iq_error,
         &ett_xmpp_iq_bind,
         &ett_xmpp_vcard,
@@ -1051,7 +1065,8 @@ proto_register_xmpp(void) {
         &ett_xmpp_gtalk_jingleinfo_server,
         &ett_xmpp_gtalk_jingleinfo_relay,
         &ett_xmpp_gtalk_jingleinfo_relay_serv,
-
+        &ett_xmpp_gtalk_setting,
+        &ett_xmpp_gtalk_nosave_x,
     };
 
     proto_xmpp = proto_register_protocol(
@@ -1061,6 +1076,9 @@ proto_register_xmpp(void) {
             );
     proto_register_field_array(proto_xmpp, hf, array_length(hf));
     proto_register_subtree_array(ett, array_length(ett));
+
+    /*to remove*/
+    //register_dissector("xmpp2", dissect_xmpp, proto_xmpp);
 }
 
 void
