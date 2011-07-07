@@ -120,5 +120,8 @@ extern void display_elems(proto_tree *tree, element_t *parent, packet_info *pinf
 
 extern void val_enum_list(packet_info *pinfo, proto_item *item, gchar *name, gchar *value, gpointer data);
 
+extern void change_elem_to_attrib(const gchar *elem_name, const gchar *attr_name, element_t *parent, attr_t* (*transform_func)(element_t *element));
+extern attr_t* transform_func_cdata(element_t *elem);
+
 #endif
 

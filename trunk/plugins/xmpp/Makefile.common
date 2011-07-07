@@ -37,7 +37,8 @@ DISSECTOR_INCLUDES = \
 	xmpp.h \
         xmpp-jingle.h \
         xmpp-other.h \
-        xmpp-gtalk.h
+        xmpp-gtalk.h \
+        xmpp-conference.h
         
 # Dissector helpers. They're included in the source files in this
 # directory, but they're not dissectors themselves, i.e. they're not
@@ -47,4 +48,5 @@ DISSECTOR_SUPPORT_SRC = \
 	xmpp.c \
         xmpp-jingle.c \
         xmpp-other.c \
-        xmpp-gtalk.c
+        xmpp-gtalk.c \
+        xmpp-conference.c

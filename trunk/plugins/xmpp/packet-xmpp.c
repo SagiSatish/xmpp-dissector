@@ -177,6 +177,10 @@ gint hf_xmpp_gtalk_nosave_x = -1;
 gint hf_xmpp_gtalk_mail_mailbox = -1;
 gint hf_xmpp_gtalk_mail_new_mail = -1;
 
+
+gint hf_xmpp_conf_info = -1;
+gint hf_xmpp_conf_info_sid = -1;
+
 gint hf_xmpp_unknown = -1;
 gint hf_xmpp_unknown_attr = -1;
 
@@ -274,6 +278,13 @@ gint ett_xmpp_gtalk_mail_senders = -1;
 gint ett_xmpp_gtalk_mail_sender = -1;
 gint ett_xmpp_gtalk_status_status_list = -1;
 
+gint ett_xmpp_conf_info = -1;
+gint ett_xmpp_conf_desc = -1;
+gint ett_xmpp_conf_state = -1;
+gint ett_xmpp_conf_users = -1;
+gint ett_xmpp_conf_user = -1;
+gint ett_xmpp_conf_endpoint = -1;
+gint ett_xmpp_conf_media = -1;
 
 static void
 dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
@@ -983,6 +994,16 @@ proto_register_xmpp(void) {
                 "NEW MAIL", "xmpp.gtalk.new-mail", FT_NONE, BASE_NONE, NULL, 0x0,
                 "google:mail:notify new-mail", HFILL
             }},
+             { &hf_xmpp_conf_info,
+            {
+                "CONFERENCE INFO", "xmpp.conf-info", FT_NONE, BASE_NONE, NULL, 0x0,
+                "urn:ietf:params:xml:ns:conference-info", HFILL
+            }},
+             { &hf_xmpp_conf_info_sid,
+            {
+                "sid", "xmpp.conf-info.sid", FT_STRING, BASE_NONE, NULL, 0x0,
+                "urn:ietf:params:xml:ns:conference-info sid", HFILL
+            }},
             { &hf_xmpp_response_in,
 		{ "Response In", "xmpp.response_in",
 		FT_FRAMENUM, BASE_NONE, NULL, 0x0,
@@ -1089,7 +1110,13 @@ proto_register_xmpp(void) {
         &ett_xmpp_gtalk_mail_senders,
         &ett_xmpp_gtalk_mail_sender,
         &ett_xmpp_gtalk_status_status_list,
-
+        &ett_xmpp_conf_info,
+        &ett_xmpp_conf_desc,
+        &ett_xmpp_conf_state,
+        &ett_xmpp_conf_users,
+        &ett_xmpp_conf_user,
+        &ett_xmpp_conf_endpoint,
+        &ett_xmpp_conf_media,
     };
 
     proto_xmpp = proto_register_protocol(
