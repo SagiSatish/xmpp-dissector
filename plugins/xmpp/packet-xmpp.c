@@ -174,6 +174,8 @@ gint hf_xmpp_gtalk_session_type = -1;
 gint hf_xmpp_gtalk = -1;
 gint hf_xmpp_gtalk_setting = -1;
 gint hf_xmpp_gtalk_nosave_x = -1;
+gint hf_xmpp_gtalk_mail_mailbox = -1;
+gint hf_xmpp_gtalk_mail_new_mail = -1;
 
 gint hf_xmpp_unknown = -1;
 gint hf_xmpp_unknown_attr = -1;
@@ -266,6 +268,10 @@ gint ett_xmpp_gtalk_jingleinfo_relay = -1;
 gint ett_xmpp_gtalk_jingleinfo_relay_serv = -1;
 gint ett_xmpp_gtalk_setting = -1;
 gint ett_xmpp_gtalk_nosave_x = -1;
+gint ett_xmpp_gtalk_mail_mailbox = -1;
+gint ett_xmpp_gtalk_mail_mail_info = -1;
+gint ett_xmpp_gtalk_mail_senders = -1;
+gint ett_xmpp_gtalk_mail_sender = -1;
 
 
 static void
@@ -966,6 +972,16 @@ proto_register_xmpp(void) {
                 "X-NOSAVE", "xmpp.gtalk.nosave.x", FT_NONE, BASE_NONE, NULL, 0x0,
                 "google:nosave x", HFILL
             }},
+            { &hf_xmpp_gtalk_mail_mailbox,
+            {
+                "MAILBOX", "xmpp.gtalk.mailbox", FT_NONE, BASE_NONE, NULL, 0x0,
+                "google:mail:notify mailbox", HFILL
+            }},
+            { &hf_xmpp_gtalk_mail_new_mail,
+            {
+                "NEW MAIL", "xmpp.gtalk.new-mail", FT_NONE, BASE_NONE, NULL, 0x0,
+                "google:mail:notify new-mail", HFILL
+            }},
             { &hf_xmpp_response_in,
 		{ "Response In", "xmpp.response_in",
 		FT_FRAMENUM, BASE_NONE, NULL, 0x0,
@@ -1067,6 +1083,11 @@ proto_register_xmpp(void) {
         &ett_xmpp_gtalk_jingleinfo_relay_serv,
         &ett_xmpp_gtalk_setting,
         &ett_xmpp_gtalk_nosave_x,
+        &ett_xmpp_gtalk_mail_mailbox,
+        &ett_xmpp_gtalk_mail_mail_info,
+        &ett_xmpp_gtalk_mail_senders,
+        &ett_xmpp_gtalk_mail_sender,
+
     };
 
     proto_xmpp = proto_register_protocol(

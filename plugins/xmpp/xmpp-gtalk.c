@@ -29,6 +29,10 @@ static void xmpp_gtalk_jingleinfo_server(proto_tree* tree, tvbuff_t* tvb, packet
 static void xmpp_gtalk_jingleinfo_relay(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_gtalk_jingleinfo_relay_serv(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_gtalk_nosave_item(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+static void xmpp_gtalk_mail_mail_info(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+static void xmpp_gtalk_mail_senders(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+static void xmpp_gtalk_mail_sender(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+static void xmpp_gtalk_mail_snippet(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 
 void
 xmpp_gtalk_session(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
@@ -373,4 +377,144 @@ xmpp_gtalk_nosave_x(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element
 
     display_attrs(x_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
     display_elems(x_tree, element, pinfo, tvb, NULL, 0);
+}
+
+void
+xmpp_gtalk_mail_query(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+{
+    proto_item *query_item;
+    proto_tree *query_tree;
+
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
+        {"newer-than-time", -1, FALSE, TRUE, NULL, NULL},
+        {"newer-than-tid", -1, FALSE, TRUE, NULL, NULL},
+        {"q", -1, FALSE, TRUE, NULL, NULL}
+    };
+
+    col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(google:mail:notify) ");
+
+    query_item = proto_tree_add_item(tree, hf_xmpp_query, tvb, element->offset, element->length, FALSE);
+    query_tree = proto_item_add_subtree(query_item, ett_xmpp_query);
+
+    display_attrs(query_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(query_tree, element, pinfo, tvb, NULL, 0);
+}
+
+void
+xmpp_gtalk_mail_mailbox(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+{
+    proto_item *mail_item;
+    proto_tree *mail_tree;
+
+    attr_info attrs_info [] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
+        {"result-time", -1, FALSE, TRUE, NULL, NULL},
+        {"total-matched", -1, FALSE, TRUE, NULL, NULL},
+        {"total-estimate", -1, FALSE, TRUE, NULL, NULL},
+        {"url", -1, FALSE, TRUE, NULL, NULL}
+    };
+
+    elem_info elems_info [] = {
+        {NAME,"mail-thread-info", xmpp_gtalk_mail_mail_info, MANY}
+    };
+
+    mail_item = proto_tree_add_item(tree, hf_xmpp_gtalk_mail_mailbox, tvb, element->offset, element->length, FALSE);
+    mail_tree = proto_item_add_subtree(mail_item, ett_xmpp_gtalk_mail_mailbox);
+
+    display_attrs(mail_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(mail_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
+}
+
+static void
+xmpp_gtalk_mail_mail_info(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+{
+    proto_item *mail_info_item;
+    proto_tree *mail_info_tree;
+
+    attr_info attrs_info [] = {
+        {"tid", -1, FALSE, FALSE, NULL, NULL},
+        {"participation", -1, FALSE, FALSE, NULL, NULL},
+        {"messages", -1, FALSE, TRUE, NULL, NULL},
+        {"date", -1, FALSE, TRUE, NULL, NULL},
+        {"url", -1, FALSE, FALSE, NULL, NULL},
+        {"labels", -1, FALSE, TRUE, NULL, NULL},
+        {"subject", -1, FALSE, TRUE, NULL, NULL}
+    };
+
+    elem_info elems_info [] = {
+        {NAME, "senders", xmpp_gtalk_mail_senders, ONE},
+        {NAME, "snippet", xmpp_gtalk_mail_snippet, ONE}/*or MANY?*/
+    };
+
+    element_t *labels, *subject;
+
+    mail_info_item = proto_tree_add_text(tree, tvb, element->offset, element->length, "MAIL-THREAD-INFO");
+    mail_info_tree = proto_item_add_subtree(mail_info_item,ett_xmpp_gtalk_mail_mail_info);
+
+    if((labels = steal_element_by_name(element,"labels"))!=NULL)
+    {
+        attr_t *fake_labels = ep_init_attr_t(labels->data?labels->data->value:"",labels->offset, labels->length);
+        g_hash_table_insert(element->attrs, "labels", fake_labels);
+    }
+    if((subject = steal_element_by_name(element,"subject"))!=NULL)
+    {
+        attr_t *fake_subject = ep_init_attr_t(subject->data?subject->data->value:"",subject->offset, subject->length);
+        g_hash_table_insert(element->attrs, "subject", fake_subject);
+    }
+
+    display_attrs(mail_info_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(mail_info_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
+}
+
+
+static void
+xmpp_gtalk_mail_senders(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+{
+    proto_item *senders_item;
+    proto_tree *senders_tree;
+
+    elem_info elems_info [] = {
+        {NAME, "sender", xmpp_gtalk_mail_sender, MANY}
+    };
+
+    senders_item = proto_tree_add_text(tree, tvb, element->offset, element->length, "SENDERS");
+    senders_tree = proto_item_add_subtree(senders_item, ett_xmpp_gtalk_mail_senders);
+
+    display_attrs(senders_tree, element, pinfo, tvb, NULL, 0);
+    display_elems(senders_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
+}
+
+static void
+xmpp_gtalk_mail_sender(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+{
+    proto_item *sender_item;
+    proto_tree *sender_tree;
+
+    attr_info attrs_info [] = {
+        {"name", -1, FALSE, TRUE, NULL, NULL},
+        {"address", -1, FALSE, TRUE, NULL, NULL},
+        {"orginator", -1, FALSE, TRUE, NULL, NULL},
+        {"unread", -1, FALSE, TRUE, NULL, NULL}
+    };
+
+    sender_item = proto_tree_add_text(tree, tvb, element->offset, element->length, "SENDER");
+    sender_tree = proto_item_add_subtree(sender_item, ett_xmpp_gtalk_mail_sender);
+
+    display_attrs(sender_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(sender_tree, element, pinfo, tvb, NULL, 0);
+}
+
+static void
+xmpp_gtalk_mail_snippet(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+{
+    proto_tree_add_text(tree, tvb, element->offset, element->length, "SNIPPET: %s",element->data?element->data->value:"");
+    xmpp_unknown(tree, tvb, pinfo, element);
+}
+
+void
+xmpp_gtalk_mail_new_mail(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+{
+    proto_tree_add_item(tree, hf_xmpp_gtalk_mail_new_mail, tvb, element->offset, element->length, FALSE);
+    xmpp_unknown(tree, tvb, pinfo, element);
 }
