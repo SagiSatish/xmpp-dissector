@@ -150,6 +150,8 @@ extern gint hf_xmpp_gtalk_session_type;
 extern gint hf_xmpp_gtalk;
 extern gint hf_xmpp_gtalk_setting;
 extern gint hf_xmpp_gtalk_nosave_x;
+extern gint hf_xmpp_gtalk_mail_mailbox;
+extern gint hf_xmpp_gtalk_mail_new_mail;
 
 extern gint hf_xmpp_unknown;
 extern gint hf_xmpp_unknown_attr;
@@ -242,6 +244,10 @@ extern gint ett_xmpp_gtalk_jingleinfo_relay;
 extern gint ett_xmpp_gtalk_jingleinfo_relay_serv;
 extern gint ett_xmpp_gtalk_setting;
 extern gint ett_xmpp_gtalk_nosave_x;
+extern gint ett_xmpp_gtalk_mail_mailbox;
+extern gint ett_xmpp_gtalk_mail_mail_info;
+extern gint ett_xmpp_gtalk_mail_senders;
+extern gint ett_xmpp_gtalk_mail_sender;
 
 #endif	/* PACKET_XMPP_H */
 
