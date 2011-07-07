@@ -248,6 +248,7 @@ extern gint ett_xmpp_gtalk_mail_mailbox;
 extern gint ett_xmpp_gtalk_mail_mail_info;
 extern gint ett_xmpp_gtalk_mail_senders;
 extern gint ett_xmpp_gtalk_mail_sender;
+extern gint ett_xmpp_gtalk_status_status_list;
 
 #endif	/* PACKET_XMPP_H */
 

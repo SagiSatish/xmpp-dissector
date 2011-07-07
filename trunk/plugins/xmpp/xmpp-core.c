@@ -95,7 +95,8 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
         {NAME_AND_ATTR, name_attr_struct("query", "xmlns","jabber:iq:version"), xmpp_version_query, ONE},
         {NAME_AND_ATTR, name_attr_struct("query", "xmlns","google:mail:notify"), xmpp_gtalk_mail_query, ONE},
         {NAME_AND_ATTR, name_attr_struct("mailbox", "xmlns","google:mail:notify"), xmpp_gtalk_mail_mailbox, ONE},
-        {NAME_AND_ATTR, name_attr_struct("new-mail", "xmlns","google:mail:notify"), xmpp_gtalk_mail_new_mail, ONE}
+        {NAME_AND_ATTR, name_attr_struct("new-mail", "xmlns","google:mail:notify"), xmpp_gtalk_mail_new_mail, ONE},
+        {NAME_AND_ATTR, name_attr_struct("query", "xmlns","google:shared-status"), xmpp_gtalk_status_query, ONE}
     };
 
     attr_id = g_hash_table_lookup(packet->attrs, "id");
