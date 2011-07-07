@@ -33,6 +33,7 @@ static void xmpp_gtalk_mail_mail_info(proto_tree* tree, tvbuff_t* tvb, packet_in
 static void xmpp_gtalk_mail_senders(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_gtalk_mail_sender(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_gtalk_mail_snippet(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+static void xmpp_gtalk_status_status_list(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 
 void
 xmpp_gtalk_session(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
@@ -517,4 +518,82 @@ xmpp_gtalk_mail_new_mail(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, el
 {
     proto_tree_add_item(tree, hf_xmpp_gtalk_mail_new_mail, tvb, element->offset, element->length, FALSE);
     xmpp_unknown(tree, tvb, pinfo, element);
+}
+
+
+void
+xmpp_gtalk_status_query(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+{
+    proto_item *query_item;
+    proto_tree *query_tree;
+
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
+        {"version", -1, FALSE, TRUE, NULL, NULL},
+        {"status-max", -1, FALSE, FALSE, NULL, NULL},
+        {"status-list-max", -1, FALSE, FALSE, NULL, NULL},
+        {"status-list-contents-max", -1, FALSE, FALSE, NULL, NULL},
+        {"status-min-ver", -1, FALSE, TRUE, NULL, NULL},
+        {"show", -1, FALSE, TRUE, NULL, NULL},
+        {"status", -1, FALSE, TRUE, NULL, NULL},
+        {"invisible", -1, FALSE, TRUE, NULL, NULL},
+    };
+
+    elem_info elems_info [] = {
+        {NAME, "status-list", xmpp_gtalk_status_status_list, MANY}
+    };
+
+    element_t *status, *show, *invisible;
+
+    col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(google:shared-status) ");
+
+    query_item = proto_tree_add_item(tree, hf_xmpp_query, tvb, element->offset, element->length, FALSE);
+    query_tree = proto_item_add_subtree(query_item, ett_xmpp_query);
+
+    if((status = steal_element_by_name(element,"status"))!=NULL)
+    {
+        attr_t *fake_status = ep_init_attr_t(status->data?status->data->value:"",status->offset, status->length);
+        g_hash_table_insert(element->attrs, "status", fake_status);
+    }
+
+    if((show = steal_element_by_name(element,"show"))!=NULL)
+    {
+        attr_t *fake_show = ep_init_attr_t(show->data?show->data->value:"",show->offset, show->length);
+        g_hash_table_insert(element->attrs, "show", fake_show);
+    }
+
+    if((invisible = steal_element_by_name(element,"invisible"))!=NULL)
+    {
+        attr_t *value = g_hash_table_lookup(invisible->attrs, "value");
+        attr_t *fake_invisible = ep_init_attr_t(value?value->value:"",invisible->offset, invisible->length);
+        g_hash_table_insert(element->attrs, "invisible", fake_invisible);
+    }
+    
+
+    display_attrs(query_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(query_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
+}
+
+static void
+xmpp_gtalk_status_status_list(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+{
+    proto_item *list_item;
+    proto_tree *list_tree;
+
+    attr_info attrs_info [] = {
+        {"show", -1, TRUE, TRUE, NULL, NULL}
+    };
+
+    element_t *status;
+
+    list_item = proto_tree_add_text(tree, tvb, element->offset, element->length, "STATUS LIST");
+    list_tree = proto_item_add_subtree(list_item, ett_xmpp_gtalk_status_status_list);
+
+    while((status = steal_element_by_name(element, "status"))!=NULL)
+    {
+        proto_tree_add_text(list_tree, tvb, status->offset, status->length, "STATUS: %s",status->data?status->data->value:"");
+    }
+
+    display_attrs(list_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(list_tree, element, pinfo, tvb, NULL, 0);
 }

@@ -272,6 +272,7 @@ gint ett_xmpp_gtalk_mail_mailbox = -1;
 gint ett_xmpp_gtalk_mail_mail_info = -1;
 gint ett_xmpp_gtalk_mail_senders = -1;
 gint ett_xmpp_gtalk_mail_sender = -1;
+gint ett_xmpp_gtalk_status_status_list = -1;
 
 
 static void
@@ -1087,6 +1088,7 @@ proto_register_xmpp(void) {
         &ett_xmpp_gtalk_mail_mail_info,
         &ett_xmpp_gtalk_mail_senders,
         &ett_xmpp_gtalk_mail_sender,
+        &ett_xmpp_gtalk_status_status_list,
 
     };
 
