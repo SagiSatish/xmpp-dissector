@@ -23,6 +23,7 @@
 #include <plugins/xmpp/packet-xmpp.h>
 #include <plugins/xmpp/xmpp.h>
 #include <plugins/xmpp/xmpp-jingle.h>
+#include <plugins/xmpp/xmpp-conference.h>
 
 void xmpp_iq_jingle(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
@@ -69,7 +70,8 @@ xmpp_iq_jingle(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *e
     elem_info elems_info [] = {
         {NAME, "content", xmpp_iq_jingle_content, MANY},
         {NAME, "reason", xmpp_iq_jingle_reason, MANY},
-        {NAMES, rtp_info_array, xmpp_iq_jingle_rtp_info, ONE}
+        {NAMES, rtp_info_array, xmpp_iq_jingle_rtp_info, ONE},
+        {NAME, "conference-info", xmpp_conferece_info_advert, ONE}
     };
 
      attr_t *action = g_hash_table_lookup(element->attrs,"action");

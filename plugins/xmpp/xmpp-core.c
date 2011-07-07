@@ -27,8 +27,11 @@
 #include <plugins/xmpp/xmpp-jingle.h>
 #include <plugins/xmpp/xmpp-other.h>
 #include <plugins/xmpp/xmpp-gtalk.h>
+#include <plugins/xmpp/xmpp-conference.h>
 
 #include <epan/strutil.h>
+
+#include "xmpp-conference.h"
 
 
 void xmpp_auth(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
@@ -96,7 +99,8 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
         {NAME_AND_ATTR, name_attr_struct("query", "xmlns","google:mail:notify"), xmpp_gtalk_mail_query, ONE},
         {NAME_AND_ATTR, name_attr_struct("mailbox", "xmlns","google:mail:notify"), xmpp_gtalk_mail_mailbox, ONE},
         {NAME_AND_ATTR, name_attr_struct("new-mail", "xmlns","google:mail:notify"), xmpp_gtalk_mail_new_mail, ONE},
-        {NAME_AND_ATTR, name_attr_struct("query", "xmlns","google:shared-status"), xmpp_gtalk_status_query, ONE}
+        {NAME_AND_ATTR, name_attr_struct("query", "xmlns","google:shared-status"), xmpp_gtalk_status_query, ONE},
+        {NAME, "conference-info", xmpp_conference_info, ONE}
     };
 
     attr_id = g_hash_table_lookup(packet->attrs, "id");

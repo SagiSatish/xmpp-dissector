@@ -680,3 +680,25 @@ val_enum_list(packet_info *pinfo, proto_item *item, gchar *name, gchar *value, g
         }
     }
 }
+
+
+void
+change_elem_to_attrib(const gchar *elem_name, const gchar *attr_name, element_t *parent, attr_t* (*transform_func)(element_t *element))
+{
+    element_t *element = NULL;
+    attr_t *fake_attr = NULL;
+
+    element = steal_element_by_name(parent, elem_name);
+    if(element)
+        fake_attr = transform_func(element);
+
+    if(fake_attr)
+        g_hash_table_insert(parent->attrs, (gpointer)attr_name, fake_attr);
+}
+
+attr_t*
+transform_func_cdata(element_t *elem)
+{
+    attr_t *result = ep_init_attr_t(elem->data?elem->data->value:"", elem->offset, elem->length);
+    return result;
+}
