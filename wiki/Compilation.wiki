@@ -12,22 +12,22 @@ To compile sources you will need linux tools such as gcc, svn, autoconf, automak
 
 At first you need to download Wireshark sources. You can get it by:
 {{{
-svn co http://anonsvn.wireshark.org/wireshark/trunk wireshark-source
+wget http://wiresharkdownloads.riverbed.com/wireshark/src/wireshark-1.6.0.tar.bz2
 }}}
 
-Next go to the sources directory and remove svn data:
+Next unpack downloaded file.
 {{{
-cd wireshark-source
-rm -rf `find . -type d -name .svn`
+tar -xvjf wireshark-1.6.0.tar.bz2
 }}}
 
-Now you have to get XMPP dissector sources (current directory: wireshark-source).
+Now you have to get XMPP dissector sources.
 {{{
-svn checkout http://xmpp-dissector.googlecode.com/svn/trunk/ . --force
+svn checkout http://xmpp-dissector.googlecode.com/svn/trunk/ wireshark-1.6.0 --force
 }}}
 
-If you have all sources, you have to patch make files. It will allow you to compile XMPP dissector sources (current directory: wireshark-source).
+If you have all sources, you have to patch make files. It will allow you to compile XMPP dissector sources.
 {{{
+cd wireshark-1.6.0
 patch -p0 -i wireshark_config.patch
 }}}
 
