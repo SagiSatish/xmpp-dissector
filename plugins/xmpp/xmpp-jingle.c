@@ -122,7 +122,7 @@ xmpp_iq_jingle_content_description(proto_tree* tree, tvbuff_t* tvb, packet_info*
     proto_tree *desc_tree;
 
     attr_info attrs_info[] = {
-        {"xmlns", hf_xmpp_xmlns, TRUE, FALSE, NULL, NULL},
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
         {"media", hf_xmpp_iq_jingle_content_description_media, TRUE, TRUE, NULL, NULL},
         {"ssrc", hf_xmpp_iq_jingle_content_description_ssrc , FALSE, TRUE, NULL, NULL}
     };
@@ -320,11 +320,21 @@ xmpp_iq_jingle_cont_desc_rtp_hdrext(proto_tree* tree, tvbuff_t* tvb, packet_info
         {"xmlns", hf_xmpp_xmlns, FALSE, FALSE, NULL, NULL},
         {"id", -1, TRUE, FALSE, NULL, NULL},
         {"uri", -1, TRUE, TRUE, NULL, NULL},
-        {"senders", -1, FALSE, TRUE, val_enum_list, senders_enums}
+        {"senders", -1, FALSE, TRUE, val_enum_list, senders_enums},
+        {"parameter", -1, FALSE, TRUE, NULL, NULL}
     };
+
+    element_t *parameter;
 
     rtp_hdr_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_desc_rtp_hdr, tvb, element->offset, element->length, FALSE);
     rtp_hdr_tree = proto_item_add_subtree(rtp_hdr_item, ett_xmpp_iq_jingle_cont_desc_rtp_hdr);
+
+    if((parameter = steal_element_by_name(element, "parameter"))!=NULL)
+    {
+        attr_t *name = g_hash_table_lookup(element->attrs, "name");
+        attr_t *fake_attr = ep_init_attr_t(name?name->value:"", parameter->offset, parameter->length);
+        g_hash_table_insert(element->attrs, "parameter", fake_attr);
+    }
 
     display_attrs(rtp_hdr_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
@@ -338,7 +348,7 @@ xmpp_iq_jingle_cont_trans(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, e
     proto_tree *trans_tree;
 
     attr_info attrs_info[] = {
-        {"xmlns", hf_xmpp_xmlns, FALSE, FALSE, NULL, NULL},
+        {"xmlns", hf_xmpp_xmlns, FALSE, TRUE, NULL, NULL},
         {"pwd", hf_xmpp_iq_jingle_cont_trans_pwd, FALSE, FALSE, NULL, NULL},
         {"ufrag", hf_xmpp_iq_jingle_cont_trans_ufrag, FALSE, TRUE, NULL, NULL}
     };
