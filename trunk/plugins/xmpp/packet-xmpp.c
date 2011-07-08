@@ -298,7 +298,7 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
     proto_tree *xmpp_tree = NULL;
     proto_item *xmpp_item = NULL;
 
-    element_t *packet;
+    element_t *packet = NULL;
 
     if(check_col(pinfo->cinfo, COL_PROTOCOL))
         col_set_str(pinfo->cinfo, COL_PROTOCOL, "XMPP");
@@ -312,9 +312,19 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
     
 
     call_dissector(xml_handle,tvb,pinfo,xmpp_tree);
+    
+    if(!pinfo->private_data)
+        return;
+
     //data from XML dissector
     xml_frame = ((xml_frame_t*)pinfo->private_data)->first_child;
+ 
+    if(!xml_frame)
+        return;
+
     packet = xml_frame_to_element_t(xml_frame);
+   
+
 
     conversation = find_or_create_conversation(pinfo);
     xmpp_info = conversation_get_proto_data(conversation, proto_xmpp);
