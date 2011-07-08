@@ -120,19 +120,6 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
 
     display_elems(xmpp_iq_tree, packet, pinfo, tvb, elems_info, array_length(elems_info));
 
-    /*appends to COL_INFO information about src or dst*/
-    if (pinfo->match_uint == pinfo->destport)
-    {
-        attr_t *to = g_hash_table_lookup(packet->attrs, "to");
-        if(to)
-            col_append_fstr(pinfo->cinfo, COL_INFO, "> %s ",to->value);
-    } else
-    {
-        attr_t *from = g_hash_table_lookup(packet->attrs, "from");
-        if(from)
-            col_append_fstr(pinfo->cinfo, COL_INFO, "< %s ",from->value);
-    }
-
     /*displays generated info such as req/resp tracking, jingle sid
      * in each packet related to specified jingle session and IBB sid in packet related to it*/
     if(xmpp_info && attr_id)

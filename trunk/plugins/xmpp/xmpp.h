@@ -13,6 +13,9 @@
       FI_RESET_FLAG(PITEM_FINFO(proto_item), FI_HIDDEN); \
 	} while(0)
 
+#define elem_cdata(elem) \
+elem->data?elem->data->value:""
+
 typedef struct _array_t
 {
     gpointer data;

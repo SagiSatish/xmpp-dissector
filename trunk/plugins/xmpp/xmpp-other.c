@@ -260,22 +260,19 @@ xmpp_roster_item(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t 
         {"ask", hf_xmpp_query_item_ask, FALSE, TRUE, val_enum_list, ask_enums_array},
         {"approved", hf_xmpp_query_item_approved, FALSE, TRUE, NULL, NULL},
         {"subscription", hf_xmpp_query_item_subscription, FALSE, TRUE, val_enum_list, subscription_array},
-        {"group", hf_xmpp_query_item_group, FALSE, TRUE, NULL, NULL}
     };
 
-
     element_t *group;
-
-    if((group = steal_element_by_name(element,"group"))!=NULL)
-    {
-        attr_t *fake_group = ep_init_attr_t(group->data?group->data->value:"",group->offset, group->length);
-        g_hash_table_insert(element->attrs, "group", fake_group);
-    }
 
     item_item = proto_tree_add_item(tree, hf_xmpp_query_item, tvb, element->offset, element->length, FALSE);
     item_tree = proto_item_add_subtree(item_item, ett_xmpp_query_item);
 
     display_attrs(item_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+
+    while((group = steal_element_by_name(element,"group"))!=NULL)
+    {
+        proto_tree_add_string(item_tree, hf_xmpp_query_item_group, tvb, group->offset, group->length, elem_cdata(group));
+    }
 
     xmpp_unknown(item_tree, tvb, pinfo, element);
 }

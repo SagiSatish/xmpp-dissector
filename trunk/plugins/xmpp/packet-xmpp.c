@@ -389,6 +389,18 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
             proto_tree_show_first_child(xmpp_tree);
             expert_add_info_format(pinfo, xmpp_tree, PI_UNDECODED, PI_NOTE, "Unknown packet: %s", packet->name );
         }
+
+        /*appends to COL_INFO information about src or dst*/
+        if (pinfo->match_uint == pinfo->destport) {
+            attr_t *to = g_hash_table_lookup(packet->attrs, "to");
+            if (to)
+                col_append_fstr(pinfo->cinfo, COL_INFO, "> %s ", to->value);
+        } else {
+            attr_t *from = g_hash_table_lookup(packet->attrs, "from");
+            if (from)
+                col_append_fstr(pinfo->cinfo, COL_INFO, "< %s ", from->value);
+        }
+
         
     }
 }
