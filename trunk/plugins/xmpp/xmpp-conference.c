@@ -64,10 +64,10 @@ xmpp_conference_info(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, elemen
     elem_info elems_info [] = {
         {NAME, "conference-description", xmpp_conf_desc, ONE},
         {NAME, "conference-state", xmpp_conf_state, ONE},
-        //{NAME, "host-info", xmpp_conf_host_info, ONE},
+        /*{NAME, "host-info", xmpp_conf_host_info, ONE},*/
         {NAME, "users", xmpp_conf_users, ONE},
-        //{NAME, "sidebars-by-ref", xmpp_conf_sidebars_by_ref, ONE},
-        //{NAME, "sidebars-by-val", xmpp_conf_sidebars_by_val, ONE},
+        /*{NAME, "sidebars-by-ref", xmpp_conf_sidebars_by_ref, ONE},*/
+        /*{NAME, "sidebars-by-val", xmpp_conf_sidebars_by_val, ONE},*/
     };
 
     cinfo_item = proto_tree_add_item(tree, hf_xmpp_conf_info, tvb, element->offset, element->length, FALSE);
@@ -90,12 +90,14 @@ xmpp_conf_desc(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *e
         {"max-user-count", -1, FALSE, FALSE, NULL, NULL},
     };
 
-    //elem_info elems_info [] = {
-        //{NAME, "keywords", xmpp_conf_desc_keywords, ONE},
-        //{NAME, "conf-uris", xmpp_conf_desc_conf_uris, ONE},
-        //{NAME, "service-uris", xmpp_conf_desc_serv_uris, ONE},
-        //{NAME, "available-media", xmpp_conf_desc_avil_media, ONE},
-    //};
+/*
+    elem_info elems_info [] = {
+        {NAME, "keywords", xmpp_conf_desc_keywords, ONE},
+        {NAME, "conf-uris", xmpp_conf_desc_conf_uris, ONE},
+        {NAME, "service-uris", xmpp_conf_desc_serv_uris, ONE},
+        {NAME, "available-media", xmpp_conf_desc_avil_media, ONE},
+    };
+*/
 
     desc_item = proto_tree_add_text(tree, tvb, element->offset, element->length, "CONFERENCE DESCRIPTION");
     desc_tree = proto_item_add_subtree(desc_item, ett_xmpp_conf_desc);
@@ -167,9 +169,9 @@ xmpp_conf_user(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *e
     };
 
     elem_info elems_info [] = {
-        //{NAME, "associated-aors", xmpp_conf_assoc_aors, ONE},
-        //{NAME, "roles", xmpp_conf_roles, ONE},
-        //{NAME, "languages", xmpp_conf_langs, ONE},
+        /*{NAME, "associated-aors", xmpp_conf_assoc_aors, ONE},*/
+        /*{NAME, "roles", xmpp_conf_roles, ONE},*/
+        /*{NAME, "languages", xmpp_conf_langs, ONE},*/
         {NAME, "endpoint", xmpp_conf_endpoint, MANY},
     };
 
@@ -199,11 +201,11 @@ xmpp_conf_endpoint(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_
     };
 
     elem_info elems_info [] = {
-        //{NAME,"referred",...,ONE},
-        //{NAME,"joining-info",...,ONE},
-        //{NAME,"disconnection-info",...,ONE},
+        /*{NAME,"referred",...,ONE},*/
+        /*{NAME,"joining-info",...,ONE},*/
+        /*{NAME,"disconnection-info",...,ONE},*/
         {NAME,"media", xmpp_conf_media, ONE},
-        //{NAME,"call-info",...,ONE},
+        /*{NAME,"call-info",...,ONE},*/
 
     };
 

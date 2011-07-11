@@ -46,15 +46,15 @@ typedef struct _element_t{
     gint length;
 } element_t;
 
-//informations about attributes that are displayed in proto tree
+/*informations about attributes that are displayed in proto tree*/
 typedef struct _attr_info{
     gchar *name;
     gint hf;
     gboolean is_required;
     gboolean in_short_list;
 
-    //function validates this attribute
-    //it may impose other restrictions (e.g. validating atribut's name, ...)
+    /*function validates this attribute
+    it may impose other restrictions (e.g. validating atribut's name, ...)*/
     void (*val_func)(packet_info *pinfo, proto_item *item, gchar *name, gchar *value, gpointer data);
     gpointer data;
 } attr_info;
@@ -71,11 +71,11 @@ typedef enum _elem_info_occurrence
     ONE,MANY
 } elem_info_occurrence;
 
-//informations about elements that are displayed in proto tree
+/*informations about elements that are displayed in proto tree*/
 typedef struct _elem_info{
     elem_info_type type;
     gpointer data;
-    //function that displays element in tree
+    /*function that displays element in tree*/
     void (*elem_func)(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
     elem_info_occurrence occurrence;
 } elem_info;

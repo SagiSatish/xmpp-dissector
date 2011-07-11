@@ -152,6 +152,7 @@ extern gint hf_xmpp_gtalk_setting;
 extern gint hf_xmpp_gtalk_nosave_x;
 extern gint hf_xmpp_gtalk_mail_mailbox;
 extern gint hf_xmpp_gtalk_mail_new_mail;
+extern gint hf_xmpp_gtalk_transport_p2p;
 
 extern gint hf_xmpp_conf_info;
 extern gint hf_xmpp_conf_info_sid;
@@ -252,6 +253,9 @@ extern gint ett_xmpp_gtalk_mail_mail_info;
 extern gint ett_xmpp_gtalk_mail_senders;
 extern gint ett_xmpp_gtalk_mail_sender;
 extern gint ett_xmpp_gtalk_status_status_list;
+extern gint ett_xmpp_gtalk_transport_p2p;
+extern gint ett_xmpp_gtalk_transport_p2p_cand;
+
 
 extern gint ett_xmpp_conf_info;
 extern gint ett_xmpp_conf_desc;

@@ -10,5 +10,6 @@ extern void xmpp_gtalk_mail_query(proto_tree* tree, tvbuff_t* tvb, packet_info* 
 extern void xmpp_gtalk_mail_mailbox(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 extern void xmpp_gtalk_mail_new_mail(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 extern void xmpp_gtalk_status_query(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+extern void xmpp_gtalk_transport_p2p(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 #endif	/* XMPP_GTALK_H */
 
