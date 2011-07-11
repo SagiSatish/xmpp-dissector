@@ -1120,7 +1120,7 @@ xmpp_muc_admin_query(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, elemen
 
     while((item = steal_element_by_name(element, "item"))!=NULL)
     {
-        //from muc#user, because it is the same except continue element
+        /*from muc#user, because it is the same except continue element*/
         xmpp_muc_user_item(query_tree, tvb, pinfo, item);
     }
 

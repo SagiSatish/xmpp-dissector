@@ -63,6 +63,7 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
     attr_t *attr_id, *attr_type;
 
     attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, FALSE, FALSE, NULL, NULL},
         {"id", hf_xmpp_id, TRUE, TRUE, NULL, NULL},
         {"type", hf_xmpp_type, TRUE, TRUE, NULL, NULL},
         {"from", hf_xmpp_from, FALSE, TRUE, NULL, NULL},

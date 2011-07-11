@@ -4,6 +4,8 @@
  * urn:xmpp:jingle:apps:rtp:info:1
  * urn:xmpp:jingle:apps:rtp:rtp-hdrext:0
  * urn:xmpp:jingle:apps:rtp:izrtp:1
+ *
+ * urn:xmpp:jingle:transports:ice-udp:1
  */
 
 #ifdef HAVE_CONFIG_H
@@ -25,6 +27,8 @@
 #include <plugins/xmpp/xmpp-jingle.h>
 #include <plugins/xmpp/xmpp-conference.h>
 
+#include "xmpp-gtalk.h"
+
 void xmpp_iq_jingle(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
 static void xmpp_iq_jingle_content(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
@@ -36,9 +40,9 @@ static void xmpp_iq_jingle_cont_desc_enc_zrtp_hash(proto_tree* tree, tvbuff_t* t
 static void xmpp_iq_jingle_cont_desc_enc_crypto(proto_tree* tree, tvbuff_t* tvb, packet_info *pinfo, element_t* element);
 static void xmpp_iq_jingle_cont_desc_bandwidth(proto_tree* tree, tvbuff_t* tvb, packet_info *pinfo, element_t* element);
 static void xmpp_iq_jingle_cont_desc_rtp_hdrext(proto_tree* tree, tvbuff_t* tvb, packet_info *pinfo, element_t* element);
-static void xmpp_iq_jingle_cont_trans(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
-static void xmpp_iq_jingle_cont_trans_candidate(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
-static void xmpp_iq_jingle_cont_trans_remote_candidate(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+static void xmpp_iq_jingle_cont_trans_ice(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+static void xmpp_iq_jingle_cont_trans_ice_candidate(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+static void xmpp_iq_jingle_cont_trans_ice_remote_candidate(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_iq_jingle_reason(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_iq_jingle_rtp_info(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 
@@ -104,7 +108,8 @@ xmpp_iq_jingle_content(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, elem
 
     elem_info elems_info [] = {
         {NAME, "description", xmpp_iq_jingle_content_description, MANY},
-        {NAME, "transport", xmpp_iq_jingle_cont_trans, MANY}
+        {NAME_AND_ATTR,  name_attr_struct("transport", "xmlns", "urn:xmpp:jingle:transports:ice-udp:1"), xmpp_iq_jingle_cont_trans_ice, MANY},
+        {NAME_AND_ATTR,  name_attr_struct("transport", "xmlns", "http://www.google.com/transport/p2p"), xmpp_gtalk_transport_p2p, MANY}
     };
 
     content_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_content, tvb, element->offset, element->length, FALSE);
@@ -195,7 +200,6 @@ xmpp_iq_jingle_cont_desc_payload_param(proto_tree* tree, tvbuff_t* tvb, packet_i
     if(name && value)
     {
         gchar *parent_item_label;
-        //gchar *new_parent_item_label;
 
         parent_item = proto_tree_get_parent(tree);
 
@@ -342,7 +346,7 @@ xmpp_iq_jingle_cont_desc_rtp_hdrext(proto_tree* tree, tvbuff_t* tvb, packet_info
 }
 
 static void
-xmpp_iq_jingle_cont_trans(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+xmpp_iq_jingle_cont_trans_ice(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
     proto_item *trans_item;
     proto_tree *trans_tree;
@@ -354,8 +358,8 @@ xmpp_iq_jingle_cont_trans(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, e
     };
 
     elem_info elems_info [] = {
-        {NAME, "candidate", xmpp_iq_jingle_cont_trans_candidate, MANY},
-        {NAME, "remote-candidate", xmpp_iq_jingle_cont_trans_remote_candidate, MANY}
+        {NAME, "candidate", xmpp_iq_jingle_cont_trans_ice_candidate, MANY},
+        {NAME, "remote-candidate", xmpp_iq_jingle_cont_trans_ice_remote_candidate, ONE}
     };
 
     trans_item = proto_tree_add_item(tree, hf_xmpp_iq_jingle_cont_trans, tvb, element->offset, element->length, FALSE);
@@ -367,7 +371,7 @@ xmpp_iq_jingle_cont_trans(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, e
 }
 
 static void
-xmpp_iq_jingle_cont_trans_candidate(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+xmpp_iq_jingle_cont_trans_ice_candidate(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
 {
     proto_item *cand_item;
     proto_tree *cand_tree;
@@ -400,7 +404,7 @@ xmpp_iq_jingle_cont_trans_candidate(proto_tree* tree, tvbuff_t* tvb, packet_info
 }
 
 static void
-xmpp_iq_jingle_cont_trans_remote_candidate(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+xmpp_iq_jingle_cont_trans_ice_remote_candidate(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
 {
     proto_item *remote_cand_item;
     proto_tree *remote_cand_tree;

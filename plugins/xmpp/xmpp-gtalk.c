@@ -34,6 +34,7 @@ static void xmpp_gtalk_mail_senders(proto_tree* tree, tvbuff_t* tvb, packet_info
 static void xmpp_gtalk_mail_sender(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_gtalk_mail_snippet(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_gtalk_status_status_list(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+static void xmpp_gtalk_transport_p2p_cand(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 
 void
 xmpp_gtalk_session(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
@@ -596,4 +597,56 @@ xmpp_gtalk_status_status_list(proto_tree* tree, tvbuff_t* tvb, packet_info* pinf
 
     display_attrs(list_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
     display_elems(list_tree, element, pinfo, tvb, NULL, 0);
+}
+
+
+void
+xmpp_gtalk_transport_p2p(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
+{
+    proto_item *trans_item;
+    proto_tree *trans_tree;
+
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, FALSE, TRUE, NULL, NULL}
+    };
+
+    elem_info elems_info [] = {
+        {NAME, "candidate", xmpp_gtalk_transport_p2p_cand, MANY}
+    };
+
+    trans_item = proto_tree_add_item(tree, hf_xmpp_gtalk_transport_p2p, tvb, element->offset, element->length, FALSE);
+    trans_tree = proto_item_add_subtree(trans_item, ett_xmpp_gtalk_transport_p2p);
+
+    display_attrs(trans_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+
+    display_elems(trans_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
+}
+
+/*http://www.google.com/transport/p2p*/
+static void
+xmpp_gtalk_transport_p2p_cand(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element) {
+    proto_item *cand_item;
+    proto_tree *cand_tree;
+
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, FALSE, FALSE, NULL, NULL},
+        {"name", -1, FALSE, TRUE, NULL, NULL},
+        {"generation", -1, FALSE, FALSE, NULL, NULL},
+        {"network", -1, FALSE, FALSE, NULL, NULL},
+        {"component", -1, FALSE, FALSE, NULL, NULL},
+        {"type", -1, FALSE, FALSE, NULL, NULL},
+        {"protocol", -1, FALSE, TRUE, NULL, NULL},
+        {"preference", -1, FALSE, FALSE, NULL, NULL},
+        {"password", -1, FALSE, FALSE, NULL, NULL},
+        {"username", -1, FALSE, FALSE, NULL, NULL},
+        {"port", -1, FALSE, TRUE, NULL, NULL},
+        {"address", -1, FALSE, TRUE, NULL, NULL}
+    };
+    
+    cand_item = proto_tree_add_text(tree, tvb, element->offset, element->length, "CANDIDATE");
+    cand_tree = proto_item_add_subtree(cand_item, ett_xmpp_gtalk_transport_p2p_cand);
+
+    display_attrs(cand_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(cand_tree, element, pinfo, tvb, NULL, 0);
+
 }

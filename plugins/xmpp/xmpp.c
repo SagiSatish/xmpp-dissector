@@ -159,7 +159,7 @@ xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
 {
     guint i;
 
-    //element has unrecognized elements
+    /*element has unrecognized elements*/
     for(i = 0; i<g_list_length(element->elements); i++)
     {
         element_t *child = g_list_nth_data(element->elements,i);
@@ -206,7 +206,7 @@ find_element_by_name(element_t *packet,const gchar *name)
     GList *found_elements;
     element_t *search_element;
 
-    //create fake elementonly with name
+    /*create fake elementonly with name*/
     search_element = ep_alloc(sizeof(element_t));
     search_element->name = ep_strdup(name);
 
@@ -219,8 +219,8 @@ find_element_by_name(element_t *packet,const gchar *name)
 }
 
 
-//function searches and removes element from packet.
-//if element doesn't exist, NULL is returned.
+/*function searches and removes element from packet.
+  if element doesn't exist, NULL is returned.*/
 element_t*
 steal_element_by_name(element_t *packet,const gchar *name)
 {
@@ -239,8 +239,8 @@ steal_element_by_name(element_t *packet,const gchar *name)
 
 }
 
-//function searches and removes one element from packet by name
-//names are taken from variable names
+/*function searches and removes one element from packet by name
+  names are taken from variable names*/
 element_t*
 steal_element_by_names(element_t *packet, const gchar **names, gint names_len)
 {
@@ -266,7 +266,9 @@ steal_element_by_attr(element_t *packet, const gchar *attr_name, const gchar *at
         element_t *child_elem = childs->data;
         attr_t *attr = g_hash_table_lookup(child_elem->attrs, attr_name);
 
-        //child is one of the defined stanza error conditions
+/*
+        child is one of the defined stanza error conditions
+*/
         if (attr && strcmp(attr->value, attr_value) == 0) {
 
             result = childs->data;
@@ -290,7 +292,9 @@ steal_element_by_name_and_attr(element_t *packet, const gchar *name, const gchar
         element_t *child_elem = childs->data;
         attr_t *attr = g_hash_table_lookup(child_elem->attrs, attr_name);
 
-        //child is one of the defined stanza error conditions
+/*
+        child is one of the defined stanza error conditions
+*/
         if (attr && strcmp(child_elem->name, name) == 0 && strcmp(attr->value, attr_value) == 0) {
 
             result = childs->data;
@@ -312,7 +316,9 @@ get_first_element(element_t *packet)
         return NULL;
 }
 
-//Function converts xml_frame_t structure to element_t (simpler representation)
+/*
+Function converts xml_frame_t structure to element_t (simpler representation)
+*/
 element_t*
 xml_frame_to_element_t(xml_frame_t *xml_frame)
 {
@@ -356,8 +362,8 @@ xml_frame_to_element_t(xml_frame_t *xml_frame)
                 attr_t *attr = ep_alloc(sizeof(attr_t));
                 attr->length = 0;
                 attr->offset = 0;
-
-                if (child->value != NULL && child->value->initialized) {
+                
+                if (child->value != NULL) {
                     l = tvb_reported_length(child->value);
                     value = ep_alloc0(l + 1);
                     tvb_memcpy(child->value, value, 0, l);
@@ -382,7 +388,7 @@ xml_frame_to_element_t(xml_frame_t *xml_frame)
                 data->length = 0;
                 data->offset = 0;
 
-                if (child->value != NULL && child->value->initialized) {
+                if (child->value != NULL) {
                     l = tvb_reported_length(child->value);
                     value = ep_alloc0(l + 1);
                     tvb_memcpy(child->value, value, 0, l);
@@ -411,33 +417,25 @@ xml_frame_to_element_t(xml_frame_t *xml_frame)
 gchar*
 element_to_string(tvbuff_t *tvb, element_t *element)
 {
-    gchar *buff;
-
-    if(tvb && tvb->initialized)
+    gchar *buff = NULL;
+    
+    if(tvb_offset_exists(tvb, element->length-1))
     {
-        buff = ep_alloc0(element->length+1);
-        tvb_memcpy(tvb,buff,element->offset,element->length);
-        return buff;
-    } else
-    {
-        return NULL;
+        buff = tvb_get_ephemeral_string(tvb, element->offset, element->length);
     }
+    return buff;
 }
 
 gchar*
 attr_to_string(tvbuff_t *tvb, attr_t *attr)
 {
-    gchar *buff;
+    gchar *buff = NULL;
 
-    if(tvb && tvb->initialized)
+    if(tvb_offset_exists(tvb, attr->length-1))
     {
-        buff = ep_alloc0(attr->length+1);
-        tvb_memcpy(tvb,buff,attr->offset,attr->length);
-        return buff;
-    } else
-    {
-        return NULL;
+        buff = tvb_get_ephemeral_string(tvb, attr->offset, attr->length);
     }
+    return buff;
 }
 
 static void
@@ -569,7 +567,9 @@ struct name_attr_t
     gchar *attr_value;
 };
 
-//returns pointer to the struct that contains 3 strings(element name, attribute name, attribute value)
+/*
+returns pointer to the struct that contains 3 strings(element name, attribute name, attribute value)
+*/
 gpointer
 name_attr_struct(gchar *name, gchar *attr_name, gchar *attr_value)
 {
@@ -655,7 +655,9 @@ display_elems(proto_tree *tree, element_t *parent, packet_info *pinfo, tvbuff_t 
     xmpp_unknown(tree, tvb, pinfo, parent);
 }
 
-//function checks that variable value is in array ((array_t)data)->data
+/*
+function checks that variable value is in array ((array_t)data)->data
+*/
 void
 val_enum_list(packet_info *pinfo, proto_item *item, gchar *name, gchar *value, gpointer data)
 {
