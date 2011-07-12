@@ -47,7 +47,8 @@ extern gint hf_xmpp_iq_bind;
 extern gint hf_xmpp_iq_bind_jid;
 extern gint hf_xmpp_iq_bind_resource;
 
-extern gint hf_xmpp_iq_services;
+extern gint hf_xmpp_services;
+extern gint hf_xmpp_channel;
 
 extern gint hf_xmpp_iq_session;
 
@@ -55,56 +56,56 @@ extern gint hf_xmpp_vcard;
 extern gint hf_xmpp_vcard_x_update;
 
 
-extern gint hf_xmpp_iq_jingle;
-extern gint hf_xmpp_iq_jingle_sid;
-extern gint hf_xmpp_iq_jingle_initiator;
-extern gint hf_xmpp_iq_jingle_responder;
-extern gint hf_xmpp_iq_jingle_action;
+extern gint hf_xmpp_jingle;
+extern gint hf_xmpp_jingle_sid;
+extern gint hf_xmpp_jingle_initiator;
+extern gint hf_xmpp_jingle_responder;
+extern gint hf_xmpp_jingle_action;
 
-extern gint hf_xmpp_iq_jingle_content;
-extern gint hf_xmpp_iq_jingle_content_creator;
-extern gint hf_xmpp_iq_jingle_content_name;
-extern gint hf_xmpp_iq_jingle_content_disposition;
-extern gint hf_xmpp_iq_jingle_content_senders;
+extern gint hf_xmpp_jingle_content;
+extern gint hf_xmpp_jingle_content_creator;
+extern gint hf_xmpp_jingle_content_name;
+extern gint hf_xmpp_jingle_content_disposition;
+extern gint hf_xmpp_jingle_content_senders;
 
-extern gint hf_xmpp_iq_jingle_content_description;
-extern gint hf_xmpp_iq_jingle_content_description_media;
-extern gint hf_xmpp_iq_jingle_content_description_ssrc;
+extern gint hf_xmpp_jingle_content_description;
+extern gint hf_xmpp_jingle_content_description_media;
+extern gint hf_xmpp_jingle_content_description_ssrc;
 
-extern gint hf_xmpp_iq_jingle_cont_desc_payload;
-extern gint hf_xmpp_iq_jingle_cont_desc_payload_id;
-extern gint hf_xmpp_iq_jingle_cont_desc_payload_channels;
-extern gint hf_xmpp_iq_jingle_cont_desc_payload_clockrate;
-extern gint hf_xmpp_iq_jingle_cont_desc_payload_maxptime;
-extern gint hf_xmpp_iq_jingle_cont_desc_payload_name;
-extern gint hf_xmpp_iq_jingle_cont_desc_payload_ptime;
+extern gint hf_xmpp_jingle_cont_desc_payload;
+extern gint hf_xmpp_jingle_cont_desc_payload_id;
+extern gint hf_xmpp_jingle_cont_desc_payload_channels;
+extern gint hf_xmpp_jingle_cont_desc_payload_clockrate;
+extern gint hf_xmpp_jingle_cont_desc_payload_maxptime;
+extern gint hf_xmpp_jingle_cont_desc_payload_name;
+extern gint hf_xmpp_jingle_cont_desc_payload_ptime;
 
-extern gint hf_xmpp_iq_jingle_cont_desc_payload_param;
-extern gint hf_xmpp_iq_jingle_cont_desc_payload_param_value;
-extern gint hf_xmpp_iq_jingle_cont_desc_payload_param_name;
+extern gint hf_xmpp_jingle_cont_desc_payload_param;
+extern gint hf_xmpp_jingle_cont_desc_payload_param_value;
+extern gint hf_xmpp_jingle_cont_desc_payload_param_name;
 
-extern gint hf_xmpp_iq_jingle_cont_desc_enc;
-extern gint hf_xmpp_iq_jingle_cont_desc_enc_zrtp_hash;
-extern gint hf_xmpp_iq_jingle_cont_desc_enc_crypto;
+extern gint hf_xmpp_jingle_cont_desc_enc;
+extern gint hf_xmpp_jingle_cont_desc_enc_zrtp_hash;
+extern gint hf_xmpp_jingle_cont_desc_enc_crypto;
 
-extern gint hf_xmpp_iq_jingle_cont_desc_rtp_hdr;
-extern gint hf_xmpp_iq_jingle_cont_desc_bandwidth;
+extern gint hf_xmpp_jingle_cont_desc_rtp_hdr;
+extern gint hf_xmpp_jingle_cont_desc_bandwidth;
 
-extern gint hf_xmpp_iq_jingle_cont_trans;
-extern gint hf_xmpp_iq_jingle_cont_trans_pwd;
-extern gint hf_xmpp_iq_jingle_cont_trans_ufrag;
+extern gint hf_xmpp_jingle_cont_trans;
+extern gint hf_xmpp_jingle_cont_trans_pwd;
+extern gint hf_xmpp_jingle_cont_trans_ufrag;
 
-extern gint hf_xmpp_iq_jingle_cont_trans_cand;
-extern gint hf_xmpp_iq_jingle_cont_trans_rem_cand;
+extern gint hf_xmpp_jingle_cont_trans_cand;
+extern gint hf_xmpp_jingle_cont_trans_rem_cand;
 
-extern gint hf_xmpp_iq_jingle_reason;
-extern gint hf_xmpp_iq_jingle_reason_condition;
-extern gint hf_xmpp_iq_jingle_reason_text;
+extern gint hf_xmpp_jingle_reason;
+extern gint hf_xmpp_jingle_reason_condition;
+extern gint hf_xmpp_jingle_reason_text;
 
-extern gint hf_xmpp_iq_jingle_rtp_info;
+extern gint hf_xmpp_jingle_rtp_info;
 
-extern gint hf_xmpp_iq_si;
-extern gint hf_xmpp_iq_si_file;
+extern gint hf_xmpp_si;
+extern gint hf_xmpp_si_file;
 
 extern gint hf_xmpp_iq_feature_neg;
 extern gint hf_xmpp_x_data;
@@ -183,25 +184,29 @@ extern gint ett_xmpp_iq_bind;
 extern gint ett_xmpp_vcard;
 extern gint ett_xmpp_vcard_x_update;
 
-extern gint ett_xmpp_iq_jingle;
-extern gint ett_xmpp_iq_jingle_content;
-extern gint ett_xmpp_iq_jingle_content_description;
-extern gint ett_xmpp_iq_jingle_cont_desc_enc;
-extern gint ett_xmpp_iq_jingle_cont_desc_enc_zrtp_hash;
-extern gint ett_xmpp_iq_jingle_cont_desc_enc_crypto;
-extern gint ett_xmpp_iq_jingle_cont_desc_rtp_hdr;
-extern gint ett_xmpp_iq_jingle_cont_desc_bandwidth;
-extern gint ett_xmpp_iq_jingle_cont_desc_payload;
-extern gint ett_xmpp_iq_jingle_cont_desc_payload_param;
-extern gint ett_xmpp_iq_jingle_cont_trans;
-extern gint ett_xmpp_iq_jingle_cont_trans_cand;
-extern gint ett_xmpp_iq_jingle_cont_trans_rem_cand;
-extern gint ett_xmpp_iq_jingle_reason;
-extern gint ett_xmpp_iq_jingle_rtp_info;
+extern gint ett_xmpp_jingle;
+extern gint ett_xmpp_jingle_content;
+extern gint ett_xmpp_jingle_content_description;
+extern gint ett_xmpp_jingle_cont_desc_enc;
+extern gint ett_xmpp_jingle_cont_desc_enc_zrtp_hash;
+extern gint ett_xmpp_jingle_cont_desc_enc_crypto;
+extern gint ett_xmpp_jingle_cont_desc_rtp_hdr;
+extern gint ett_xmpp_jingle_cont_desc_bandwidth;
+extern gint ett_xmpp_jingle_cont_desc_payload;
+extern gint ett_xmpp_jingle_cont_desc_payload_param;
+extern gint ett_xmpp_jingle_cont_trans;
+extern gint ett_xmpp_jingle_cont_trans_cand;
+extern gint ett_xmpp_jingle_cont_trans_rem_cand;
+extern gint ett_xmpp_jingle_reason;
+extern gint ett_xmpp_jingle_rtp_info;
 
-extern gint ett_xmpp_iq_si;
-extern gint ett_xmpp_iq_si_file;
-extern gint ett_xmpp_iq_si_file_range;
+extern gint ett_xmpp_services;
+extern gint ett_xmpp_services_relay;
+extern gint ett_xmpp_channel;
+
+extern gint ett_xmpp_si;
+extern gint ett_xmpp_si_file;
+extern gint ett_xmpp_si_file_range;
 
 extern gint ett_xmpp_iq_feature_neg;
 extern gint ett_xmpp_x_data;
