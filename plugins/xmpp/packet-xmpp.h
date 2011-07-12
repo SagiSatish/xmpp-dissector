@@ -98,6 +98,11 @@ extern gint hf_xmpp_jingle_cont_trans_ufrag;
 extern gint hf_xmpp_jingle_cont_trans_cand;
 extern gint hf_xmpp_jingle_cont_trans_rem_cand;
 
+extern gint hf_xmpp_jingle_cont_trans_activated;
+extern gint hf_xmpp_jingle_cont_trans_candidate_used;
+extern gint hf_xmpp_jingle_cont_trans_candidate_error;
+extern gint hf_xmpp_jingle_cont_trans_proxy_error;
+
 extern gint hf_xmpp_jingle_reason;
 extern gint hf_xmpp_jingle_reason_condition;
 extern gint hf_xmpp_jingle_reason_text;
@@ -167,6 +172,8 @@ extern gint hf_xmpp_response_in;
 extern gint hf_xmpp_response_to;
 extern gint hf_xmpp_jingle_session;
 extern gint hf_xmpp_ibb;
+
+extern gint hf_xmpp_ping;
 
 extern gint ett_xmpp;
 extern gint ett_xmpp_iq;
@@ -269,6 +276,8 @@ extern gint ett_xmpp_conf_users;
 extern gint ett_xmpp_conf_user;
 extern gint ett_xmpp_conf_endpoint;
 extern gint ett_xmpp_conf_media;
+
+extern gint ett_xmpp_ping;
 
 #endif	/* PACKET_XMPP_H */
 
