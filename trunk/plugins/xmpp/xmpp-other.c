@@ -90,18 +90,6 @@ xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
 }
 
 void
-xmpp_iq_services(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
-{
-    proto_item *services_item;
-
-    attr_t *xmlns = g_hash_table_lookup(element->attrs, "xmlns");
-
-    col_append_fstr(pinfo->cinfo, COL_INFO, "SERVICES ");
-
-    services_item = proto_tree_add_string_format(tree, hf_xmpp_iq_services, tvb, element->offset, element->length, xmlns?xmlns->value:"", "SERVICES (%s)", xmlns?xmlns->value:"");
-}
-
-void
 xmpp_session(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
     attr_t *xmlns  = g_hash_table_lookup(element->attrs, "xmlns");
@@ -439,7 +427,7 @@ xmpp_bytestreams_streamhost_used(proto_tree *tree, tvbuff_t *tvb, packet_info *p
 static void
 xmpp_bytestreams_activate(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
-    proto_tree_add_item(tree, hf_xmpp_query_activate, tvb, element->offset, element->length, FALSE);
+    proto_tree_add_string(tree, hf_xmpp_query_activate, tvb, element->offset, element->length, elem_cdata(element));
     xmpp_unknown(tree, tvb, pinfo, element);
 }
 
@@ -481,8 +469,8 @@ xmpp_si(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
 
     col_append_fstr(pinfo->cinfo, COL_INFO, "SI ");
 
-    si_item = proto_tree_add_item(tree, hf_xmpp_iq_si, tvb, element->offset, element->length, FALSE);
-    si_tree = proto_item_add_subtree(si_item, ett_xmpp_iq_si);
+    si_item = proto_tree_add_item(tree, hf_xmpp_si, tvb, element->offset, element->length, FALSE);
+    si_tree = proto_item_add_subtree(si_item, ett_xmpp_si);
 
     display_attrs(si_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
@@ -518,8 +506,8 @@ xmpp_si_file(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* ele
 
     element_t *desc, *range;
 
-    file_item = proto_tree_add_item(tree, hf_xmpp_iq_si_file, tvb, element->offset, element->length, FALSE);
-    file_tree = proto_item_add_subtree(file_item, ett_xmpp_iq_si_file);
+    file_item = proto_tree_add_item(tree, hf_xmpp_si_file, tvb, element->offset, element->length, FALSE);
+    file_tree = proto_item_add_subtree(file_item, ett_xmpp_si_file);
 
     if((desc = steal_element_by_name(element, "desc"))!=NULL)
     {
@@ -549,7 +537,7 @@ xmpp_si_file_range(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_
     };
 
     range_item = proto_tree_add_text(tree, tvb, element->offset, element->length, "RANGE: ");
-    range_tree = proto_item_add_subtree(range_item, ett_xmpp_iq_si_file_range);
+    range_tree = proto_item_add_subtree(range_item, ett_xmpp_si_file_range);
 
     display_attrs(range_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 

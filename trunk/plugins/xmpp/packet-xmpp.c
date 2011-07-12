@@ -72,63 +72,64 @@ gint hf_xmpp_iq_bind = -1;
 gint hf_xmpp_iq_bind_jid = -1;
 gint hf_xmpp_iq_bind_resource = -1;
 
-gint hf_xmpp_iq_services = -1;
+gint hf_xmpp_services = -1;
+gint hf_xmpp_channel = -1;
 
 gint hf_xmpp_iq_session = -1;
 
 gint hf_xmpp_vcard  = -1;
 gint hf_xmpp_vcard_x_update = -1;
 
-gint hf_xmpp_iq_jingle = -1;
-gint hf_xmpp_iq_jingle_sid = -1;
-gint hf_xmpp_iq_jingle_initiator = -1;
-gint hf_xmpp_iq_jingle_responder = -1;
-gint hf_xmpp_iq_jingle_action = -1;
+gint hf_xmpp_jingle = -1;
+gint hf_xmpp_jingle_sid = -1;
+gint hf_xmpp_jingle_initiator = -1;
+gint hf_xmpp_jingle_responder = -1;
+gint hf_xmpp_jingle_action = -1;
 
-gint hf_xmpp_iq_jingle_content = -1;
-gint hf_xmpp_iq_jingle_content_creator = -1;
-gint hf_xmpp_iq_jingle_content_name = -1;
-gint hf_xmpp_iq_jingle_content_disposition = -1;
-gint hf_xmpp_iq_jingle_content_senders = -1;
+gint hf_xmpp_jingle_content = -1;
+gint hf_xmpp_jingle_content_creator = -1;
+gint hf_xmpp_jingle_content_name = -1;
+gint hf_xmpp_jingle_content_disposition = -1;
+gint hf_xmpp_jingle_content_senders = -1;
 
-gint hf_xmpp_iq_jingle_content_description = -1;
-gint hf_xmpp_iq_jingle_content_description_media = -1;
-gint hf_xmpp_iq_jingle_content_description_ssrc = -1;
+gint hf_xmpp_jingle_content_description = -1;
+gint hf_xmpp_jingle_content_description_media = -1;
+gint hf_xmpp_jingle_content_description_ssrc = -1;
 
-gint hf_xmpp_iq_jingle_cont_desc_payload = -1;
-gint hf_xmpp_iq_jingle_cont_desc_payload_id = -1;
-gint hf_xmpp_iq_jingle_cont_desc_payload_channels = -1;
-gint hf_xmpp_iq_jingle_cont_desc_payload_clockrate = -1;
-gint hf_xmpp_iq_jingle_cont_desc_payload_maxptime = -1;
-gint hf_xmpp_iq_jingle_cont_desc_payload_name = -1;
-gint hf_xmpp_iq_jingle_cont_desc_payload_ptime = -1;
+gint hf_xmpp_jingle_cont_desc_payload = -1;
+gint hf_xmpp_jingle_cont_desc_payload_id = -1;
+gint hf_xmpp_jingle_cont_desc_payload_channels = -1;
+gint hf_xmpp_jingle_cont_desc_payload_clockrate = -1;
+gint hf_xmpp_jingle_cont_desc_payload_maxptime = -1;
+gint hf_xmpp_jingle_cont_desc_payload_name = -1;
+gint hf_xmpp_jingle_cont_desc_payload_ptime = -1;
 
-gint hf_xmpp_iq_jingle_cont_desc_payload_param = -1;
-gint hf_xmpp_iq_jingle_cont_desc_payload_param_value = -1;
-gint hf_xmpp_iq_jingle_cont_desc_payload_param_name = -1;
+gint hf_xmpp_jingle_cont_desc_payload_param = -1;
+gint hf_xmpp_jingle_cont_desc_payload_param_value = -1;
+gint hf_xmpp_jingle_cont_desc_payload_param_name = -1;
 
-gint hf_xmpp_iq_jingle_cont_desc_enc = -1;
-gint hf_xmpp_iq_jingle_cont_desc_enc_zrtp_hash = -1;
-gint hf_xmpp_iq_jingle_cont_desc_enc_crypto = -1;
+gint hf_xmpp_jingle_cont_desc_enc = -1;
+gint hf_xmpp_jingle_cont_desc_enc_zrtp_hash = -1;
+gint hf_xmpp_jingle_cont_desc_enc_crypto = -1;
 
-gint hf_xmpp_iq_jingle_cont_desc_rtp_hdr = -1;
-gint hf_xmpp_iq_jingle_cont_desc_bandwidth = -1;
+gint hf_xmpp_jingle_cont_desc_rtp_hdr = -1;
+gint hf_xmpp_jingle_cont_desc_bandwidth = -1;
 
-gint hf_xmpp_iq_jingle_cont_trans = -1;
-gint hf_xmpp_iq_jingle_cont_trans_pwd = -1;
-gint hf_xmpp_iq_jingle_cont_trans_ufrag = -1;
+gint hf_xmpp_jingle_cont_trans = -1;
+gint hf_xmpp_jingle_cont_trans_pwd = -1;
+gint hf_xmpp_jingle_cont_trans_ufrag = -1;
 
-gint hf_xmpp_iq_jingle_cont_trans_cand = -1;
-gint hf_xmpp_iq_jingle_cont_trans_rem_cand = -1;
+gint hf_xmpp_jingle_cont_trans_cand = -1;
+gint hf_xmpp_jingle_cont_trans_rem_cand = -1;
 
-gint hf_xmpp_iq_jingle_reason = -1;
-gint hf_xmpp_iq_jingle_reason_condition = -1;
-gint hf_xmpp_iq_jingle_reason_text = -1;
+gint hf_xmpp_jingle_reason = -1;
+gint hf_xmpp_jingle_reason_condition = -1;
+gint hf_xmpp_jingle_reason_text = -1;
 
-gint hf_xmpp_iq_jingle_rtp_info = -1;
+gint hf_xmpp_jingle_rtp_info = -1;
 
-gint hf_xmpp_iq_si = -1;
-gint hf_xmpp_iq_si_file = -1;
+gint hf_xmpp_si = -1;
+gint hf_xmpp_si_file = -1;
 
 gint hf_xmpp_iq_feature_neg = -1;
 gint hf_xmpp_x_data = -1;
@@ -208,25 +209,29 @@ gint ett_xmpp_iq_bind = -1;
 gint ett_xmpp_vcard = -1;
 gint ett_xmpp_vcard_x_update = -1;
 
-gint ett_xmpp_iq_jingle = -1;
-gint ett_xmpp_iq_jingle_content = -1;
-gint ett_xmpp_iq_jingle_content_description = -1;
-gint ett_xmpp_iq_jingle_cont_desc_enc = -1;
-gint ett_xmpp_iq_jingle_cont_desc_enc_zrtp_hash = -1;
-gint ett_xmpp_iq_jingle_cont_desc_enc_crypto = -1;
-gint ett_xmpp_iq_jingle_cont_desc_rtp_hdr = -1;
-gint ett_xmpp_iq_jingle_cont_desc_bandwidth = -1;
-gint ett_xmpp_iq_jingle_cont_desc_payload = -1;
-gint ett_xmpp_iq_jingle_cont_desc_payload_param = -1;
-gint ett_xmpp_iq_jingle_cont_trans = -1;
-gint ett_xmpp_iq_jingle_cont_trans_cand = -1;
-gint ett_xmpp_iq_jingle_cont_trans_rem_cand = -1;
-gint ett_xmpp_iq_jingle_reason = -1;
-gint ett_xmpp_iq_jingle_rtp_info = -1;
+gint ett_xmpp_jingle = -1;
+gint ett_xmpp_jingle_content = -1;
+gint ett_xmpp_jingle_content_description = -1;
+gint ett_xmpp_jingle_cont_desc_enc = -1;
+gint ett_xmpp_jingle_cont_desc_enc_zrtp_hash = -1;
+gint ett_xmpp_jingle_cont_desc_enc_crypto = -1;
+gint ett_xmpp_jingle_cont_desc_rtp_hdr = -1;
+gint ett_xmpp_jingle_cont_desc_bandwidth = -1;
+gint ett_xmpp_jingle_cont_desc_payload = -1;
+gint ett_xmpp_jingle_cont_desc_payload_param = -1;
+gint ett_xmpp_jingle_cont_trans = -1;
+gint ett_xmpp_jingle_cont_trans_cand = -1;
+gint ett_xmpp_jingle_cont_trans_rem_cand = -1;
+gint ett_xmpp_jingle_reason = -1;
+gint ett_xmpp_jingle_rtp_info = -1;
 
-gint ett_xmpp_iq_si = -1;
-gint ett_xmpp_iq_si_file = -1;
-gint ett_xmpp_iq_si_file_range = -1;
+gint ett_xmpp_services = -1;
+gint ett_xmpp_services_relay = -1;
+gint ett_xmpp_channel = -1;
+
+gint ett_xmpp_si = -1;
+gint ett_xmpp_si_file = -1;
+gint ett_xmpp_si_file_range = -1;
 
 gint ett_xmpp_iq_feature_neg = -1;
 gint ett_xmpp_x_data = -1;
@@ -557,7 +562,7 @@ proto_register_xmpp(void) {
             }},
             { &hf_xmpp_query_activate,
             {
-                "ACTIVATE", "xmpp.query.activate", FT_NONE, BASE_NONE, NULL, 0x0,
+                "ACTIVATE", "xmpp.query.activate", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq query activate", HFILL
 
             }},
@@ -614,10 +619,15 @@ proto_register_xmpp(void) {
                 "iq bind resource", HFILL
 
             }},
-            { &hf_xmpp_iq_services,
+            { &hf_xmpp_services,
             {
-                "SERVICES", "xmpp.iq.services", FT_STRING, BASE_NONE, NULL, 0x0,
-                "iq services", HFILL
+                "SERVICES", "xmpp.services", FT_NONE, BASE_NONE, NULL, 0x0,
+                "http://jabber.org/protocol/jinglenodes services", HFILL
+            }},
+            { &hf_xmpp_channel,
+            {
+                "CHANNEL", "xmpp.channel", FT_NONE, BASE_NONE, NULL, 0x0,
+                "http://jabber.org/protocol/jinglenodes#channel", HFILL
             }},
             { &hf_xmpp_iq_session,
             {
@@ -634,199 +644,199 @@ proto_register_xmpp(void) {
                 "X VCARD-UPDATE", "xmpp.vcard-update", FT_NONE, BASE_NONE, NULL, 0x0,
                 "vcard-temp:x:update", HFILL
             }},
-            { &hf_xmpp_iq_jingle,
+            { &hf_xmpp_jingle,
             {
-                "JINGLE", "xmpp.iq.jingle", FT_NONE, BASE_NONE, NULL, 0x0,
+                "JINGLE", "xmpp.jingle", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle", HFILL
             }},
-            { &hf_xmpp_iq_jingle_action,
+            { &hf_xmpp_jingle_action,
             {
-                "action", "xmpp.iq.jingle.action", FT_STRING, BASE_NONE, NULL, 0x0,
+                "action", "xmpp.jingle.action", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle action", HFILL
             }},
-            { &hf_xmpp_iq_jingle_sid,
+            { &hf_xmpp_jingle_sid,
             {
-                "sid", "xmpp.iq.jingle.sid", FT_STRING, BASE_NONE, NULL, 0x0,
+                "sid", "xmpp.jingle.sid", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle sid", HFILL
             }},
-            { &hf_xmpp_iq_jingle_initiator,
+            { &hf_xmpp_jingle_initiator,
             {
-                "initiator", "xmpp.iq.jingle.initiator", FT_STRING, BASE_NONE, NULL, 0x0,
+                "initiator", "xmpp.jingle.initiator", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle initiator", HFILL
             }},
-            { &hf_xmpp_iq_jingle_responder,
+            { &hf_xmpp_jingle_responder,
             {
-                "responder", "xmpp.iq.jingle.responder", FT_STRING, BASE_NONE, NULL, 0x0,
+                "responder", "xmpp.jingle.responder", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle responder", HFILL
             }},
-            { &hf_xmpp_iq_jingle_content,
+            { &hf_xmpp_jingle_content,
             {
-                "CONTENT", "xmpp.iq.jingle.content", FT_NONE, BASE_NONE, NULL, 0x0,
+                "CONTENT", "xmpp.jingle.content", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle content", HFILL
             }},
-            { &hf_xmpp_iq_jingle_content_creator,
+            { &hf_xmpp_jingle_content_creator,
             {
-                "creator", "xmpp.iq.jingle.content.creator", FT_STRING, BASE_NONE, NULL, 0x0,
+                "creator", "xmpp.jingle.content.creator", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content creator", HFILL
             }},
-            { &hf_xmpp_iq_jingle_content_name,
+            { &hf_xmpp_jingle_content_name,
             {
-                "name", "xmpp.iq.jingle.content.name", FT_STRING, BASE_NONE, NULL, 0x0,
+                "name", "xmpp.jingle.content.name", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content name", HFILL
             }},
-            { &hf_xmpp_iq_jingle_content_disposition,
+            { &hf_xmpp_jingle_content_disposition,
             {
-                "disposition", "xmpp.iq.jingle.content.disposition", FT_STRING, BASE_NONE, NULL, 0x0,
+                "disposition", "xmpp.jingle.content.disposition", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content disposition", HFILL
             }},
-            { &hf_xmpp_iq_jingle_content_senders,
+            { &hf_xmpp_jingle_content_senders,
             {
-                "senders", "xmpp.iq.jingle.content.senders", FT_STRING, BASE_NONE, NULL, 0x0,
+                "senders", "xmpp.jingle.content.senders", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content senders", HFILL
             }},
-            { &hf_xmpp_iq_jingle_content_description,
+            { &hf_xmpp_jingle_content_description,
             {
-                "DESCRIPTION", "xmpp.iq.jingle.content.description", FT_NONE, BASE_NONE, NULL, 0x0,
+                "DESCRIPTION", "xmpp.jingle.content.description", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle content description", HFILL
             }},
-            { &hf_xmpp_iq_jingle_content_description_media,
+            { &hf_xmpp_jingle_content_description_media,
             {
-                "media", "xmpp.iq.jingle.content.description.media", FT_STRING, BASE_NONE, NULL, 0x0,
+                "media", "xmpp.jingle.content.description.media", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content description", HFILL
             }},
-            { &hf_xmpp_iq_jingle_content_description_ssrc,
+            { &hf_xmpp_jingle_content_description_ssrc,
             {
-                "ssrc", "xmpp.iq.jingle.content.description.ssrc", FT_STRING, BASE_NONE, NULL, 0x0,
+                "ssrc", "xmpp.jingle.content.description.ssrc", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content description ssrc", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_desc_payload,
+            { &hf_xmpp_jingle_cont_desc_payload,
             {
-                "PAYLOAD-TYPE", "xmpp.iq.jingle.content.description.payload-type", FT_NONE, BASE_NONE, NULL, 0x0,
+                "PAYLOAD-TYPE", "xmpp.jingle.content.description.payload-type", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle content description payload-type", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_desc_payload_id,
+            { &hf_xmpp_jingle_cont_desc_payload_id,
             {
-                "id", "xmpp.iq.jingle.content.description.payload-type.id", FT_STRING, BASE_NONE, NULL, 0x0,
+                "id", "xmpp.jingle.content.description.payload-type.id", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content description payload-type id", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_desc_payload_channels,
+            { &hf_xmpp_jingle_cont_desc_payload_channels,
             {
-                "channels", "xmpp.iq.jingle.content.description.payload-type.channels", FT_STRING, BASE_NONE, NULL, 0x0,
+                "channels", "xmpp.jingle.content.description.payload-type.channels", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content description payload-type channels", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_desc_payload_clockrate,
+            { &hf_xmpp_jingle_cont_desc_payload_clockrate,
             {
-                "clockrate", "xmpp.iq.jingle.content.description.payload-type.clockrate", FT_STRING, BASE_NONE, NULL, 0x0,
+                "clockrate", "xmpp.jingle.content.description.payload-type.clockrate", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content description payload-type clockrate", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_desc_payload_maxptime,
+            { &hf_xmpp_jingle_cont_desc_payload_maxptime,
             {
-                "maxptime", "xmpp.iq.jingle.content.description.payload-type.maxptime", FT_STRING, BASE_NONE, NULL, 0x0,
+                "maxptime", "xmpp.jingle.content.description.payload-type.maxptime", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content description payload-type maxptime", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_desc_payload_name,
+            { &hf_xmpp_jingle_cont_desc_payload_name,
             {
-                "name", "xmpp.iq.jingle.content.description.payload-type.name", FT_STRING, BASE_NONE, NULL, 0x0,
+                "name", "xmpp.jingle.content.description.payload-type.name", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content description payload-type name", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_desc_payload_ptime,
+            { &hf_xmpp_jingle_cont_desc_payload_ptime,
             {
-                "ptime", "xmpp.iq.jingle.content.description.payload-type.ptime", FT_STRING, BASE_NONE, NULL, 0x0,
+                "ptime", "xmpp.jingle.content.description.payload-type.ptime", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content description payload-type ptime", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_desc_payload_param,
+            { &hf_xmpp_jingle_cont_desc_payload_param,
             {
-                "PARAMETER", "xmpp.iq.jingle.content.description.payload-type.parameter", FT_NONE, BASE_NONE, NULL, 0x0,
+                "PARAMETER", "xmpp.jingle.content.description.payload-type.parameter", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle content description payload-type parameter", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_desc_payload_param_name,
+            { &hf_xmpp_jingle_cont_desc_payload_param_name,
             {
-                "name", "xmpp.iq.jingle.content.description.payload-type.parameter.name", FT_STRING, BASE_NONE, NULL, 0x0,
+                "name", "xmpp.jingle.content.description.payload-type.parameter.name", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content description payload-type parameter name", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_desc_payload_param_value,
+            { &hf_xmpp_jingle_cont_desc_payload_param_value,
             {
-                "value", "xmpp.iq.jingle.content.description.payload-type.parameter.value", FT_STRING, BASE_NONE, NULL, 0x0,
+                "value", "xmpp.jingle.content.description.payload-type.parameter.value", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content description payload-type parameter value", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_trans,
+            { &hf_xmpp_jingle_cont_trans,
             {
-                "TRANSPORT", "xmpp.iq.jingle.content.transport", FT_NONE, BASE_NONE, NULL, 0x0,
+                "TRANSPORT", "xmpp.jingle.content.transport", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle content transport", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_trans_ufrag,
+            { &hf_xmpp_jingle_cont_trans_ufrag,
             {
-                "ufrag", "xmpp.iq.jingle.content.transport.ufrag", FT_STRING, BASE_NONE, NULL, 0x0,
+                "ufrag", "xmpp.jingle.content.transport.ufrag", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content transport ufrag", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_trans_pwd,
+            { &hf_xmpp_jingle_cont_trans_pwd,
             {
-                "pwd", "xmpp.iq.jingle.content.transport.pwd", FT_STRING, BASE_NONE, NULL, 0x0,
+                "pwd", "xmpp.jingle.content.transport.pwd", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle content transport pwd", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_trans_cand,
+            { &hf_xmpp_jingle_cont_trans_cand,
             {
-                "CANDIDATE", "xmpp.iq.jingle.content.transport.candidate", FT_NONE, BASE_NONE, NULL, 0x0,
+                "CANDIDATE", "xmpp.jingle.content.transport.candidate", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle content transport candidate", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_trans_rem_cand,
+            { &hf_xmpp_jingle_cont_trans_rem_cand,
             {
-                "REMOTE-CANDIDATE", "xmpp.iq.jingle.content.transport.remote-candidate", FT_NONE, BASE_NONE, NULL, 0x0,
+                "REMOTE-CANDIDATE", "xmpp.jingle.content.transport.remote-candidate", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle content transport remote-candidate", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_desc_enc,
+            { &hf_xmpp_jingle_cont_desc_enc,
             {
-                "ENCRYPTION", "xmpp.iq.jingle.content.description.encryption", FT_NONE, BASE_NONE, NULL, 0x0,
+                "ENCRYPTION", "xmpp.jingle.content.description.encryption", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle content descryption encryption", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_desc_enc_zrtp_hash,
+            { &hf_xmpp_jingle_cont_desc_enc_zrtp_hash,
             {
-                "ZRTP-HASH", "xmpp.iq.jingle.content.description.encryption.zrtp-hash", FT_NONE, BASE_NONE, NULL, 0x0,
+                "ZRTP-HASH", "xmpp.jingle.content.description.encryption.zrtp-hash", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle content descryption encryption zrtp-hash", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_desc_enc_crypto,
+            { &hf_xmpp_jingle_cont_desc_enc_crypto,
             {
-                "CRYPTO", "xmpp.iq.jingle.content.description.encryption.crypto", FT_NONE, BASE_NONE, NULL, 0x0,
+                "CRYPTO", "xmpp.jingle.content.description.encryption.crypto", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle content descryption encryption crypto", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_desc_bandwidth,
+            { &hf_xmpp_jingle_cont_desc_bandwidth,
             {
-                "BANDWIDTH", "xmpp.iq.jingle.content.description.bandwidth", FT_NONE, BASE_NONE, NULL, 0x0,
+                "BANDWIDTH", "xmpp.jingle.content.description.bandwidth", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle content descryption bandwidth", HFILL
             }},
-            { &hf_xmpp_iq_jingle_cont_desc_rtp_hdr,
+            { &hf_xmpp_jingle_cont_desc_rtp_hdr,
             {
-                "RTP-HDREXT", "xmpp.iq.jingle.content.description.rtp-hdrext", FT_NONE, BASE_NONE, NULL, 0x0,
+                "RTP-HDREXT", "xmpp.jingle.content.description.rtp-hdrext", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle content descryption rtp-hdrext", HFILL
             }},
-            { &hf_xmpp_iq_jingle_reason,
+            { &hf_xmpp_jingle_reason,
             {
-                "REASON", "xmpp.iq.jingle.reason", FT_NONE, BASE_NONE, NULL, 0x0,
+                "REASON", "xmpp.jingle.reason", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle reason", HFILL
             }},
-            { &hf_xmpp_iq_jingle_reason_condition,
+            { &hf_xmpp_jingle_reason_condition,
             {
-                "CONDITION", "xmpp.iq.jingle.reason.condition", FT_STRING, BASE_NONE, NULL, 0x0,
+                "CONDITION", "xmpp.jingle.reason.condition", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle reason condition", HFILL
             }},
-            { &hf_xmpp_iq_jingle_reason_text,
+            { &hf_xmpp_jingle_reason_text,
             {
-                "TEXT", "xmpp.iq.jingle.reason.text", FT_STRING, BASE_NONE, NULL, 0x0,
+                "TEXT", "xmpp.jingle.reason.text", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle reason text", HFILL
             }},
-            { &hf_xmpp_iq_jingle_rtp_info,
+            { &hf_xmpp_jingle_rtp_info,
             {
-                "RTP-INFO", "xmpp.iq.jingle.rtp_info", FT_STRING, BASE_NONE, NULL, 0x0,
+                "RTP-INFO", "xmpp.jingle.rtp_info", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle rtp-info(ringing, active, hold, mute, ...)", HFILL
             }},
-            { &hf_xmpp_iq_si,
+            { &hf_xmpp_si,
             {
-                "SI", "xmpp.iq.si", FT_NONE, BASE_NONE, NULL, 0x0,
+                "SI", "xmpp.si", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq si", HFILL
             }},
-            { &hf_xmpp_iq_si_file,
+            { &hf_xmpp_si_file,
             {
-                "FILE", "xmpp.iq.si.file", FT_NONE, BASE_NONE, NULL, 0x0,
+                "FILE", "xmpp.si.file", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq si file", HFILL
             }},
             { &hf_xmpp_iq_feature_neg,
@@ -1080,24 +1090,27 @@ proto_register_xmpp(void) {
         &ett_xmpp_iq_bind,
         &ett_xmpp_vcard,
         &ett_xmpp_vcard_x_update,
-        &ett_xmpp_iq_jingle,
-        &ett_xmpp_iq_jingle_content,
-        &ett_xmpp_iq_jingle_content_description,
-        &ett_xmpp_iq_jingle_cont_desc_payload,
-        &ett_xmpp_iq_jingle_cont_desc_payload_param,
-        &ett_xmpp_iq_jingle_cont_desc_enc,
-        &ett_xmpp_iq_jingle_cont_desc_enc_zrtp_hash,
-        &ett_xmpp_iq_jingle_cont_desc_enc_crypto,
-        &ett_xmpp_iq_jingle_cont_desc_bandwidth,
-        &ett_xmpp_iq_jingle_cont_desc_rtp_hdr,
-        &ett_xmpp_iq_jingle_cont_trans,
-        &ett_xmpp_iq_jingle_cont_trans_cand,
-        &ett_xmpp_iq_jingle_cont_trans_rem_cand,
-        &ett_xmpp_iq_jingle_reason,
-        &ett_xmpp_iq_jingle_rtp_info,
-        &ett_xmpp_iq_si,
-        &ett_xmpp_iq_si_file,
-        &ett_xmpp_iq_si_file_range,
+        &ett_xmpp_jingle,
+        &ett_xmpp_jingle_content,
+        &ett_xmpp_jingle_content_description,
+        &ett_xmpp_jingle_cont_desc_payload,
+        &ett_xmpp_jingle_cont_desc_payload_param,
+        &ett_xmpp_jingle_cont_desc_enc,
+        &ett_xmpp_jingle_cont_desc_enc_zrtp_hash,
+        &ett_xmpp_jingle_cont_desc_enc_crypto,
+        &ett_xmpp_jingle_cont_desc_bandwidth,
+        &ett_xmpp_jingle_cont_desc_rtp_hdr,
+        &ett_xmpp_jingle_cont_trans,
+        &ett_xmpp_jingle_cont_trans_cand,
+        &ett_xmpp_jingle_cont_trans_rem_cand,
+        &ett_xmpp_jingle_reason,
+        &ett_xmpp_jingle_rtp_info,
+        &ett_xmpp_services,
+        &ett_xmpp_services_relay,
+        &ett_xmpp_channel,
+        &ett_xmpp_si,
+        &ett_xmpp_si_file,
+        &ett_xmpp_si_file_range,
         &ett_xmpp_iq_feature_neg,
         &ett_xmpp_x_data,
         &ett_xmpp_x_data_field,
