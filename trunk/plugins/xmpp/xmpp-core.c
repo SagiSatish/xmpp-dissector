@@ -102,7 +102,8 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
         {NAME_AND_ATTR, name_attr_struct("mailbox", "xmlns","google:mail:notify"), xmpp_gtalk_mail_mailbox, ONE},
         {NAME_AND_ATTR, name_attr_struct("new-mail", "xmlns","google:mail:notify"), xmpp_gtalk_mail_new_mail, ONE},
         {NAME_AND_ATTR, name_attr_struct("query", "xmlns","google:shared-status"), xmpp_gtalk_status_query, ONE},
-        {NAME, "conference-info", xmpp_conference_info, ONE}
+        {NAME, "conference-info", xmpp_conference_info, ONE},
+        {NAME_AND_ATTR, name_attr_struct("ping", "xmlns","urn:xmpp:ping"), xmpp_ping, ONE},
     };
 
     attr_id = g_hash_table_lookup(packet->attrs, "id");

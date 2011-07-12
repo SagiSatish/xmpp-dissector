@@ -52,7 +52,8 @@ xmpp_gtalk_session(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_
     elem_info elems_info [] = {
         {NAME,"description", xmpp_gtalk_session_desc, ONE},
         {NAME, "candidate", xmpp_gtalk_session_cand, MANY},
-        {NAME, "reason", xmpp_gtalk_session_reason, ONE}
+        {NAME, "reason", xmpp_gtalk_session_reason, ONE},
+        {NAME_AND_ATTR, name_attr_struct("transport", "xmlns", "http://www.google.com/transport/p2p"), xmpp_gtalk_transport_p2p, ONE},
     };
 
     attr_t *attr_type = g_hash_table_lookup(element->attrs, "type");
@@ -74,7 +75,8 @@ xmpp_gtalk_session_desc(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, ele
     proto_tree *desc_tree;
 
     attr_info attrs_info[] = {
-        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL}
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
+        {"xml:lang", -1, FALSE, FALSE, NULL, NULL}
     };
 
     elem_info elems_info[] = {
@@ -599,7 +601,7 @@ xmpp_gtalk_status_status_list(proto_tree* tree, tvbuff_t* tvb, packet_info* pinf
     display_elems(list_tree, element, pinfo, tvb, NULL, 0);
 }
 
-
+/*http://www.google.com/transport/p2p*/
 void
 xmpp_gtalk_transport_p2p(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
 {
@@ -622,7 +624,6 @@ xmpp_gtalk_transport_p2p(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, el
     display_elems(trans_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
 }
 
-/*http://www.google.com/transport/p2p*/
 static void
 xmpp_gtalk_transport_p2p_cand(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element) {
     proto_item *cand_item;

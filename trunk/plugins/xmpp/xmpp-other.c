@@ -1143,6 +1143,7 @@ xmpp_last_query(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *
     display_elems(query_tree, element, pinfo, tvb, NULL, 0);
 }
 
+/*XEP-0092: Software Version jabber:iq:version*/
 void
 xmpp_version_query(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
@@ -1183,4 +1184,21 @@ xmpp_version_query(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_
 
     display_attrs(query_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
     display_elems(query_tree, element, pinfo, tvb, NULL, 0);
+}
+/*XEP-0199: XMPP Ping*/
+void
+xmpp_ping(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+{
+    proto_item *ping_item;
+    proto_tree *ping_tree;
+
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
+    };
+
+    ping_item = proto_tree_add_item(tree, hf_xmpp_ping, tvb, element->offset, element->length, FALSE);
+    ping_tree = proto_item_add_subtree(ping_item, ett_xmpp_ping);
+
+    display_attrs(ping_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(ping_tree, element, pinfo, tvb, NULL, 0);
 }

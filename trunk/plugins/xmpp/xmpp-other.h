@@ -35,5 +35,6 @@ extern void xmpp_muc_admin_query(proto_tree *tree, tvbuff_t *tvb, packet_info *p
 extern void xmpp_last_query(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 extern void xmpp_version_query(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
+extern void xmpp_ping(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 #endif	/* XMPP_OTHER_H */
 

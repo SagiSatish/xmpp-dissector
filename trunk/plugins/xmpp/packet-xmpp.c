@@ -121,6 +121,11 @@ gint hf_xmpp_jingle_cont_trans_ufrag = -1;
 
 gint hf_xmpp_jingle_cont_trans_cand = -1;
 gint hf_xmpp_jingle_cont_trans_rem_cand = -1;
+gint hf_xmpp_jingle_cont_trans_activated = -1;
+gint hf_xmpp_jingle_cont_trans_candidate_error = -1;
+gint hf_xmpp_jingle_cont_trans_candidate_used = -1;
+gint hf_xmpp_jingle_cont_trans_proxy_error = -1;
+
 
 gint hf_xmpp_jingle_reason = -1;
 gint hf_xmpp_jingle_reason_condition = -1;
@@ -192,6 +197,8 @@ gint hf_xmpp_response_in = -1;
 gint hf_xmpp_response_to = -1;
 gint hf_xmpp_jingle_session = -1;
 gint hf_xmpp_ibb = -1;
+
+gint hf_xmpp_ping = -1;
 
 gint ett_xmpp = -1;
 gint ett_xmpp_iq = -1;
@@ -293,6 +300,8 @@ gint ett_xmpp_conf_users = -1;
 gint ett_xmpp_conf_user = -1;
 gint ett_xmpp_conf_endpoint = -1;
 gint ett_xmpp_conf_media = -1;
+
+gint ett_xmpp_ping = -1;
 
 static void
 dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
@@ -784,6 +793,26 @@ proto_register_xmpp(void) {
                 "REMOTE-CANDIDATE", "xmpp.jingle.content.transport.remote-candidate", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq jingle content transport remote-candidate", HFILL
             }},
+            { &hf_xmpp_jingle_cont_trans_activated,
+            {
+                "ACTIVATED", "xmpp.jingle.content.transport.activated", FT_NONE, BASE_NONE, NULL, 0x0,
+                "urn:xmpp:jingle:transports:s5b:1 activated", HFILL
+            }},
+            { &hf_xmpp_jingle_cont_trans_candidate_used,
+            {
+                "CANDIDATE-USED", "xmpp.jingle.content.transport.candidate-used", FT_NONE, BASE_NONE, NULL, 0x0,
+                "urn:xmpp:jingle:transports:s5b:1 candidate-used", HFILL
+            }},
+            { &hf_xmpp_jingle_cont_trans_candidate_error,
+            {
+                "CANDIDATE-ERROR", "xmpp.jingle.content.transport.candidate-error", FT_NONE, BASE_NONE, NULL, 0x0,
+                "urn:xmpp:jingle:transports:s5b:1 candidate-error", HFILL
+            }},
+             { &hf_xmpp_jingle_cont_trans_proxy_error,
+            {
+                "PROXY-ERROR", "xmpp.jingle.content.transport.proxy-error", FT_NONE, BASE_NONE, NULL, 0x0,
+                "urn:xmpp:jingle:transports:s5b:1 proxy-error", HFILL
+            }},
             { &hf_xmpp_jingle_cont_desc_enc,
             {
                 "ENCRYPTION", "xmpp.jingle.content.description.encryption", FT_NONE, BASE_NONE, NULL, 0x0,
@@ -1073,7 +1102,12 @@ proto_register_xmpp(void) {
             {
                 "JINGLE SESSION", "xmpp.jingle_session", FT_STRING, BASE_NONE, NULL, 0x0,
                 "Jingle SID", HFILL
-            }}
+            }},
+            { &hf_xmpp_ping,
+            {
+                "PING", "xmpp.ping", FT_NONE, BASE_NONE, NULL, 0x0,
+                "urn:xmpp:ping", HFILL
+            }},
     };
 
     static gint * ett[] = {
@@ -1162,6 +1196,7 @@ proto_register_xmpp(void) {
         &ett_xmpp_conf_media,
         &ett_xmpp_gtalk_transport_p2p,
         &ett_xmpp_gtalk_transport_p2p_cand,
+        &ett_xmpp_ping,
     };
 
     proto_xmpp = proto_register_protocol(
