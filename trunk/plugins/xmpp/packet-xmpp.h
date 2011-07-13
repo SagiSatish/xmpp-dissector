@@ -182,6 +182,9 @@ extern gint hf_xmpp_ibb;
 extern gint hf_xmpp_ping;
 extern gint hf_xmpp_hashes;
 
+extern gint hf_xmpp_jitsi_inputevt;
+extern gint hf_xmpp_jitsi_inputevt_rmt_ctrl;
+
 extern gint ett_xmpp;
 extern gint ett_xmpp_iq;
 extern gint ett_xmpp_query;
@@ -293,6 +296,9 @@ extern gint ett_xmpp_conf_media;
 extern gint ett_xmpp_ping;
 extern gint ett_xmpp_hashes;
 extern gint ett_xmpp_hashes_hash;
+
+extern gint ett_xmpp_jitsi_inputevt;
+extern gint ett_xmpp_jitsi_inputevt_rmt_ctrl;
 
 #endif	/* PACKET_XMPP_H */
 

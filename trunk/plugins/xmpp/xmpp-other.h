@@ -37,5 +37,7 @@ extern void xmpp_version_query(proto_tree *tree, tvbuff_t *tvb, packet_info *pin
 
 extern void xmpp_ping(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 extern void xmpp_hashes(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+
+extern void xmpp_jitsi_inputevt(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 #endif	/* XMPP_OTHER_H */
 
