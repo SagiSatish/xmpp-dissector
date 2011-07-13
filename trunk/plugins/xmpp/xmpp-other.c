@@ -46,6 +46,8 @@ static void xmpp_muc_user_item(proto_tree *tree, tvbuff_t *tvb, packet_info *pin
 static void xmpp_muc_user_status(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 static void xmpp_muc_user_invite(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
+static void xmpp_hashes_hash(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+
 void
 xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
@@ -1201,4 +1203,45 @@ xmpp_ping(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *elemen
 
     display_attrs(ping_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
     display_elems(ping_tree, element, pinfo, tvb, NULL, 0);
+}
+
+/*XEP-0300: Use of Cryptographic Hash Functions in XMPP urn:xmpp:hashes:0*/
+void
+xmpp_hashes(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element) {
+    proto_item *hashes_item;
+    proto_tree *hashes_tree;
+
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
+    };
+    elem_info elems_info[] = {
+        {NAME, "hash", xmpp_hashes_hash, MANY}
+    };
+
+    hashes_item = proto_tree_add_item(tree, hf_xmpp_hashes, tvb, element->offset, element->length, FALSE);
+    hashes_tree = proto_item_add_subtree(hashes_item, ett_xmpp_hashes);
+
+    display_attrs(hashes_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(hashes_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
+}
+
+static void
+xmpp_hashes_hash(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+{
+    proto_item *hash_item;
+    proto_tree *hash_tree;
+
+    attr_info attrs_info[] = {
+        {"algo", -1, TRUE, TRUE, NULL, NULL},
+        {"value", -1, TRUE, TRUE, NULL, NULL}
+    };
+
+    attr_t *fake_cdata = ep_init_attr_t(elem_cdata(element), element->offset, element->length);
+    g_hash_table_insert(element->attrs, "value", fake_cdata);
+
+    hash_item = proto_tree_add_text(tree, tvb, element->offset, element->length, "HASH");
+    hash_tree = proto_item_add_subtree(hash_item, ett_xmpp_hashes_hash);
+    
+    display_attrs(hash_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(hash_tree, element, pinfo, tvb, NULL, 0);
 }

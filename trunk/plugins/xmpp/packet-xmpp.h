@@ -109,6 +109,12 @@ extern gint hf_xmpp_jingle_reason_text;
 
 extern gint hf_xmpp_jingle_rtp_info;
 
+extern gint hf_xmpp_jingle_file_transfer_offer;
+extern gint hf_xmpp_jingle_file_transfer_request;
+extern gint hf_xmpp_jingle_file_transfer_received;
+extern gint hf_xmpp_jingle_file_transfer_abort;
+extern gint hf_xmpp_jingle_file_transfer_checksum;
+
 extern gint hf_xmpp_si;
 extern gint hf_xmpp_si_file;
 
@@ -174,6 +180,7 @@ extern gint hf_xmpp_jingle_session;
 extern gint hf_xmpp_ibb;
 
 extern gint hf_xmpp_ping;
+extern gint hf_xmpp_hashes;
 
 extern gint ett_xmpp;
 extern gint ett_xmpp_iq;
@@ -206,6 +213,12 @@ extern gint ett_xmpp_jingle_cont_trans_cand;
 extern gint ett_xmpp_jingle_cont_trans_rem_cand;
 extern gint ett_xmpp_jingle_reason;
 extern gint ett_xmpp_jingle_rtp_info;
+extern gint ett_xmpp_jingle_file_transfer_offer;
+extern gint ett_xmpp_jingle_file_transfer_request;
+extern gint ett_xmpp_jingle_file_transfer_received;
+extern gint ett_xmpp_jingle_file_transfer_abort;
+extern gint ett_xmpp_jingle_file_transfer_checksum;
+extern gint ett_xmpp_jingle_file_transfer_file;
 
 extern gint ett_xmpp_services;
 extern gint ett_xmpp_services_relay;
@@ -278,6 +291,8 @@ extern gint ett_xmpp_conf_endpoint;
 extern gint ett_xmpp_conf_media;
 
 extern gint ett_xmpp_ping;
+extern gint ett_xmpp_hashes;
+extern gint ett_xmpp_hashes_hash;
 
 #endif	/* PACKET_XMPP_H */
 
