@@ -133,6 +133,12 @@ gint hf_xmpp_jingle_reason_text = -1;
 
 gint hf_xmpp_jingle_rtp_info = -1;
 
+gint hf_xmpp_jingle_file_transfer_offer = -1;
+gint hf_xmpp_jingle_file_transfer_request = -1;
+gint hf_xmpp_jingle_file_transfer_received = -1;
+gint hf_xmpp_jingle_file_transfer_abort = -1;
+gint hf_xmpp_jingle_file_transfer_checksum = -1;
+
 gint hf_xmpp_si = -1;
 gint hf_xmpp_si_file = -1;
 
@@ -199,6 +205,7 @@ gint hf_xmpp_jingle_session = -1;
 gint hf_xmpp_ibb = -1;
 
 gint hf_xmpp_ping = -1;
+gint hf_xmpp_hashes = -1;
 
 gint ett_xmpp = -1;
 gint ett_xmpp_iq = -1;
@@ -231,6 +238,13 @@ gint ett_xmpp_jingle_cont_trans_cand = -1;
 gint ett_xmpp_jingle_cont_trans_rem_cand = -1;
 gint ett_xmpp_jingle_reason = -1;
 gint ett_xmpp_jingle_rtp_info = -1;
+
+gint ett_xmpp_jingle_file_transfer_offer = -1;
+gint ett_xmpp_jingle_file_transfer_request = -1;
+gint ett_xmpp_jingle_file_transfer_abort = -1;
+gint ett_xmpp_jingle_file_transfer_received = -1;
+gint ett_xmpp_jingle_file_transfer_checksum = -1;
+gint ett_xmpp_jingle_file_transfer_file = -1;
 
 gint ett_xmpp_services = -1;
 gint ett_xmpp_services_relay = -1;
@@ -302,6 +316,8 @@ gint ett_xmpp_conf_endpoint = -1;
 gint ett_xmpp_conf_media = -1;
 
 gint ett_xmpp_ping = -1;
+gint ett_xmpp_hashes = -1;
+gint ett_xmpp_hashes_hash = -1;
 
 static void
 dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
@@ -858,6 +874,31 @@ proto_register_xmpp(void) {
                 "RTP-INFO", "xmpp.jingle.rtp_info", FT_STRING, BASE_NONE, NULL, 0x0,
                 "iq jingle rtp-info(ringing, active, hold, mute, ...)", HFILL
             }},
+            { &hf_xmpp_jingle_file_transfer_offer,
+            {
+                "OFFER", "xmpp.jingle.content.description.offer", FT_NONE, BASE_NONE, NULL, 0x0,
+                "urn:xmpp:jingle:apps:file-transfer:3 offer", HFILL
+            }},
+            { &hf_xmpp_jingle_file_transfer_request,
+            {
+                "REQUEST", "xmpp.jingle.content.description.request", FT_NONE, BASE_NONE, NULL, 0x0,
+                "urn:xmpp:jingle:apps:file-transfer:3 request", HFILL
+            }},
+            { &hf_xmpp_jingle_file_transfer_received,
+            {
+                "RECEIVED", "xmpp.jingle.content.received", FT_NONE, BASE_NONE, NULL, 0x0,
+                "urn:xmpp:jingle:apps:file-transfer:3 received", HFILL
+            }},
+            { &hf_xmpp_jingle_file_transfer_abort,
+            {
+                "ABORT", "xmpp.jingle.content.abort", FT_NONE, BASE_NONE, NULL, 0x0,
+                "urn:xmpp:jingle:apps:file-transfer:3 abort", HFILL
+            }},
+            { &hf_xmpp_jingle_file_transfer_checksum,
+            {
+                "CHECKSUM", "xmpp.jingle.content.checksum", FT_NONE, BASE_NONE, NULL, 0x0,
+                "urn:xmpp:jingle:apps:file-transfer:3 checksum", HFILL
+            }},
             { &hf_xmpp_si,
             {
                 "SI", "xmpp.si", FT_NONE, BASE_NONE, NULL, 0x0,
@@ -1108,6 +1149,11 @@ proto_register_xmpp(void) {
                 "PING", "xmpp.ping", FT_NONE, BASE_NONE, NULL, 0x0,
                 "urn:xmpp:ping", HFILL
             }},
+            { &hf_xmpp_hashes,
+            {
+                "HASHES", "xmpp.hashes", FT_NONE, BASE_NONE, NULL, 0x0,
+                "urn:xmpp:hashes:0", HFILL
+            }},
     };
 
     static gint * ett[] = {
@@ -1197,6 +1243,14 @@ proto_register_xmpp(void) {
         &ett_xmpp_gtalk_transport_p2p,
         &ett_xmpp_gtalk_transport_p2p_cand,
         &ett_xmpp_ping,
+        &ett_xmpp_hashes_hash,
+        &ett_xmpp_hashes,
+        &ett_xmpp_jingle_file_transfer_offer,
+        &ett_xmpp_jingle_file_transfer_request,
+        &ett_xmpp_jingle_file_transfer_received,
+        &ett_xmpp_jingle_file_transfer_abort,
+        &ett_xmpp_jingle_file_transfer_checksum,
+        &ett_xmpp_jingle_file_transfer_file,
     };
 
     proto_xmpp = proto_register_protocol(
