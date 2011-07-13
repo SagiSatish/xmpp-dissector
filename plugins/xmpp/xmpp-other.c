@@ -48,6 +48,8 @@ static void xmpp_muc_user_invite(proto_tree *tree, tvbuff_t *tvb, packet_info *p
 
 static void xmpp_hashes_hash(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
+static void xmpp_jitsi_inputevt_rmt_ctrl(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+
 void
 xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
@@ -1244,4 +1246,82 @@ xmpp_hashes_hash(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t 
     
     display_attrs(hash_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
     display_elems(hash_tree, element, pinfo, tvb, NULL, 0);
+}
+
+/*http://jitsi.org/protocol/inputevt*/
+void
+xmpp_jitsi_inputevt(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+{
+    proto_item *inputevt_item;
+    proto_tree *inputevt_tree;
+
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
+        {"action", -1, FALSE, TRUE, NULL, NULL}
+    };
+
+    elem_info elems_info[] = {
+        {NAME, "remote-control", xmpp_jitsi_inputevt_rmt_ctrl, MANY}
+    };
+
+    inputevt_item = proto_tree_add_item(tree, hf_xmpp_jitsi_inputevt, tvb, element->offset, element->length, FALSE);
+    inputevt_tree = proto_item_add_subtree(inputevt_item, ett_xmpp_jitsi_inputevt);
+    
+    display_attrs(inputevt_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(inputevt_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
+}
+
+static void
+xmpp_jitsi_inputevt_rmt_ctrl(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+{
+    proto_item *rmt_ctrl_item;
+    proto_tree *rmt_ctrl_tree;
+
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, FALSE, FALSE, NULL, NULL},
+        {"action", -1, TRUE, TRUE, NULL, NULL},
+        {"x", -1, FALSE, TRUE, NULL, NULL},
+        {"y", -1, FALSE, TRUE, NULL, NULL},
+        {"btns", -1, FALSE, TRUE, NULL, NULL},
+        {"keycode", -1, FALSE, TRUE, NULL, NULL},
+    };
+
+    element_t *action;
+    const gchar *action_names[] = {"mouse-move","mouse-press", "mouse-release", "key-press", "key-release"};
+
+    if((action = steal_element_by_names(element, action_names, array_length(action_names)))!=NULL)
+    {
+        attr_t *fake_action = ep_init_attr_t(action->name, action->offset, action->length);
+        g_hash_table_insert(element->attrs,"action", fake_action);
+
+        if(strcmp(action->name,"mouse-move") == 0)
+        {
+            attr_t *x = g_hash_table_lookup(action->attrs,"x");
+            attr_t *y = g_hash_table_lookup(action->attrs,"y");
+
+            if(x)
+                g_hash_table_insert(element->attrs,"x",x);
+            if(y)
+                g_hash_table_insert(element->attrs,"y",y);
+        } else if(strcmp(action->name,"mouse-press") == 0 || strcmp(action->name,"mouse-release") == 0)
+        {
+            attr_t *btns = g_hash_table_lookup(action->attrs,"btns");
+
+            if(btns)
+                g_hash_table_insert(element->attrs,"btns",btns);
+        } else if(strcmp(action->name,"key-press") == 0 || strcmp(action->name,"key-release") == 0)
+        {
+            attr_t *keycode = g_hash_table_lookup(action->attrs,"keycode");
+
+            if(keycode)
+                g_hash_table_insert(element->attrs,"keycode",keycode);
+        }
+
+    }
+
+    rmt_ctrl_item = proto_tree_add_item(tree, hf_xmpp_jitsi_inputevt_rmt_ctrl, tvb, element->offset, element->length, FALSE);
+    rmt_ctrl_tree = proto_item_add_subtree(rmt_ctrl_item, ett_xmpp_jitsi_inputevt_rmt_ctrl);
+
+    display_attrs(rmt_ctrl_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(rmt_ctrl_tree, element, pinfo, tvb, NULL, 0);
 }

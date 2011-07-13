@@ -104,6 +104,7 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
         {NAME_AND_ATTR, name_attr_struct("query", "xmlns","google:shared-status"), xmpp_gtalk_status_query, ONE},
         {NAME, "conference-info", xmpp_conference_info, ONE},
         {NAME_AND_ATTR, name_attr_struct("ping", "xmlns","urn:xmpp:ping"), xmpp_ping, ONE},
+        {NAME_AND_ATTR, name_attr_struct("inputevt", "xmlns","http://jitsi.org/protocol/inputevt"), xmpp_jitsi_inputevt, ONE},
     };
 
     attr_id = g_hash_table_lookup(packet->attrs, "id");

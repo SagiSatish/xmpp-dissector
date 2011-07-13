@@ -207,6 +207,9 @@ gint hf_xmpp_ibb = -1;
 gint hf_xmpp_ping = -1;
 gint hf_xmpp_hashes = -1;
 
+gint hf_xmpp_jitsi_inputevt = -1;
+gint hf_xmpp_jitsi_inputevt_rmt_ctrl = -1;
+
 gint ett_xmpp = -1;
 gint ett_xmpp_iq = -1;
 gint ett_xmpp_query = -1;
@@ -318,6 +321,9 @@ gint ett_xmpp_conf_media = -1;
 gint ett_xmpp_ping = -1;
 gint ett_xmpp_hashes = -1;
 gint ett_xmpp_hashes_hash = -1;
+
+gint ett_xmpp_jitsi_inputevt = -1;
+gint ett_xmpp_jitsi_inputevt_rmt_ctrl = -1;
 
 static void
 dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
@@ -1154,6 +1160,16 @@ proto_register_xmpp(void) {
                 "HASHES", "xmpp.hashes", FT_NONE, BASE_NONE, NULL, 0x0,
                 "urn:xmpp:hashes:0", HFILL
             }},
+            { &hf_xmpp_jitsi_inputevt,
+            {
+                "INPUTEVT", "xmpp.inputevt", FT_NONE, BASE_NONE, NULL, 0x0,
+                "http://jitsi.org/protocol/inputevt", HFILL
+            }},
+            { &hf_xmpp_jitsi_inputevt_rmt_ctrl,
+            {
+                "REMOTE-CONTROL", "xmpp.inputevt.remote-control", FT_NONE, BASE_NONE, NULL, 0x0,
+                "http://jitsi.org/protocol/inputevt remote-control", HFILL
+            }},
     };
 
     static gint * ett[] = {
@@ -1251,6 +1267,8 @@ proto_register_xmpp(void) {
         &ett_xmpp_jingle_file_transfer_abort,
         &ett_xmpp_jingle_file_transfer_checksum,
         &ett_xmpp_jingle_file_transfer_file,
+        &ett_xmpp_jitsi_inputevt,
+        &ett_xmpp_jitsi_inputevt_rmt_ctrl,
     };
 
     proto_xmpp = proto_register_protocol(

@@ -142,6 +142,7 @@ xmpp_jingle_content(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element
         {NAME_AND_ATTR,  name_attr_struct("received", "xmlns", "urn:xmpp:jingle:apps:file-transfer:3"), xmpp_jingle_file_transfer_received, MANY},
         {NAME_AND_ATTR,  name_attr_struct("abort", "xmlns", "urn:xmpp:jingle:apps:file-transfer:3"), xmpp_jingle_file_transfer_abort, MANY},
         {NAME_AND_ATTR,  name_attr_struct("checksum", "xmlns", "urn:xmpp:jingle:apps:file-transfer:3"), xmpp_jingle_file_transfer_checksum, MANY},
+        {NAME_AND_ATTR, name_attr_struct("inputevt", "xmlns","http://jitsi.org/protocol/inputevt"), xmpp_jitsi_inputevt, ONE},
     };
 
     content_item = proto_tree_add_item(tree, hf_xmpp_jingle_content, tvb, element->offset, element->length, FALSE);
