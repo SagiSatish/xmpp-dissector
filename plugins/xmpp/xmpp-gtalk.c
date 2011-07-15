@@ -56,7 +56,7 @@ xmpp_gtalk_session(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_
         {NAME_AND_ATTR, name_attr_struct("transport", "xmlns", "http://www.google.com/transport/p2p"), xmpp_gtalk_transport_p2p, ONE},
     };
 
-    attr_t *attr_type = g_hash_table_lookup(element->attrs, "type");
+    attr_t *attr_type = get_attr(element, "type");
 
     col_append_fstr(pinfo->cinfo, COL_INFO, "GTALK-SESSION(%s) ", attr_type?attr_type->value:"");
 
@@ -315,7 +315,7 @@ xmpp_gtalk_usersetting(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, elem
 
         if(elem)
         {
-            attr_t *val = g_hash_table_lookup(elem->attrs,"value");
+            attr_t *val = get_attr(elem,"value");
             proto_tree_add_text(sett_tree, tvb, elem->offset, elem->length, "%s [%s]",elem->name,val?val->value:"");
         }
     }
@@ -567,7 +567,7 @@ xmpp_gtalk_status_query(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, ele
 
     if((invisible = steal_element_by_name(element,"invisible"))!=NULL)
     {
-        attr_t *value = g_hash_table_lookup(invisible->attrs, "value");
+        attr_t *value = get_attr(invisible, "value");
         attr_t *fake_invisible = ep_init_attr_t(value?value->value:"",invisible->offset, invisible->length);
         g_hash_table_insert(element->attrs, "invisible", fake_invisible);
     }

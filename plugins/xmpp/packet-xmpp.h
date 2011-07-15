@@ -1,6 +1,8 @@
 #ifndef PACKET_XMPP_H
 #define	PACKET_XMPP_H
 
+#define ETT_UNKNOWN_LEN 20
+
 extern int proto_xmpp;
 
 extern gint hf_xmpp_xmlns;
@@ -300,5 +302,6 @@ extern gint ett_xmpp_hashes_hash;
 extern gint ett_xmpp_jitsi_inputevt;
 extern gint ett_xmpp_jitsi_inputevt_rmt_ctrl;
 
+extern gint ett_unknown[ETT_UNKNOWN_LEN];
 #endif	/* PACKET_XMPP_H */
 
