@@ -107,8 +107,8 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
         {NAME_AND_ATTR, name_attr_struct("inputevt", "xmlns","http://jitsi.org/protocol/inputevt"), xmpp_jitsi_inputevt, ONE},
     };
 
-    attr_id = g_hash_table_lookup(packet->attrs, "id");
-    attr_type = g_hash_table_lookup(packet->attrs, "type");
+    attr_id = get_attr(packet, "id");
+    attr_type = get_attr(packet, "type");
 
     conversation = find_or_create_conversation(pinfo);
     xmpp_info = conversation_get_proto_data(conversation, proto_xmpp);
@@ -363,7 +363,7 @@ xmpp_message(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pac
     col_clear(pinfo->cinfo, COL_INFO);
     col_append_fstr(pinfo->cinfo, COL_INFO, "MESSAGE ");
 
-    id = g_hash_table_lookup(packet->attrs, "id");
+    id = get_attr(packet, "id");
 
     conversation = find_or_create_conversation(pinfo);
     xmpp_info = conversation_get_proto_data(conversation, proto_xmpp);
@@ -572,7 +572,7 @@ xmpp_failure(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pac
 static void
 xmpp_failure_text(proto_tree *tree, tvbuff_t *tvb, element_t *element)
 {
-    attr_t *lang = g_hash_table_lookup(element->attrs,"xml:lang");
+    attr_t *lang = get_attr(element,"xml:lang");
     
     proto_tree_add_text(tree, tvb, element->offset, element->length, "TEXT%s: %s",
             lang?ep_strdup_printf("(%s)",lang->value):"",

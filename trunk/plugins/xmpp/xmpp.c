@@ -11,6 +11,7 @@
 #include <epan/packet_info.h>
 #include <epan/epan.h>
 #include <epan/expert.h>
+#include <epan/tvbparse.h>
 
 #include <epan/dissectors/packet-xml.h>
 
@@ -27,7 +28,7 @@ xmpp_iq_reqresp_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *x
     attr_t *attr_id;
     char *id;
 
-    attr_id = g_hash_table_lookup(packet->attrs, "id");
+    attr_id = get_attr(packet, "id");
     id = ep_strdup(attr_id->value);
 
 
@@ -70,10 +71,10 @@ xmpp_jingle_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_
         char *se_sid;
 
 
-        attr_id = g_hash_table_lookup(packet->attrs, "id");
+        attr_id = get_attr(packet, "id");
         se_id = se_strdup(attr_id->value);
 
-        attr_sid = g_hash_table_lookup(jingle_packet->attrs, "sid");
+        attr_sid = get_attr(jingle_packet, "sid");
         se_sid = se_strdup(attr_sid->value);
 
         se_tree_insert_string(xmpp_info->jingle_sessions, se_id, (void*) se_sid, EMEM_TREE_STRING_NOCASE);
@@ -97,15 +98,15 @@ xmpp_gtalk_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t
         char *se_id;
         char *se_sid;
 
-        attr_t *xmlns = g_hash_table_lookup(gtalk_packet->attrs, "xmlns");
+        attr_t *xmlns = get_attr(gtalk_packet, "xmlns");
         if(xmlns && strcmp(xmlns->value,"http://www.google.com/session") != 0)
             return;
 
 
-        attr_id = g_hash_table_lookup(packet->attrs, "id");
+        attr_id = get_attr(packet, "id");
         se_id = se_strdup(attr_id->value);
 
-        attr_sid = g_hash_table_lookup(gtalk_packet->attrs, "id");
+        attr_sid = get_attr(gtalk_packet, "id");
         se_sid = se_strdup(attr_sid->value);
 
         se_tree_insert_string(xmpp_info->gtalk_sessions, se_id, (void*) se_sid, EMEM_TREE_STRING_NOCASE);
@@ -143,14 +144,42 @@ xmpp_ibb_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *
         char *se_sid;
 
 
-        attr_id = g_hash_table_lookup(packet->attrs, "id");
-        attr_sid = g_hash_table_lookup(ibb_packet->attrs, "sid");
+        attr_id = get_attr(packet, "id");
+        attr_sid = get_attr(ibb_packet, "sid");
         if(attr_id && attr_sid)
         {
             se_id = se_strdup(attr_id->value);
             se_sid = se_strdup(attr_sid->value);
             se_tree_insert_string(xmpp_info->ibb_sessions, se_id, (void*) se_sid, EMEM_TREE_STRING_NOCASE);
         }
+    }
+}
+
+static void
+xmpp_unknown_items(proto_tree *tree, tvbuff_t *tvb, element_t *element, guint level)
+{
+    GList *keys = g_hash_table_get_keys(element->attrs);
+    GList *childs = element->elements;
+    
+    DISSECTOR_ASSERT( level < ETT_UNKNOWN_LEN );
+
+    while(keys)
+    {
+        attr_t *attr = get_attr(element, (const gchar*)keys->data);
+        if(attr)
+            proto_tree_add_text(tree, tvb, attr->offset, attr->length, "%s: %s",(gchar*)keys->data,attr->value);
+        keys = keys->next;
+    }
+
+    while(childs)
+    {
+        element_t *child = childs->data;
+        proto_item *child_item = proto_tree_add_text(tree, tvb, child->offset, child->length, "%s", ep_string_upcase(child->name));
+        proto_tree *child_tree = proto_item_add_subtree(child_item, ett_unknown[level]);
+
+        xmpp_unknown_items(child_tree, tvb, child, level +1);
+
+        childs = childs->next;
     }
 }
 
@@ -163,7 +192,16 @@ xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
     for(i = 0; i<g_list_length(element->elements); i++)
     {
         element_t *child = g_list_nth_data(element->elements,i);
-        proto_item *unknown_item= proto_tree_add_string(tree, hf_xmpp_unknown, tvb, child->offset, child->length, element_to_string(tvb, child));
+        proto_item *unknown_item = proto_tree_add_string_format(tree,
+                hf_xmpp_unknown, tvb, child->offset, child->length, child->name,
+                "%s", ep_string_upcase(child->name));
+        
+        proto_tree *unknown_tree = proto_item_add_subtree(unknown_item, ett_unknown[0]);
+        
+        proto_item_append_text(unknown_item, " [UNKNOWN]");
+
+        xmpp_unknown_items(unknown_tree, tvb, child, 1);
+
         expert_add_info_format(pinfo, unknown_item, PI_UNDECODED, PI_NOTE,"Unknown element: %s", child->name);
     }
     
@@ -191,6 +229,23 @@ ep_init_attr_t(gchar *value, gint offset, gint length)
     result->offset = offset;
     result->length = length;
 
+    return result;
+}
+
+gchar*
+ep_string_upcase(const gchar* string)
+{
+    gint len = strlen(string);
+    gint i;
+    gchar* result = ep_alloc0(len+1);
+    for(i=0; i<len; i++)
+    {
+        result[i] = string[i];
+
+        if(string[i]>='a' && string[i]<='z')
+            result[i]-='a'-'A';
+
+    }
     return result;
 }
 
@@ -264,7 +319,7 @@ steal_element_by_attr(element_t *packet, const gchar *attr_name, const gchar *at
 
     while (childs) {
         element_t *child_elem = childs->data;
-        attr_t *attr = g_hash_table_lookup(child_elem->attrs, attr_name);
+        attr_t *attr = get_attr(child_elem, attr_name);
 
 /*
         child is one of the defined stanza error conditions
@@ -290,7 +345,7 @@ steal_element_by_name_and_attr(element_t *packet, const gchar *name, const gchar
 
     while (childs) {
         element_t *child_elem = childs->data;
-        attr_t *attr = g_hash_table_lookup(child_elem->attrs, attr_name);
+        attr_t *attr = get_attr(child_elem, attr_name);
 
 /*
         child is one of the defined stanza error conditions
@@ -338,7 +393,7 @@ xml_frame_to_element_t(xml_frame_t *xml_frame)
 
     if(start_offset == -1 && xml_frame->item != NULL)
         start_offset = xml_frame->item->finfo->start;
-
+    
 
     if(xml_frame->item != NULL)
     {
@@ -375,8 +430,9 @@ xml_frame_to_element_t(xml_frame_t *xml_frame)
                     attr->length = child->item->finfo->length;
                 }
                 attr->value = value;
+                attr->name = ep_strdup(child->name_orig_case);
 
-                g_hash_table_insert(node->attrs,(gpointer)child->name_orig_case,(gpointer)attr);
+                g_hash_table_insert(node->attrs,(gpointer)attr->name,(gpointer)attr);
             }
             else if( child->type == XML_FRAME_CDATA)
             {
@@ -412,6 +468,39 @@ xml_frame_to_element_t(xml_frame_t *xml_frame)
     }
     return node;
 }
+
+/*Function recognize attribute names if they looks like ns:attr_name or xmlns:ns*/
+/*TODO ns:attr*/
+static gboolean
+attr_find_pred(gpointer key, gpointer value _U_, gpointer user_data)
+{
+    gchar *attr_name = (gchar*) user_data;
+
+    if( strcmp(attr_name, "xmlns") == 0 )
+    {
+        gchar *first_occur = epan_strcasestr(key, "xmlns:");
+        if(first_occur && first_occur == key)
+            return TRUE;
+        else
+            return FALSE;
+    }
+    return FALSE;
+}
+
+/*Functions returns element's attibute by name*/
+attr_t*
+get_attr(element_t *element, const gchar* attr_name)
+{
+    attr_t *result = g_hash_table_lookup(element->attrs, attr_name);
+    
+    if(!result)
+    {
+        result = g_hash_table_find(element->attrs, attr_find_pred, (gpointer)attr_name);
+    }
+
+    return result;
+}
+
 
 
 gchar*
@@ -513,7 +602,7 @@ display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t
     proto_item_append_text(item," [");
     for(i = 0; i < n && attrs!=NULL; i++)
     {
-        attr = g_hash_table_lookup(element->attrs, attrs[i].name);
+        attr = get_attr(element, attrs[i].name);
         if(attr)
         {
             if(attrs[i].hf != -1)
@@ -554,8 +643,10 @@ display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t
     for(i = 0; i<g_list_length(attrs_copy); i++)
     {
         attr_t *unknown_attr = g_list_nth_data(attrs_copy,i);
-        proto_item *unknown_attr_item= proto_tree_add_string(tree, hf_xmpp_unknown_attr, tvb, unknown_attr->offset, unknown_attr->length, attr_to_string(tvb, unknown_attr));
-        expert_add_info_format(pinfo, unknown_attr_item, PI_UNDECODED, PI_NOTE,"Unknown attribute.");
+        proto_item *unknown_attr_item= proto_tree_add_string_format(tree,
+                hf_xmpp_unknown_attr, tvb, unknown_attr->offset, unknown_attr->length,
+                unknown_attr->name, "%s: %s [UNKNOWN ATTR]", unknown_attr->name, unknown_attr->value);
+        expert_add_info_format(pinfo, unknown_attr_item, PI_UNDECODED, PI_NOTE,"Unknown attribute %s.", unknown_attr->name);
     }
 
 }

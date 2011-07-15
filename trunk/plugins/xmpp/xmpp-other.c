@@ -96,7 +96,7 @@ xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
 void
 xmpp_session(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
-    attr_t *xmlns  = g_hash_table_lookup(element->attrs, "xmlns");
+    attr_t *xmlns  = get_attr(element, "xmlns");
 
     col_append_fstr(pinfo->cinfo, COL_INFO, "SESSION ");
 
@@ -333,7 +333,7 @@ static void
 xmpp_disco_info_feature(proto_tree *tree, tvbuff_t *tvb, element_t *element)
 {
 
-    attr_t *var = g_hash_table_lookup(element->attrs, "var");
+    attr_t *var = get_attr(element, "var");
 
     if(var)
     {
@@ -1013,7 +1013,7 @@ xmpp_muc_user_item(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_
 
     if((actor = steal_element_by_name(element, "actor"))!=NULL)
     {
-        attr_t *jid = g_hash_table_lookup(actor->attrs, "jid");
+        attr_t *jid = get_attr(actor, "jid");
         attr_t *fake_actor_jid = ep_init_attr_t(jid?jid->value:"",actor->offset, actor->length);
         g_hash_table_insert(element->attrs, "actor_jid", fake_actor_jid);
     }
@@ -1026,7 +1026,7 @@ xmpp_muc_user_item(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_
 static void
 xmpp_muc_user_status(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
-    attr_t *code = g_hash_table_lookup(element->attrs, "code");
+    attr_t *code = get_attr(element, "code");
     proto_tree_add_text(tree, tvb, element->offset, element->length, "STATUS [code=\"%s\"]",code?code->value:"");
 
     xmpp_unknown(tree, tvb, pinfo, element);
@@ -1200,6 +1200,8 @@ xmpp_ping(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *elemen
         {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
     };
 
+    col_append_fstr(pinfo->cinfo, COL_INFO, "PING ");
+
     ping_item = proto_tree_add_item(tree, hf_xmpp_ping, tvb, element->offset, element->length, FALSE);
     ping_tree = proto_item_add_subtree(ping_item, ett_xmpp_ping);
 
@@ -1296,8 +1298,8 @@ xmpp_jitsi_inputevt_rmt_ctrl(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo
 
         if(strcmp(action->name,"mouse-move") == 0)
         {
-            attr_t *x = g_hash_table_lookup(action->attrs,"x");
-            attr_t *y = g_hash_table_lookup(action->attrs,"y");
+            attr_t *x = get_attr(action,"x");
+            attr_t *y = get_attr(action,"y");
 
             if(x)
                 g_hash_table_insert(element->attrs,"x",x);
@@ -1305,13 +1307,13 @@ xmpp_jitsi_inputevt_rmt_ctrl(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo
                 g_hash_table_insert(element->attrs,"y",y);
         } else if(strcmp(action->name,"mouse-press") == 0 || strcmp(action->name,"mouse-release") == 0)
         {
-            attr_t *btns = g_hash_table_lookup(action->attrs,"btns");
+            attr_t *btns = get_attr(action,"btns");
 
             if(btns)
                 g_hash_table_insert(element->attrs,"btns",btns);
         } else if(strcmp(action->name,"key-press") == 0 || strcmp(action->name,"key-release") == 0)
         {
-            attr_t *keycode = g_hash_table_lookup(action->attrs,"keycode");
+            attr_t *keycode = get_attr(action,"keycode");
 
             if(keycode)
                 g_hash_table_insert(element->attrs,"keycode",keycode);

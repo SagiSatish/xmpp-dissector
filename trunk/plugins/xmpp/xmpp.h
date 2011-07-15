@@ -24,6 +24,7 @@ typedef struct _array_t
 
 typedef struct _attr_t{
     gchar *value;
+    gchar *name;
     gint offset;
     gint length;
 } attr_t;
@@ -100,6 +101,7 @@ extern void xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, el
 
 extern array_t* ep_init_array_t(const gchar** array, gint len);
 extern attr_t* ep_init_attr_t(gchar *value, gint offset, gint length);
+extern gchar* ep_string_upcase(const gchar* string);
 
 extern gint element_t_cmp(gconstpointer a, gconstpointer b);
 extern GList* find_element_by_name(element_t *packet,const gchar *name);
@@ -111,6 +113,8 @@ extern element_t* get_first_element(element_t *packet);
 extern element_t* xml_frame_to_element_t(xml_frame_t *xml_frame);
 extern gchar* element_to_string(tvbuff_t *tvb, element_t *element);
 extern gchar* attr_to_string(tvbuff_t *tvb, attr_t *attr);
+extern attr_t* get_attr(element_t *element, const gchar* attr_name);
+
 
 extern void proto_tree_hide_first_child(proto_tree *tree);
 extern void proto_tree_show_first_child(proto_tree *tree);

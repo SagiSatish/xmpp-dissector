@@ -103,7 +103,7 @@ xmpp_jingle(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *elem
         {NAME, "conference-info", xmpp_conferece_info_advert, ONE}
     };
 
-     attr_t *action = g_hash_table_lookup(element->attrs,"action");
+     attr_t *action = get_attr(element,"action");
      col_append_fstr(pinfo->cinfo, COL_INFO, "JINGLE(%s) ", action?action->value:"");
 
 
@@ -295,8 +295,8 @@ xmpp_jingle_cont_desc_rtp_payload_param(proto_tree* tree, tvbuff_t* tvb, packet_
     };
 
 
-    name = g_hash_table_lookup(element->attrs, "name");
-    value = g_hash_table_lookup(element->attrs, "value");
+    name = get_attr(element, "name");
+    value = get_attr(element, "value");
 
     if(name && value)
     {
@@ -438,7 +438,7 @@ xmpp_jingle_cont_desc_rtp_hdrext(proto_tree* tree, tvbuff_t* tvb, packet_info *p
 
     if((parameter = steal_element_by_name(element, "parameter"))!=NULL)
     {
-        attr_t *name = g_hash_table_lookup(element->attrs, "name");
+        attr_t *name = get_attr(element, "name");
         attr_t *fake_attr = ep_init_attr_t(name?name->value:"", parameter->offset, parameter->length);
         g_hash_table_insert(element->attrs, "parameter", fake_attr);
     }
@@ -656,7 +656,7 @@ static void
 xmpp_jingle_cont_trans_s5b_activated(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
     proto_item *activated_item;
-    attr_t *cid = g_hash_table_lookup(element->attrs, "cid");
+    attr_t *cid = get_attr(element, "cid");
 
     activated_item = proto_tree_add_item(tree, hf_xmpp_jingle_cont_trans_activated, tvb, element->offset, element->length, FALSE);
     proto_item_append_text(activated_item, " [cid=\"%s\"]",cid?cid->value:"");
@@ -668,7 +668,7 @@ static void
 xmpp_jingle_cont_trans_s5b_cand_used(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
     proto_item *cand_used_item;
-    attr_t *cid = g_hash_table_lookup(element->attrs, "cid");
+    attr_t *cid = get_attr(element, "cid");
 
     cand_used_item = proto_tree_add_item(tree, hf_xmpp_jingle_cont_trans_candidate_used, tvb, element->offset, element->length, FALSE);
     proto_item_append_text(cand_used_item, " [cid=\"%s\"]",cid?cid->value:"");

@@ -325,6 +325,14 @@ gint ett_xmpp_hashes_hash = -1;
 gint ett_xmpp_jitsi_inputevt = -1;
 gint ett_xmpp_jitsi_inputevt_rmt_ctrl = -1;
 
+gint ett_unknown[ETT_UNKNOWN_LEN] =
+{
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,
+};
+
 static void
 dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
     
@@ -441,11 +449,11 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
 
         /*appends to COL_INFO information about src or dst*/
         if (pinfo->match_uint == pinfo->destport) {
-            attr_t *to = g_hash_table_lookup(packet->attrs, "to");
+            attr_t *to = get_attr(packet, "to");
             if (to)
                 col_append_fstr(pinfo->cinfo, COL_INFO, "> %s ", to->value);
         } else {
-            attr_t *from = g_hash_table_lookup(packet->attrs, "from");
+            attr_t *from = get_attr(packet, "from");
             if (from)
                 col_append_fstr(pinfo->cinfo, COL_INFO, "< %s ", from->value);
         }
@@ -1271,6 +1279,15 @@ proto_register_xmpp(void) {
         &ett_xmpp_jitsi_inputevt_rmt_ctrl,
     };
 
+    static gint* ett_unknown_ptr[ETT_UNKNOWN_LEN];
+    gint i;
+    for(i=0;i<ETT_UNKNOWN_LEN;i++)
+    {
+        ett_unknown_ptr[i] = &ett_unknown[i];
+    }
+
+    
+
     proto_xmpp = proto_register_protocol(
             "XMPP Protocol", /* name       */
             "XMPP", /* short name */
@@ -1278,11 +1295,9 @@ proto_register_xmpp(void) {
             );
     proto_register_field_array(proto_xmpp, hf, array_length(hf));
     proto_register_subtree_array(ett, array_length(ett));
+    proto_register_subtree_array(ett_unknown_ptr, array_length(ett_unknown_ptr));
 
-    /*to remove*/
-/*
-    register_dissector("xmpp2", dissect_xmpp, proto_xmpp);
-*/
+    register_dissector("xmpp", dissect_xmpp, proto_xmpp);
 }
 
 void
@@ -1291,7 +1306,8 @@ proto_reg_handoff_xmpp(void) {
 
     xml_handle = find_dissector("xml");
 
-    xmpp_handle = create_dissector_handle(dissect_xmpp, proto_xmpp);
+    //xmpp_handle = create_dissector_handle(dissect_xmpp, proto_xmpp);
+    xmpp_handle = find_dissector("xmpp");
 
     dissector_add_uint("tcp.port", XMPP_PORT, xmpp_handle);
 
