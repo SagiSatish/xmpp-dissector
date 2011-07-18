@@ -370,7 +370,7 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
         return;
 
     packet = xml_frame_to_element_t(xml_frame);
-   
+    DISSECTOR_ASSERT(packet);
 
 
     conversation = find_or_create_conversation(pinfo);
@@ -457,9 +457,9 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
             if (from)
                 col_append_fstr(pinfo->cinfo, COL_INFO, "< %s ", from->value);
         }
-
-        
     }
+
+    element_t_tree_free(packet);
 }
 
 

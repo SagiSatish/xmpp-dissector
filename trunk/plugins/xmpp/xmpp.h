@@ -45,6 +45,8 @@ typedef struct _element_t{
 
     gint offset;
     gint length;
+
+    gboolean was_read;
 } element_t;
 
 /*informations about attributes that are displayed in proto tree*/
@@ -99,6 +101,9 @@ extern void xmpp_ibb_session_track(packet_info *pinfo, element_t *packet, xmpp_c
 extern void xmpp_gtalk_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info);
 extern void xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
+extern element_t* xml_frame_to_element_t(xml_frame_t *xml_frame);
+extern void element_t_tree_free(element_t *root);
+
 extern array_t* ep_init_array_t(const gchar** array, gint len);
 extern attr_t* ep_init_attr_t(gchar *value, gint offset, gint length);
 extern gchar* ep_string_upcase(const gchar* string);
@@ -110,11 +115,11 @@ extern element_t* steal_element_by_names(element_t *packet, const gchar **names,
 extern element_t* steal_element_by_attr(element_t *packet, const gchar *attr_name, const gchar *attr_value);
 extern element_t* steal_element_by_name_and_attr(element_t *packet, const gchar *name, const gchar *attr_name, const gchar *attr_value);
 extern element_t* get_first_element(element_t *packet);
-extern element_t* xml_frame_to_element_t(xml_frame_t *xml_frame);
+
 extern gchar* element_to_string(tvbuff_t *tvb, element_t *element);
 extern gchar* attr_to_string(tvbuff_t *tvb, attr_t *attr);
-extern attr_t* get_attr(element_t *element, const gchar* attr_name);
 
+extern attr_t* get_attr(element_t *element, const gchar* attr_name);
 
 extern void proto_tree_hide_first_child(proto_tree *tree);
 extern void proto_tree_show_first_child(proto_tree *tree);

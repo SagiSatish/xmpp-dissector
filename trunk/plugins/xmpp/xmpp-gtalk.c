@@ -319,7 +319,6 @@ xmpp_gtalk_usersetting(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, elem
             proto_tree_add_text(sett_tree, tvb, elem->offset, elem->length, "%s [%s]",elem->name,val?val->value:"");
         }
     }
-    g_list_free(element->elements);
 }
 
 void

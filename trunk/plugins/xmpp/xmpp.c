@@ -161,6 +161,8 @@ xmpp_unknown_items(proto_tree *tree, tvbuff_t *tvb, element_t *element, guint le
     GList *keys = g_hash_table_get_keys(element->attrs);
     GList *childs = element->elements;
     
+    GList *keys_head = keys;
+
     DISSECTOR_ASSERT( level < ETT_UNKNOWN_LEN );
 
     while(keys)
@@ -169,6 +171,12 @@ xmpp_unknown_items(proto_tree *tree, tvbuff_t *tvb, element_t *element, guint le
         if(attr)
             proto_tree_add_text(tree, tvb, attr->offset, attr->length, "%s: %s",(gchar*)keys->data,attr->value);
         keys = keys->next;
+    }
+    g_list_free(keys_head);
+
+    if(element->data)
+    {
+        proto_tree_add_text(tree, tvb, element->data->offset, element->data->length, "CDATA: %s",element->data->value);
     }
 
     while(childs)
@@ -186,26 +194,27 @@ xmpp_unknown_items(proto_tree *tree, tvbuff_t *tvb, element_t *element, guint le
 void
 xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
-    guint i;
+    GList *childs = element->elements;
 
     /*element has unrecognized elements*/
-    for(i = 0; i<g_list_length(element->elements); i++)
+    while(childs)
     {
-        element_t *child = g_list_nth_data(element->elements,i);
-        proto_item *unknown_item = proto_tree_add_string_format(tree,
-                hf_xmpp_unknown, tvb, child->offset, child->length, child->name,
-                "%s", ep_string_upcase(child->name));
-        
-        proto_tree *unknown_tree = proto_item_add_subtree(unknown_item, ett_unknown[0]);
-        
-        proto_item_append_text(unknown_item, " [UNKNOWN]");
+        element_t *child = childs->data;
+        if(!child->was_read)
+        {
+            proto_item *unknown_item = proto_tree_add_string_format(tree,
+                    hf_xmpp_unknown, tvb, child->offset, child->length, child->name,
+                    "%s", ep_string_upcase(child->name));
 
-        xmpp_unknown_items(unknown_tree, tvb, child, 1);
+            proto_tree *unknown_tree = proto_item_add_subtree(unknown_item, ett_unknown[0]);
 
-        expert_add_info_format(pinfo, unknown_item, PI_UNDECODED, PI_NOTE,"Unknown element: %s", child->name);
+            proto_item_append_text(unknown_item, " [UNKNOWN]");
+
+            xmpp_unknown_items(unknown_tree, tvb, child, 1);
+            expert_add_info_format(pinfo, unknown_item, PI_UNDECODED, PI_NOTE,"Unknown element: %s", child->name);
+        }
+        childs = childs->next;
     }
-    
-    g_list_free(element->elements);
 }
 
 array_t*
@@ -228,6 +237,7 @@ ep_init_attr_t(gchar *value, gint offset, gint length)
     result->value = value;
     result->offset = offset;
     result->length = length;
+    result->name = NULL;
 
     return result;
 }
@@ -252,7 +262,12 @@ ep_string_upcase(const gchar* string)
 gint
 element_t_cmp(gconstpointer a, gconstpointer b)
 {
-    return strcmp(((element_t*)a)->name,((element_t*)b)->name);
+    gint result = strcmp(((element_t*)a)->name,((element_t*)b)->name);
+
+    if(result == 0 && ((element_t*)a)->was_read)
+        result = -1;
+
+    return result;
 }
 
 GList*
@@ -287,7 +302,10 @@ steal_element_by_name(element_t *packet,const gchar *name)
     if(element_l)
     {
         element = element_l->data;
+/*
         packet->elements = g_list_delete_link(packet->elements, element_l);
+*/
+        element->was_read = TRUE;
     }
 
     return element;
@@ -324,10 +342,13 @@ steal_element_by_attr(element_t *packet, const gchar *attr_name, const gchar *at
 /*
         child is one of the defined stanza error conditions
 */
-        if (attr && strcmp(attr->value, attr_value) == 0) {
+        if (!child_elem->was_read && attr && strcmp(attr->value, attr_value) == 0) {
 
             result = childs->data;
+/*
             packet->elements = g_list_delete_link(packet->elements, childs);
+*/
+            result->was_read = TRUE;
             
             break;
         } else
@@ -350,10 +371,13 @@ steal_element_by_name_and_attr(element_t *packet, const gchar *name, const gchar
 /*
         child is one of the defined stanza error conditions
 */
-        if (attr && strcmp(child_elem->name, name) == 0 && strcmp(attr->value, attr_value) == 0) {
+        if (!child_elem->was_read && attr && strcmp(child_elem->name, name) == 0 && strcmp(attr->value, attr_value) == 0) {
 
             result = childs->data;
+/*
             packet->elements = g_list_delete_link(packet->elements, childs);
+*/
+            result->was_read = TRUE;
 
             break;
         } else
@@ -386,6 +410,7 @@ xml_frame_to_element_t(xml_frame_t *xml_frame)
     node->elements = NULL;
     node->data = NULL;
     node->item = NULL;
+    node->was_read = FALSE;
 
     node->name = ep_strdup(xml_frame->name_orig_case);
     node->offset = 0;
@@ -467,6 +492,23 @@ xml_frame_to_element_t(xml_frame_t *xml_frame)
         child = child->next_sibling;
     }
     return node;
+}
+
+void
+element_t_tree_free(element_t *root)
+{
+    GList *childs = root->elements;
+
+    g_hash_table_destroy(root->attrs);
+
+    while(childs)
+    {
+        element_t *child = childs->data;
+
+        element_t_tree_free(child);
+        childs = childs->next;
+    }
+    g_list_free(root->elements);
 }
 
 /*Function recognize attribute names if they looks like ns:attr_name or xmlns:ns*/
@@ -581,14 +623,6 @@ proto_item_get_text(proto_item *item)
     return result;
 }
 
-/*
-static void
-element_tree_delete()
-{
-    //TODO
-}
-*/
-
 
 void
 display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t *tvb, attr_info *attrs, guint n)
@@ -598,6 +632,7 @@ display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t
     guint i;
     gboolean short_list_started = FALSE;
     GList *attrs_copy = g_hash_table_get_values(element->attrs);
+    GList *attrs_copy_head;
 
     proto_item_append_text(item," [");
     for(i = 0; i < n && attrs!=NULL; i++)
@@ -606,9 +641,16 @@ display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t
         if(attr)
         {
             if(attrs[i].hf != -1)
-                proto_tree_add_string(tree, attrs[i].hf, tvb, attr->offset, attr->length, attr->value);
+            {
+                if(attr->name)
+                    proto_tree_add_string_format(tree, attrs[i].hf, tvb, attr->offset, attr->length, attr->value,"%s: %s", attr->name, attr->value);
+                else
+                    proto_tree_add_string(tree, attrs[i].hf, tvb, attr->offset, attr->length, attr->value);
+            }
             else
-                proto_tree_add_text(tree, tvb, attr->offset, attr->length, "%s: %s", attrs[i].name, attr->value);
+            {
+                proto_tree_add_text(tree, tvb, attr->offset, attr->length, "%s: %s", attr->name?attr->name:attrs[i].name, attr->value);
+            }
 
             if(attrs[i].in_short_list)
             {
@@ -639,16 +681,20 @@ display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t
     }
     proto_item_append_text(item,"]");
 
+    attrs_copy_head = attrs_copy;
+
     /*displays attributes that weren't recognized*/
-    for(i = 0; i<g_list_length(attrs_copy); i++)
+    while(attrs_copy)
     {
-        attr_t *unknown_attr = g_list_nth_data(attrs_copy,i);
+        attr_t *unknown_attr = attrs_copy->data;
         proto_item *unknown_attr_item= proto_tree_add_string_format(tree,
                 hf_xmpp_unknown_attr, tvb, unknown_attr->offset, unknown_attr->length,
                 unknown_attr->name, "%s: %s [UNKNOWN ATTR]", unknown_attr->name, unknown_attr->value);
         expert_add_info_format(pinfo, unknown_attr_item, PI_UNDECODED, PI_NOTE,"Unknown attribute %s.", unknown_attr->name);
-    }
 
+        attrs_copy = attrs_copy->next;
+    }
+    g_list_free(attrs_copy_head);
 }
 
 struct name_attr_t

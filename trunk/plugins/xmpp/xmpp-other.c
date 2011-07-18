@@ -56,8 +56,6 @@ xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
     proto_item *bind_item;
     proto_tree *bind_tree;
 
-    element_t *resource, *jid;
-
     attr_info attrs_info[] = {
         {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
         {"resource", hf_xmpp_iq_bind_resource, FALSE, TRUE, NULL, NULL},
@@ -67,26 +65,8 @@ xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
     bind_item = proto_tree_add_item(tree, hf_xmpp_iq_bind, tvb, element->offset, element->length, FALSE);
     bind_tree = proto_item_add_subtree(bind_item, ett_xmpp_iq_bind);
 
-    resource = steal_element_by_name(element, "resource");
-    jid = steal_element_by_name(element, "jid");
-
-    if(resource)
-    {
-        attr_t *fake_attr_res = ep_alloc(sizeof(attr_t));
-        fake_attr_res->value = resource->data?resource->data->value:"";
-        fake_attr_res->offset = resource->offset;
-        fake_attr_res->length = resource->length;
-        g_hash_table_insert(element->attrs, "resource", fake_attr_res);
-    }
-
-    if(jid)
-    {
-        attr_t *fake_attr_jid = ep_alloc(sizeof(attr_t));
-        fake_attr_jid->value = jid->data?jid->data->value:"";
-        fake_attr_jid->offset = jid->offset;
-        fake_attr_jid->length = jid->length;
-        g_hash_table_insert(element->attrs, "jid", fake_attr_jid);
-    }
+    change_elem_to_attrib("resource", "resource", element, transform_func_cdata);
+    change_elem_to_attrib("jid", "jid", element, transform_func_cdata);
 
     display_attrs(bind_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 
