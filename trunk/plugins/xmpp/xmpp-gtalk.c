@@ -18,6 +18,7 @@
 #include <plugins/xmpp/packet-xmpp.h>
 #include <plugins/xmpp/xmpp.h>
 #include <plugins/xmpp/xmpp-gtalk.h>
+#include <plugins/xmpp/xmpp-conference.h>
 
 
 static void xmpp_gtalk_session_desc(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
@@ -54,6 +55,7 @@ xmpp_gtalk_session(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_
         {NAME, "candidate", xmpp_gtalk_session_cand, MANY},
         {NAME, "reason", xmpp_gtalk_session_reason, ONE},
         {NAME_AND_ATTR, name_attr_struct("transport", "xmlns", "http://www.google.com/transport/p2p"), xmpp_gtalk_transport_p2p, ONE},
+        {NAME, "conference-info", xmpp_conferece_info_advert, ONE}
     };
 
     attr_t *attr_type = get_attr(element, "type");
@@ -411,7 +413,7 @@ xmpp_gtalk_mail_mailbox(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, ele
     proto_tree *mail_tree;
 
     attr_info attrs_info [] = {
-        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
+        {"xmlns", hf_xmpp_xmlns, FALSE, TRUE, NULL, NULL},
         {"result-time", -1, FALSE, TRUE, NULL, NULL},
         {"total-matched", -1, FALSE, TRUE, NULL, NULL},
         {"total-estimate", -1, FALSE, TRUE, NULL, NULL},
@@ -421,6 +423,8 @@ xmpp_gtalk_mail_mailbox(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, ele
     elem_info elems_info [] = {
         {NAME,"mail-thread-info", xmpp_gtalk_mail_mail_info, MANY}
     };
+
+    col_append_fstr(pinfo->cinfo, COL_INFO, "MAILBOX ");
 
     mail_item = proto_tree_add_item(tree, hf_xmpp_gtalk_mail_mailbox, tvb, element->offset, element->length, FALSE);
     mail_tree = proto_item_add_subtree(mail_item, ett_xmpp_gtalk_mail_mailbox);
@@ -441,7 +445,7 @@ xmpp_gtalk_mail_mail_info(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, e
         {"messages", -1, FALSE, TRUE, NULL, NULL},
         {"date", -1, FALSE, TRUE, NULL, NULL},
         {"url", -1, FALSE, FALSE, NULL, NULL},
-        {"labels", -1, FALSE, TRUE, NULL, NULL},
+        {"labels", -1, FALSE, FALSE, NULL, NULL},
         {"subject", -1, FALSE, TRUE, NULL, NULL}
     };
 
@@ -497,7 +501,7 @@ xmpp_gtalk_mail_sender(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, elem
     attr_info attrs_info [] = {
         {"name", -1, FALSE, TRUE, NULL, NULL},
         {"address", -1, FALSE, TRUE, NULL, NULL},
-        {"orginator", -1, FALSE, TRUE, NULL, NULL},
+        {"originator", -1, FALSE, TRUE, NULL, NULL},
         {"unread", -1, FALSE, TRUE, NULL, NULL}
     };
 
@@ -518,6 +522,7 @@ xmpp_gtalk_mail_snippet(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, ele
 void
 xmpp_gtalk_mail_new_mail(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element)
 {
+    col_append_fstr(pinfo->cinfo, COL_INFO, "NEW-MAIL ");
     proto_tree_add_item(tree, hf_xmpp_gtalk_mail_new_mail, tvb, element->offset, element->length, FALSE);
     xmpp_unknown(tree, tvb, pinfo, element);
 }

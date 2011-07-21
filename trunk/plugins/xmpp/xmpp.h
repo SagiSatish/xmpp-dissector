@@ -38,6 +38,11 @@ typedef struct _data_t{
 
 typedef struct _element_t{
     gchar* name;
+    
+    /*abbreviation that apprears before tag name (<nos:x .../>)
+     if abbrev doesn't appear then NULL*/
+    gchar* default_ns_abbrev; 
+
     GHashTable *attrs;
     GList *elements;
     data_t *data;
@@ -101,7 +106,7 @@ extern void xmpp_ibb_session_track(packet_info *pinfo, element_t *packet, xmpp_c
 extern void xmpp_gtalk_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info);
 extern void xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
-extern element_t* xml_frame_to_element_t(xml_frame_t *xml_frame);
+extern element_t* xml_frame_to_element_t(xml_frame_t *xml_frame, gboolean first);
 extern void element_t_tree_free(element_t *root);
 
 extern array_t* ep_init_array_t(const gchar** array, gint len);

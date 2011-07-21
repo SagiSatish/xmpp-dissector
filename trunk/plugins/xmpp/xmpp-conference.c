@@ -70,6 +70,8 @@ xmpp_conference_info(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, elemen
         /*{NAME, "sidebars-by-val", xmpp_conf_sidebars_by_val, ONE},*/
     };
 
+    col_append_fstr(pinfo->cinfo, COL_INFO, "CONFERENC-INFO ");
+
     cinfo_item = proto_tree_add_item(tree, hf_xmpp_conf_info, tvb, element->offset, element->length, FALSE);
     cinfo_tree = proto_item_add_subtree(cinfo_item, ett_xmpp_conf_info);
 

@@ -29,9 +29,10 @@ xmpp_iq_reqresp_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *x
     char *id;
 
     attr_id = get_attr(packet, "id");
+    DISSECTOR_ASSERT(attr_id);
     id = ep_strdup(attr_id->value);
 
-
+    
 
     if (!pinfo->fd->flags.visited) {
         xmpp_trans = se_tree_lookup_string(xmpp_info->req_resp, id, EMEM_TREE_STRING_NOCASE);
@@ -163,15 +164,32 @@ xmpp_unknown_items(proto_tree *tree, tvbuff_t *tvb, element_t *element, guint le
     
     GList *keys_head = keys;
 
+    gboolean short_list_started = FALSE;
+    proto_item* parent_item = proto_tree_get_parent(tree);
+
+
     DISSECTOR_ASSERT( level < ETT_UNKNOWN_LEN );
 
     while(keys)
     {
         attr_t *attr = get_attr(element, (const gchar*)keys->data);
         if(attr)
+        {
+            if(!short_list_started)
+                proto_item_append_text(parent_item, " [");
+            else
+                proto_item_append_text(parent_item, " ");
+            proto_item_append_text(parent_item, "%s=\"%s\"", (gchar*)keys->data,attr->value);
+
             proto_tree_add_text(tree, tvb, attr->offset, attr->length, "%s: %s",(gchar*)keys->data,attr->value);
+            short_list_started = TRUE;
+        }
         keys = keys->next;
     }
+
+    if(short_list_started)
+        proto_item_append_text(parent_item, "]");
+
     g_list_free(keys_head);
 
     if(element->data)
@@ -184,6 +202,9 @@ xmpp_unknown_items(proto_tree *tree, tvbuff_t *tvb, element_t *element, guint le
         element_t *child = childs->data;
         proto_item *child_item = proto_tree_add_text(tree, tvb, child->offset, child->length, "%s", ep_string_upcase(child->name));
         proto_tree *child_tree = proto_item_add_subtree(child_item, ett_unknown[level]);
+
+        if(child->default_ns_abbrev)
+            proto_item_append_text(child_item, "(%s)", child->default_ns_abbrev);
 
         xmpp_unknown_items(child_tree, tvb, child, level +1);
 
@@ -208,9 +229,12 @@ xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
 
             proto_tree *unknown_tree = proto_item_add_subtree(unknown_item, ett_unknown[0]);
 
-            proto_item_append_text(unknown_item, " [UNKNOWN]");
+            if(child->default_ns_abbrev)
+                proto_item_append_text(unknown_item,"(%s)",child->default_ns_abbrev);
 
             xmpp_unknown_items(unknown_tree, tvb, child, 1);
+            proto_item_append_text(unknown_item, " [UNKNOWN]");
+
             expert_add_info_format(pinfo, unknown_item, PI_UNDECODED, PI_NOTE,"Unknown element: %s", child->name);
         }
         childs = childs->next;
@@ -399,7 +423,7 @@ get_first_element(element_t *packet)
 Function converts xml_frame_t structure to element_t (simpler representation)
 */
 element_t*
-xml_frame_to_element_t(xml_frame_t *xml_frame)
+xml_frame_to_element_t(xml_frame_t *xml_frame, gboolean first)
 {
     static gint start_offset = -1;
     xml_frame_t *child;
@@ -411,14 +435,15 @@ xml_frame_to_element_t(xml_frame_t *xml_frame)
     node->data = NULL;
     node->item = NULL;
     node->was_read = FALSE;
+    node->default_ns_abbrev = NULL;
 
     node->name = ep_strdup(xml_frame->name_orig_case);
     node->offset = 0;
     node->length = 0;
 
-    if(start_offset == -1 && xml_frame->item != NULL)
+    if(first && xml_frame->item != NULL)
         start_offset = xml_frame->item->finfo->start;
-    
+
 
     if(xml_frame->item != NULL)
     {
@@ -427,6 +452,22 @@ xml_frame_to_element_t(xml_frame_t *xml_frame)
         node->length = xml_frame->item->finfo->length;
     }
 
+    /*looking for items in tree that looks like <ns:tag_name or <ns:tag_name/>*/
+    if(xml_frame->item)
+    {
+        gchar* item_text = proto_item_get_text(xml_frame->item);
+        gchar* needle = ":";
+        if(item_text && strlen(node->name)+3 <= strlen(item_text))
+        {
+            gchar* ptr = epan_strcasestr(item_text, needle);
+            /*found ':'*/
+            if(ptr)
+            {
+                *ptr = '\0';
+                node->default_ns_abbrev = ep_strdup(item_text+1);/*+1 because first char is '<'*/
+            }
+        }
+    }
 
     child = xml_frame->first_child;
 
@@ -486,7 +527,7 @@ xml_frame_to_element_t(xml_frame_t *xml_frame)
             }
         } else
         {
-            node->elements = g_list_append(node->elements,(gpointer)xml_frame_to_element_t(child));
+            node->elements = g_list_append(node->elements,(gpointer)xml_frame_to_element_t(child, FALSE));
         }
 
         child = child->next_sibling;
@@ -634,6 +675,9 @@ display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t
     GList *attrs_copy = g_hash_table_get_values(element->attrs);
     GList *attrs_copy_head;
 
+    if(element->default_ns_abbrev)
+        proto_item_append_text(item, "(%s)",element->default_ns_abbrev);
+
     proto_item_append_text(item," [");
     for(i = 0; i < n && attrs!=NULL; i++)
     {
@@ -658,7 +702,7 @@ display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t
                 {
                     proto_item_append_text(item," ");
                 }
-                proto_item_append_text(item,"%s=\"%s\"",attrs[i].name, attr->value);
+                proto_item_append_text(item,"%s=\"%s\"",attr->name?attr->name:attrs[i].name, attr->value);
                 short_list_started = TRUE;
             }
 
