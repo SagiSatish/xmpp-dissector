@@ -200,6 +200,7 @@ extern gint ett_xmpp_query_udpsuccess;
 
 extern gint ett_xmpp_iq_error;
 extern gint ett_xmpp_iq_bind;
+extern gint ett_xmpp_iq_session;
 extern gint ett_xmpp_vcard;
 extern gint ett_xmpp_vcard_x_update;
 

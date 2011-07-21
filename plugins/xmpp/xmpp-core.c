@@ -99,8 +99,8 @@ xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
         {NAME_AND_ATTR, name_attr_struct("query", "xmlns","jabber:iq:last"), xmpp_last_query, ONE},
         {NAME_AND_ATTR, name_attr_struct("query", "xmlns","jabber:iq:version"), xmpp_version_query, ONE},
         {NAME_AND_ATTR, name_attr_struct("query", "xmlns","google:mail:notify"), xmpp_gtalk_mail_query, ONE},
-        {NAME_AND_ATTR, name_attr_struct("mailbox", "xmlns","google:mail:notify"), xmpp_gtalk_mail_mailbox, ONE},
-        {NAME_AND_ATTR, name_attr_struct("new-mail", "xmlns","google:mail:notify"), xmpp_gtalk_mail_new_mail, ONE},
+        {NAME, "mailbox", xmpp_gtalk_mail_mailbox, ONE},
+        {NAME, "new-mail", xmpp_gtalk_mail_new_mail, ONE},
         {NAME_AND_ATTR, name_attr_struct("query", "xmlns","google:shared-status"), xmpp_gtalk_status_query, ONE},
         {NAME, "conference-info", xmpp_conference_info, ONE},
         {NAME_AND_ATTR, name_attr_struct("ping", "xmlns","urn:xmpp:ping"), xmpp_ping, ONE},
@@ -350,7 +350,8 @@ xmpp_message(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pac
         {NAME, "delay", xmpp_delay, ONE},
         {NAME_AND_ATTR, name_attr_struct("x","xmlns","jabber:x:event"), xmpp_x_event, ONE},
         {NAME_AND_ATTR, name_attr_struct("x","xmlns","http://jabber.org/protocol/muc#user"), xmpp_muc_user_x, ONE},
-        {NAME_AND_ATTR, name_attr_struct("x","xmlns","google:nosave"), xmpp_gtalk_nosave_x, ONE}
+        {NAME_AND_ATTR, name_attr_struct("x","xmlns","google:nosave"), xmpp_gtalk_nosave_x, ONE},
+        {NAME, "error", xmpp_error, ONE}
     };
 
     element_t *chatstate;

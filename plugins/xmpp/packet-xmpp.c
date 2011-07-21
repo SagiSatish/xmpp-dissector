@@ -223,6 +223,7 @@ gint ett_xmpp_query_udpsuccess = -1;
 
 gint ett_xmpp_iq_error = -1;
 gint ett_xmpp_iq_bind = -1;
+gint ett_xmpp_iq_session = -1;
 gint ett_xmpp_vcard = -1;
 gint ett_xmpp_vcard_x_update = -1;
 
@@ -347,6 +348,17 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
 
     element_t *packet = NULL;
 
+    /*check if desegment
+     * now it checks that last char is '>',
+     * TODO checks that first element in packet is closed*/
+    int len = tvb_reported_length(tvb);
+    gchar last_char = tvb_get_guint8(tvb, len-1);
+    if(last_char!='>')
+    {
+        pinfo->desegment_len = DESEGMENT_ONE_MORE_SEGMENT;
+        return;
+    }
+
     if(check_col(pinfo->cinfo, COL_PROTOCOL))
         col_set_str(pinfo->cinfo, COL_PROTOCOL, "XMPP");
 
@@ -369,7 +381,7 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
     if(!xml_frame)
         return;
 
-    packet = xml_frame_to_element_t(xml_frame);
+    packet = xml_frame_to_element_t(xml_frame, TRUE);
     DISSECTOR_ASSERT(packet);
 
 
@@ -1192,6 +1204,7 @@ proto_register_xmpp(void) {
         &ett_xmpp_query_udpsuccess,
         &ett_xmpp_iq_error,
         &ett_xmpp_iq_bind,
+        &ett_xmpp_iq_session,
         &ett_xmpp_vcard,
         &ett_xmpp_vcard_x_update,
         &ett_xmpp_jingle,
@@ -1306,7 +1319,7 @@ proto_reg_handoff_xmpp(void) {
 
     xml_handle = find_dissector("xml");
 
-    //xmpp_handle = create_dissector_handle(dissect_xmpp, proto_xmpp);
+    /*xmpp_handle = create_dissector_handle(dissect_xmpp, proto_xmpp);*/
     xmpp_handle = find_dissector("xmpp");
 
     dissector_add_uint("tcp.port", XMPP_PORT, xmpp_handle);

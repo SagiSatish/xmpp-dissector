@@ -39,6 +39,7 @@ static void xmpp_si_file_range(proto_tree* tree, tvbuff_t* tvb, packet_info* pin
 static void xmpp_x_data_field(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_x_data_field_option(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 static void xmpp_x_data_field_value(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
+static void xmpp_x_data_instr(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* element);
 
 static void xmpp_muc_history(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 
@@ -76,11 +77,20 @@ xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
 void
 xmpp_session(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 {
-    attr_t *xmlns  = get_attr(element, "xmlns");
+    proto_item *session_item;
+    proto_tree *session_tree;
+
+    attr_info attrs_info [] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL}
+    };
+
+    session_item = proto_tree_add_item(tree, hf_xmpp_iq_session, tvb, element->offset, element->length, FALSE);
+    session_tree = proto_item_add_subtree(session_item, ett_xmpp_iq_session);
 
     col_append_fstr(pinfo->cinfo, COL_INFO, "SESSION ");
 
-    proto_tree_add_string_format(tree, hf_xmpp_iq_session, tvb, element->offset, element->length, xmlns?xmlns->value:"","SESSION (%s)",xmlns?xmlns->value:"");
+    display_attrs(session_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(session_tree, element, pinfo, tvb, NULL, 0);
 }
 
 void
@@ -569,28 +579,22 @@ xmpp_x_data(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, element_t* elem
     attr_info attrs_info[] = {
         {"xmlns", hf_xmpp_xmlns, TRUE, FALSE, NULL, NULL},
         {"type", -1, TRUE, TRUE, val_enum_list, type_array},
-        {"title", -1, FALSE, TRUE, NULL, NULL}
+        {"TITLE", -1, FALSE, TRUE, NULL, NULL}
     };
 
-    element_t *field, *title; /*TODO instructions, title, reported, item*/
+    elem_info elems_info[] = {
+        {NAME, "instructions", xmpp_x_data_instr, MANY},
+        {NAME, "field", xmpp_x_data_field, MANY},
+    };
+    /*TODO reported, item*/
 
     x_item = proto_tree_add_item(tree, hf_xmpp_x_data, tvb, element->offset, element->length, FALSE);
     x_tree = proto_item_add_subtree(x_item, ett_xmpp_x_data);
 
-    if((title = steal_element_by_name(element, "title"))!=NULL)
-    {
-        attr_t *fake_title = ep_init_attr_t(title->data?title->data->value:"", title->offset, title->length);
-        g_hash_table_insert(element->attrs, "title", fake_title);
-    }
+    change_elem_to_attrib("title", "TITLE", element, transform_func_cdata);
 
     display_attrs(x_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
-
-    while((field = steal_element_by_name(element, "field"))!=NULL)
-    {
-        xmpp_x_data_field(x_tree, tvb, pinfo, field);
-    }
-
-    xmpp_unknown(x_tree, tvb, pinfo, element);
+    display_elems(x_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
 }
 
 static void
@@ -686,6 +690,11 @@ xmpp_x_data_field_value(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, ele
     xmpp_unknown(value_tree, tvb, pinfo, element);
 }
 
+static void
+xmpp_x_data_instr(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo _U_, element_t* element)
+{
+    proto_tree_add_text(tree, tvb, element->offset, element->length, "INSTRUCTIONS: %s",elem_cdata(element));
+}
 
 /*In-Band Bytestreams*/
 void
