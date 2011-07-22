@@ -46,7 +46,6 @@ typedef struct _element_t{
     GHashTable *attrs;
     GList *elements;
     data_t *data;
-    proto_item *item;
 
     gint offset;
     gint length;
