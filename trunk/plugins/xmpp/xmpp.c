@@ -11,14 +11,14 @@
 #include <epan/packet_info.h>
 #include <epan/epan.h>
 #include <epan/expert.h>
-#include <epan/tvbparse.h>
+#include <epan/tvbuff.h>
 
 #include <epan/dissectors/packet-xml.h>
 
 #include <plugins/xmpp/packet-xmpp.h>
 #include <plugins/xmpp/xmpp.h>
 
-#include "epan/strutil.h"
+#include <epan/strutil.h>
 
 void
 xmpp_iq_reqresp_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info)
@@ -423,17 +423,14 @@ get_first_element(element_t *packet)
 Function converts xml_frame_t structure to element_t (simpler representation)
 */
 element_t*
-xml_frame_to_element_t(xml_frame_t *xml_frame, gboolean first)
+xml_frame_to_element_t(xml_frame_t *xml_frame, gboolean first _U_)
 {
-    static gint start_offset = -1;
     xml_frame_t *child;
     element_t *node = ep_alloc0(sizeof(element_t));
-
 
     node->attrs = g_hash_table_new(g_str_hash, g_str_equal);
     node->elements = NULL;
     node->data = NULL;
-    node->item = NULL;
     node->was_read = FALSE;
     node->default_ns_abbrev = NULL;
 
@@ -441,16 +438,14 @@ xml_frame_to_element_t(xml_frame_t *xml_frame, gboolean first)
     node->offset = 0;
     node->length = 0;
 
-    if(first && xml_frame->item != NULL)
-        start_offset = xml_frame->item->finfo->start;
 
 
     if(xml_frame->item != NULL)
     {
-        node->item = xml_frame->item;
-        node->offset = xml_frame->item->finfo->start - start_offset;
         node->length = xml_frame->item->finfo->length;
     }
+    
+    node->offset = xml_frame->start_offset;
 
     /*looking for items in tree that looks like <ns:tag_name or <ns:tag_name/>*/
     if(xml_frame->item)
@@ -492,9 +487,10 @@ xml_frame_to_element_t(xml_frame_t *xml_frame, gboolean first)
 
                 if(child->item)
                 {
-                    attr->offset = child->item->finfo->start - start_offset;
                     attr->length = child->item->finfo->length;
                 }
+                
+                attr->offset = child->start_offset;
                 attr->value = value;
                 attr->name = ep_strdup(child->name_orig_case);
 
@@ -520,9 +516,9 @@ xml_frame_to_element_t(xml_frame_t *xml_frame, gboolean first)
 
                 if(child->item)
                 {
-                    data->offset = child->item->finfo->start - start_offset;
                     data->length = child->item->finfo->length;
                 }
+                data->offset = child->start_offset;
                 node->data = data;
             }
         } else
@@ -591,7 +587,7 @@ element_to_string(tvbuff_t *tvb, element_t *element)
 {
     gchar *buff = NULL;
     
-    if(tvb_offset_exists(tvb, element->length-1))
+    if(tvb_offset_exists(tvb, element->offset+element->length-1))
     {
         buff = tvb_get_ephemeral_string(tvb, element->offset, element->length);
     }

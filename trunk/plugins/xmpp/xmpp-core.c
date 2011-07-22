@@ -579,3 +579,15 @@ xmpp_failure_text(proto_tree *tree, tvbuff_t *tvb, element_t *element)
             lang?ep_strdup_printf("(%s)",lang->value):"",
             element->data?element->data->value:"");
 }
+
+void
+xmpp_xml_header(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo _U_, element_t *packet)
+{
+    proto_tree_add_text(tree, tvb, packet->offset, packet->length, "XML HEADER VER. %s","1.0");
+}
+
+void
+xmpp_stream(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo _U_, element_t *packet)
+{
+    proto_tree_add_text(tree, tvb, packet->offset, packet->length, "STREAM");
+}

@@ -63,6 +63,8 @@ xmpp_iq_bind(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
         {"jid", hf_xmpp_iq_bind_jid, FALSE, TRUE, NULL, NULL}
     };
 
+    col_append_fstr(pinfo->cinfo, COL_INFO, "BIND ");
+
     bind_item = proto_tree_add_item(tree, hf_xmpp_iq_bind, tvb, element->offset, element->length, FALSE);
     bind_tree = proto_item_add_subtree(bind_item, ett_xmpp_iq_bind);
 
@@ -115,11 +117,14 @@ xmpp_vcard(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *eleme
 
     if(cdata)
     {
-        attr_t *fake_cdata = ep_init_attr_t(element_to_string(tvb, cdata), cdata->offset, cdata->length);
+        attr_t *fake_cdata;
+        printf("no%d %d %d\n",pinfo->fd->num, cdata->offset, cdata->length);
+        fake_cdata = ep_init_attr_t(element_to_string(tvb, cdata), cdata->offset, cdata->length);
         g_hash_table_insert(element->attrs,"value", fake_cdata);
+        
     }
     display_attrs(vcard_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
-
+    
 }
 
 void
