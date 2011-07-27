@@ -478,13 +478,12 @@ xmpp_auth(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet
     proto_item *auth_item;
     proto_tree *auth_tree;
 
-    attr_info attrs_info[]={
-        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
-        {"mechanism", -1, TRUE, TRUE, NULL, NULL},
-        {"value", -1, TRUE, FALSE,NULL,NULL}
+    attr_info_ext attrs_info[]={
+        {"urn:ietf:params:xml:ns:xmpp-sasl", {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL}},
+        {"urn:ietf:params:xml:ns:xmpp-sasl", {"mechanism", -1, TRUE, TRUE, NULL, NULL}},
+        {"http://www.google.com/talk/protocol/auth", {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL}},
+        {"http://www.google.com/talk/protocol/auth", {"client-uses-full-bind-result", -1, TRUE, TRUE, NULL, NULL}},
     };
-
-    attr_t *fake_cdata;
 
     if (check_col(pinfo->cinfo, COL_INFO))
             col_set_str(pinfo->cinfo, COL_INFO, "AUTH");
@@ -492,10 +491,9 @@ xmpp_auth(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet
     auth_item = proto_tree_add_item(tree, hf_xmpp_auth, tvb, packet->offset, packet->length, FALSE);
     auth_tree = proto_item_add_subtree(auth_item, ett_xmpp_auth);
 
-    fake_cdata = ep_init_attr_t(packet->data?packet->data->value:"", packet->offset, packet->length);
-    g_hash_table_insert(packet->attrs,"value",fake_cdata);
+    display_attrs_ext(auth_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
 
-    display_attrs(auth_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
+    xmpp_cdata(auth_tree, tvb, packet, -1);
 
     xmpp_unknown(auth_tree, tvb, pinfo, packet);
 }
@@ -508,8 +506,7 @@ xmpp_challenge_response_success(proto_tree *tree, tvbuff_t *tvb,
     proto_tree *subtree;
 
     attr_info attrs_info[] = {
-        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
-        {"value", -1, FALSE, TRUE, NULL, NULL}
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL}
     };
 
     if (check_col(pinfo->cinfo, COL_INFO))
@@ -518,14 +515,9 @@ xmpp_challenge_response_success(proto_tree *tree, tvbuff_t *tvb,
     item = proto_tree_add_item(tree, hf, tvb, packet->offset, packet->length, FALSE);
     subtree = proto_item_add_subtree(item, ett);
 
-    if(packet->data)
-    {
-        attr_t *fake_cdata = ep_init_attr_t(packet->data->value, packet->data->offset, packet->data->length);
-        g_hash_table_insert(packet->attrs, "value", fake_cdata);
-    }
-    
     display_attrs(subtree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
-   
+    xmpp_cdata(subtree, tvb, packet, -1);
+
     xmpp_unknown(subtree, tvb, pinfo, packet);
 }
 
@@ -549,7 +541,7 @@ xmpp_failure(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pac
 
     element_t *fail_condition, *text;
 
-    col_add_fstr(pinfo->cinfo, COL_INFO, "FAILURE");
+    col_add_fstr(pinfo->cinfo, COL_INFO, "FAILURE ");
 
     fail_item = proto_tree_add_item(tree, hf_xmpp_failure, tvb, packet->offset, packet->length, FALSE);
     fail_tree = proto_item_add_subtree(fail_item, ett_xmpp_failure);
@@ -583,11 +575,13 @@ xmpp_failure_text(proto_tree *tree, tvbuff_t *tvb, element_t *element)
 void
 xmpp_xml_header(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo _U_, element_t *packet)
 {
+    col_add_fstr(pinfo->cinfo, COL_INFO, "XML ");
     proto_tree_add_text(tree, tvb, packet->offset, packet->length, "XML HEADER VER. %s","1.0");
 }
 
 void
 xmpp_stream(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo _U_, element_t *packet)
 {
+    col_add_fstr(pinfo->cinfo, COL_INFO, "STREAM ");
     proto_tree_add_text(tree, tvb, packet->offset, packet->length, "STREAM");
 }

@@ -23,6 +23,8 @@
 
 #define XMPP_PORT 5222
 
+#define XMPP_DEBUG 1
+
 static dissector_handle_t xml_handle = NULL;
 
 int proto_xmpp = -1;
@@ -350,16 +352,20 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
     /*check if desegment
      * now it checks that last char is '>',
      * TODO checks that first element in packet is closed*/
-    int len;
+    int index;
     gchar last_char;
 
-    len = tvb_reported_length(tvb);
-    if (len > 0) {
-        last_char = tvb_get_guint8(tvb, len - 1);
+    index = tvb_reported_length(tvb) - 1;
+    if (index >= 0) {
+        last_char = tvb_get_guint8(tvb, index);
 
-        /*len > 1 - sometimes there is sent packet that contains byte 0x20
-        it shouldn't be desegment*/
-        if (len > 1 && last_char != '>') {
+        while(last_char <= ' ' && index - 1 >= 0)
+        {
+            index--;
+            last_char = tvb_get_guint8(tvb, index);
+        }
+
+        if (index >= 0 && last_char != '>' && last_char > ' ') {
             pinfo->desegment_len = DESEGMENT_ONE_MORE_SEGMENT;
             return;
         }
@@ -407,7 +413,7 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
 
     while(xml_frame)
     {
-        packet = xml_frame_to_element_t(xml_frame, TRUE);
+        packet = xml_frame_to_element_t(xml_frame, NULL);
         DISSECTOR_ASSERT(packet);
 
         if (strcmp(packet->name, "iq") == 0) {
@@ -684,7 +690,7 @@ proto_register_xmpp(void) {
             }},
             { &hf_xmpp_iq_session,
             {
-                "SESSION", "xmpp.iq.session", FT_STRING, BASE_NONE, NULL, 0x0,
+                "SESSION", "xmpp.iq.session", FT_NONE, BASE_NONE, NULL, 0x0,
                 "iq session", HFILL
             }},
             { &hf_xmpp_vcard,

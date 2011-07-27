@@ -41,7 +41,9 @@ typedef struct _element_t{
     
     /*abbreviation that apprears before tag name (<nos:x .../>)
      if abbrev doesn't appear then NULL*/
-    gchar* default_ns_abbrev; 
+    gchar* default_ns_abbrev;
+    /*pair of namespace abbrev and namespace*/
+    GHashTable *namespaces;
 
     GHashTable *attrs;
     GList *elements;
@@ -65,6 +67,11 @@ typedef struct _attr_info{
     void (*val_func)(packet_info *pinfo, proto_item *item, gchar *name, gchar *value, gpointer data);
     gpointer data;
 } attr_info;
+
+typedef struct _attr_info_ext{
+    gchar* ns;
+    attr_info info;
+} attr_info_ext;
 
 typedef enum _elem_info_type{
     NAME,
@@ -104,8 +111,9 @@ extern void xmpp_jingle_session_track(packet_info *pinfo, element_t *packet, xmp
 extern void xmpp_ibb_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info);
 extern void xmpp_gtalk_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *xmpp_info);
 extern void xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+extern void xmpp_cdata(proto_tree *tree, tvbuff_t *tvb, element_t *element, gint hf);
 
-extern element_t* xml_frame_to_element_t(xml_frame_t *xml_frame, gboolean first);
+extern element_t* xml_frame_to_element_t(xml_frame_t *xml_frame, element_t *parent);
 extern void element_t_tree_free(element_t *root);
 
 extern array_t* ep_init_array_t(const gchar** array, gint len);
@@ -132,12 +140,15 @@ extern gchar* proto_item_get_text(proto_item *item);
 extern gpointer name_attr_struct(gchar *name, gchar *attr_name, gchar *attr_value);
 
 extern void display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t *tvb, attr_info *attrs, guint n);
+void display_attrs_ext(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t *tvb, attr_info_ext *attrs, guint n);
 extern void display_elems(proto_tree *tree, element_t *parent, packet_info *pinfo, tvbuff_t *tvb, elem_info *elems, guint n);
 
 extern void val_enum_list(packet_info *pinfo, proto_item *item, gchar *name, gchar *value, gpointer data);
 
 extern void change_elem_to_attrib(const gchar *elem_name, const gchar *attr_name, element_t *parent, attr_t* (*transform_func)(element_t *element));
 extern attr_t* transform_func_cdata(element_t *elem);
+
+extern void copy_hash_table(GHashTable *src, GHashTable *dst);
 
 #endif
 
