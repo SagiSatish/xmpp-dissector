@@ -118,7 +118,6 @@ xmpp_vcard(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *eleme
     if(cdata)
     {
         attr_t *fake_cdata;
-        printf("no%d %d %d\n",pinfo->fd->num, cdata->offset, cdata->length);
         fake_cdata = ep_init_attr_t(element_to_string(tvb, cdata), cdata->offset, cdata->length);
         g_hash_table_insert(element->attrs,"value", fake_cdata);
         

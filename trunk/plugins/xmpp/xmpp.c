@@ -229,15 +229,39 @@ xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
 
             proto_tree *unknown_tree = proto_item_add_subtree(unknown_item, ett_unknown[0]);
 
+            col_append_fstr(pinfo->cinfo, COL_INFO, "%s ", ep_string_upcase(child->name));
+
             if(child->default_ns_abbrev)
                 proto_item_append_text(unknown_item,"(%s)",child->default_ns_abbrev);
 
             xmpp_unknown_items(unknown_tree, tvb, child, 1);
+#ifdef DEBUG
             proto_item_append_text(unknown_item, " [UNKNOWN]");
 
             expert_add_info_format(pinfo, unknown_item, PI_UNDECODED, PI_NOTE,"Unknown element: %s", child->name);
+#endif
         }
         childs = childs->next;
+    }
+}
+
+void
+xmpp_cdata(proto_tree *tree, tvbuff_t *tvb, element_t *element, gint hf)
+{
+    if(element->data)
+{
+        if (hf == -1) {
+            proto_tree_add_text(tree, tvb, element->data->offset, element->data->length, "CDATA: %s", element->data->value);
+        } else {
+            proto_tree_add_string(tree, hf, tvb, element->data->offset, element->data->length, element->data->value);
+        }
+    } else
+    {
+        if (hf == -1) {
+            proto_tree_add_text(tree, tvb, 0, 0, "CDATA: (empty)");
+        } else {
+            proto_tree_add_string(tree, hf, tvb, 0, 0, "");
+        }
     }
 }
 
@@ -423,7 +447,7 @@ get_first_element(element_t *packet)
 Function converts xml_frame_t structure to element_t (simpler representation)
 */
 element_t*
-xml_frame_to_element_t(xml_frame_t *xml_frame, gboolean first _U_)
+xml_frame_to_element_t(xml_frame_t *xml_frame, element_t *parent)
 {
     xml_frame_t *child;
     element_t *node = ep_alloc0(sizeof(element_t));
@@ -438,7 +462,14 @@ xml_frame_to_element_t(xml_frame_t *xml_frame, gboolean first _U_)
     node->offset = 0;
     node->length = 0;
 
-
+    node->namespaces = g_hash_table_new(g_str_hash, g_str_equal);
+    if(parent)
+    {
+        copy_hash_table(parent->namespaces, node->namespaces);
+    } else
+    {
+        g_hash_table_insert(node->namespaces, "", "jabber:client");
+    }
 
     if(xml_frame->item != NULL)
     {
@@ -474,6 +505,7 @@ xml_frame_to_element_t(xml_frame_t *xml_frame, gboolean first _U_)
             {
                 gint l;
                 gchar *value = NULL;
+                gchar *xmlns_needle = NULL;
 
                 attr_t *attr = ep_alloc(sizeof(attr_t));
                 attr->length = 0;
@@ -495,6 +527,22 @@ xml_frame_to_element_t(xml_frame_t *xml_frame, gboolean first _U_)
                 attr->name = ep_strdup(child->name_orig_case);
 
                 g_hash_table_insert(node->attrs,(gpointer)attr->name,(gpointer)attr);
+
+                /*checking that attr->name looks like xmlns:ns*/
+                xmlns_needle = epan_strcasestr(attr->name, "xmlns");
+                
+                if(xmlns_needle == attr->name)
+                {
+                    if(attr->name[5] == ':' && strlen(attr->name) > 6)
+                    {
+                        g_hash_table_insert(node->namespaces, (gpointer)ep_strdup(&attr->name[6]), (gpointer)ep_strdup(attr->value));
+                    } else if(attr->name[5] == '\0')
+                    {
+                        g_hash_table_insert(node->namespaces, "", (gpointer)ep_strdup(attr->value));
+                    }
+                }
+
+
             }
             else if( child->type == XML_FRAME_CDATA)
             {
@@ -523,7 +571,7 @@ xml_frame_to_element_t(xml_frame_t *xml_frame, gboolean first _U_)
             }
         } else
         {
-            node->elements = g_list_append(node->elements,(gpointer)xml_frame_to_element_t(child, FALSE));
+            node->elements = g_list_append(node->elements,(gpointer)xml_frame_to_element_t(child, node));
         }
 
         child = child->next_sibling;
@@ -537,6 +585,7 @@ element_t_tree_free(element_t *root)
     GList *childs = root->elements;
 
     g_hash_table_destroy(root->attrs);
+    g_hash_table_destroy(root->namespaces);
 
     while(childs)
     {
@@ -580,6 +629,30 @@ get_attr(element_t *element, const gchar* attr_name)
     return result;
 }
 
+/*Functions returns element's attibute by name and namespace abbrev*/
+attr_t*
+get_attr_ext(element_t *element, const gchar* attr_name, const gchar* ns_abbrev)
+{
+    gchar* search_phrase;
+    attr_t *result;
+
+    if(strcmp(ns_abbrev,"")==0)
+        search_phrase = ep_strdup(attr_name);
+    else if(strcmp(attr_name, "xmlns") == 0)
+        search_phrase = ep_strdup_printf("%s:%s",attr_name, ns_abbrev);
+    else
+        search_phrase = ep_strdup_printf("%s:%s", ns_abbrev, attr_name);
+    
+    result = g_hash_table_lookup(element->attrs, search_phrase);
+
+    if(!result)
+    {
+        result = g_hash_table_find(element->attrs, attr_find_pred, (gpointer)attr_name);
+    }
+
+    return result;
+}
+
 
 
 gchar*
@@ -599,7 +672,7 @@ attr_to_string(tvbuff_t *tvb, attr_t *attr)
 {
     gchar *buff = NULL;
 
-    if(tvb_offset_exists(tvb, attr->length-1))
+    if(tvb_offset_exists(tvb, attr->offset + attr->length-1))
     {
         buff = tvb_get_ephemeral_string(tvb, attr->offset, attr->length);
     }
@@ -727,14 +800,103 @@ display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t
     while(attrs_copy)
     {
         attr_t *unknown_attr = attrs_copy->data;
-        proto_item *unknown_attr_item= proto_tree_add_string_format(tree,
+        proto_item* unknown_attr_item;
+        unknown_attr_item = proto_tree_add_string_format(tree,
                 hf_xmpp_unknown_attr, tvb, unknown_attr->offset, unknown_attr->length,
-                unknown_attr->name, "%s: %s [UNKNOWN ATTR]", unknown_attr->name, unknown_attr->value);
+                unknown_attr->name, "%s: %s", unknown_attr->name, unknown_attr->value);
+        #ifdef XMPP_DEBUG
+        proto_item_append_text(unknown_attr_item, " [UNKNOWN ATTR]");
         expert_add_info_format(pinfo, unknown_attr_item, PI_UNDECODED, PI_NOTE,"Unknown attribute %s.", unknown_attr->name);
+        #endif
+        attrs_copy = attrs_copy->next;
+    }
+    g_list_free(attrs_copy_head);
+}
+
+void
+display_attrs_ext(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t *tvb, attr_info_ext *attrs, guint n)
+{
+    proto_item *item = proto_tree_get_parent(tree);
+    attr_t *attr;
+    guint i;
+    gboolean short_list_started = FALSE;
+    GList *attrs_copy = g_hash_table_get_values(element->attrs);
+    GList *attrs_copy_head;
+
+    GList *ns_abbrevs_head, *ns_abbrevs = g_hash_table_get_keys(element->namespaces);
+    GList *ns_fullnames_head, *ns_fullnames = g_hash_table_get_values(element->namespaces);
+    ns_abbrevs_head = ns_abbrevs;
+    ns_fullnames_head = ns_fullnames;
+
+    if(element->default_ns_abbrev)
+        proto_item_append_text(item, "(%s)",element->default_ns_abbrev);
+
+    proto_item_append_text(item," [");
+    while(ns_abbrevs && ns_fullnames)
+    {
+        for (i = 0; i < n && attrs != NULL; i++) {
+            if(strcmp(ns_fullnames->data, attrs[i].ns) == 0)
+            {
+                attr = get_attr_ext(element, attrs[i].info.name, ns_abbrevs->data);
+                if (attr) {
+                    if (attrs[i].info.hf != -1) {
+                        if (attr->name)
+                            proto_tree_add_string_format(tree, attrs[i].info.hf, tvb, attr->offset, attr->length, attr->value, "%s: %s", attr->name, attr->value);
+                        else
+                            proto_tree_add_string(tree, attrs[i].info.hf, tvb, attr->offset, attr->length, attr->value);
+                    } else {
+                        proto_tree_add_text(tree, tvb, attr->offset, attr->length, "%s: %s", attr->name ? attr->name : attrs[i].info.name, attr->value);
+                    }
+
+                    if (attrs[i].info.in_short_list) {
+                        if (short_list_started) {
+                            proto_item_append_text(item, " ");
+                        }
+                        proto_item_append_text(item, "%s=\"%s\"", attr->name ? attr->name : attrs[i].info.name, attr->value);
+                        short_list_started = TRUE;
+                    }
+
+                    attrs_copy = g_list_remove(attrs_copy, attr);
+
+                } else if (attrs[i].info.is_required) {
+                    expert_add_info_format(pinfo, item, PI_PROTOCOL, PI_WARN,
+                            "Required attribute \"%s\" doesn't appear in \"%s\".", attrs[i].info.name,
+                            element->name);
+                }
+
+                if (attrs[i].info.val_func) {
+                    if (attr)
+                        attrs[i].info.val_func(pinfo, item, attrs[i].info.name, attr->value, attrs[i].info.data);
+                    else
+                        attrs[i].info.val_func(pinfo, item, attrs[i].info.name, NULL, attrs[i].info.data);
+                }
+            }
+        }
+        ns_abbrevs = ns_abbrevs->next;
+        ns_fullnames = ns_fullnames->next;
+    }
+    proto_item_append_text(item,"]");
+
+    attrs_copy_head = attrs_copy;
+
+    /*displays attributes that weren't recognized*/
+    while(attrs_copy)
+    {
+        attr_t *unknown_attr = attrs_copy->data;
+        proto_item *unknown_attr_item;
+        unknown_attr_item = proto_tree_add_string_format(tree,
+                hf_xmpp_unknown_attr, tvb, unknown_attr->offset, unknown_attr->length,
+                unknown_attr->name, "%s: %s", unknown_attr->name, unknown_attr->value);
+       #ifdef XMPP_DEBUG
+        proto_item_append_text(unknown_attr_item, " [UNKNOWN ATTR]");
+        expert_add_info_format(pinfo, unknown_attr_item, PI_UNDECODED, PI_NOTE,"Unknown attribute %s.", unknown_attr->name);
+        #endif
 
         attrs_copy = attrs_copy->next;
     }
     g_list_free(attrs_copy_head);
+    g_list_free(ns_abbrevs_head);
+    g_list_free(ns_fullnames_head);
 }
 
 struct name_attr_t
@@ -881,3 +1043,36 @@ transform_func_cdata(element_t *elem)
     attr_t *result = ep_init_attr_t(elem->data?elem->data->value:"", elem->offset, elem->length);
     return result;
 }
+
+static void
+copy_hash_table_func(gpointer key, gpointer value, gpointer user_data)
+{
+    GHashTable *dst = user_data;
+    g_hash_table_insert(dst, key, value);
+}
+
+void copy_hash_table(GHashTable *src, GHashTable *dst)
+{
+    g_hash_table_foreach(src, copy_hash_table_func, dst);
+}
+
+/*
+static void
+printf_hash_table_func(gpointer key, gpointer value, gpointer user_data _U_)
+{
+    printf("'%s' '%s'\n", (gchar*)key, (gchar*)value);
+}
+
+void
+printf_elements(element_t *root)
+{
+    GList *elems = root->elements;
+
+    printf("%s\n", root->name);
+    g_hash_table_foreach(root->namespaces, printf_hash_table_func, NULL);
+    while(elems)
+    {
+        printf_elements(elems->data);
+        elems = elems->next;
+    }
+}*/
