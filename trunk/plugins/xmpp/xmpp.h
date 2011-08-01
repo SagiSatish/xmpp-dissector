@@ -113,7 +113,7 @@ extern void xmpp_gtalk_session_track(packet_info *pinfo, element_t *packet, xmpp
 extern void xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
 extern void xmpp_cdata(proto_tree *tree, tvbuff_t *tvb, element_t *element, gint hf);
 
-extern element_t* xml_frame_to_element_t(xml_frame_t *xml_frame, element_t *parent);
+extern element_t* xml_frame_to_element_t(xml_frame_t *xml_frame, element_t *parent, tvbuff_t *tvb);
 extern void element_t_tree_free(element_t *root);
 
 extern array_t* ep_init_array_t(const gchar** array, gint len);

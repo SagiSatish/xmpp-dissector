@@ -12,6 +12,7 @@
 #include <epan/epan.h>
 #include <epan/expert.h>
 #include <epan/tvbuff.h>
+#include <epan/tvbparse.h>
 
 #include <epan/dissectors/packet-xml.h>
 
@@ -235,7 +236,7 @@ xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
                 proto_item_append_text(unknown_item,"(%s)",child->default_ns_abbrev);
 
             xmpp_unknown_items(unknown_tree, tvb, child, 1);
-#ifdef DEBUG
+#ifdef XMPP_DEBUG
             proto_item_append_text(unknown_item, " [UNKNOWN]");
 
             expert_add_info_format(pinfo, unknown_item, PI_UNDECODED, PI_NOTE,"Unknown element: %s", child->name);
@@ -447,10 +448,14 @@ get_first_element(element_t *packet)
 Function converts xml_frame_t structure to element_t (simpler representation)
 */
 element_t*
-xml_frame_to_element_t(xml_frame_t *xml_frame, element_t *parent)
+xml_frame_to_element_t(xml_frame_t *xml_frame, element_t *parent, tvbuff_t *tvb)
 {
     xml_frame_t *child;
     element_t *node = ep_alloc0(sizeof(element_t));
+
+    tvbparse_wanted_t *want_ignore, *want_name, *want_scoped_name;
+    tvbparse_t* tt;
+    tvbparse_elem_t* elem;
 
     node->attrs = g_hash_table_new(g_str_hash, g_str_equal);
     node->elements = NULL;
@@ -478,21 +483,19 @@ xml_frame_to_element_t(xml_frame_t *xml_frame, element_t *parent)
     
     node->offset = xml_frame->start_offset;
 
-    /*looking for items in tree that looks like <ns:tag_name or <ns:tag_name/>*/
-    if(xml_frame->item)
+    /*looking for element's names that looks like ns:tag_name*/
+    want_ignore = tvbparse_chars(-1,1,0," \t\r\n</",NULL,NULL,NULL);
+    want_name = tvbparse_chars(-1,1,0,"abcdefghijklmnopqrstuvwxyz.-_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",NULL,NULL,NULL);
+    want_scoped_name = tvbparse_set_seq(-1, NULL, NULL, NULL,
+							       want_name,
+							       tvbparse_char(-1,":",NULL,NULL,NULL),
+							       want_name,
+							       NULL);
+    tt = tvbparse_init(tvb,node->offset,-1,NULL,want_ignore);
+
+    if((elem = tvbparse_get(tt,want_scoped_name))!=NULL)
     {
-        gchar* item_text = proto_item_get_text(xml_frame->item);
-        gchar* needle = ":";
-        if(item_text && strlen(node->name)+3 <= strlen(item_text))
-        {
-            gchar* ptr = epan_strcasestr(item_text, needle);
-            /*found ':'*/
-            if(ptr)
-            {
-                *ptr = '\0';
-                node->default_ns_abbrev = ep_strdup(item_text+1);/*+1 because first char is '<'*/
-            }
-        }
+        node->default_ns_abbrev = tvb_get_ephemeral_string(elem->sub->tvb, elem->sub->offset, elem->sub->len);
     }
 
     child = xml_frame->first_child;
@@ -571,7 +574,7 @@ xml_frame_to_element_t(xml_frame_t *xml_frame, element_t *parent)
             }
         } else
         {
-            node->elements = g_list_append(node->elements,(gpointer)xml_frame_to_element_t(child, node));
+            node->elements = g_list_append(node->elements,(gpointer)xml_frame_to_element_t(child, node,tvb));
         }
 
         child = child->next_sibling;
@@ -838,6 +841,9 @@ display_attrs_ext(proto_tree *tree, element_t *element, packet_info *pinfo, tvbu
             if(strcmp(ns_fullnames->data, attrs[i].ns) == 0)
             {
                 attr = get_attr_ext(element, attrs[i].info.name, ns_abbrevs->data);
+                if(!attr && element->default_ns_abbrev && strcmp(ns_abbrevs->data, element->default_ns_abbrev)==0)
+                    attr = get_attr_ext(element, attrs[i].info.name, "");
+
                 if (attr) {
                     if (attrs[i].info.hf != -1) {
                         if (attr->name)
@@ -884,12 +890,15 @@ display_attrs_ext(proto_tree *tree, element_t *element, packet_info *pinfo, tvbu
     {
         attr_t *unknown_attr = attrs_copy->data;
         proto_item *unknown_attr_item;
+
+        //printf("%s %s\n",element->default_ns_abbrev,unknown_attr->name);
+
         unknown_attr_item = proto_tree_add_string_format(tree,
                 hf_xmpp_unknown_attr, tvb, unknown_attr->offset, unknown_attr->length,
                 unknown_attr->name, "%s: %s", unknown_attr->name, unknown_attr->value);
        #ifdef XMPP_DEBUG
         proto_item_append_text(unknown_attr_item, " [UNKNOWN ATTR]");
-        expert_add_info_format(pinfo, unknown_attr_item, PI_UNDECODED, PI_NOTE,"Unknown attribute %s.", unknown_attr->name);
+        expert_add_info_format(pinfo, unknown_attr_item, PI_UNDECODED, PI_NOTE,"Unknown attribute %s. [DISP ATTR EXT]", unknown_attr->name);
         #endif
 
         attrs_copy = attrs_copy->next;

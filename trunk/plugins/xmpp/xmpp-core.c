@@ -580,8 +580,26 @@ xmpp_xml_header(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo _U_, element
 }
 
 void
-xmpp_stream(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo _U_, element_t *packet)
+xmpp_stream(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
 {
+    proto_item *stream_item;
+    proto_tree *stream_tree;
+
+    attr_info_ext attrs_info [] = {
+        {"http://etherx.jabber.org/streams",{"xmlns", hf_xmpp_xmlns, FALSE, TRUE, NULL, NULL}},
+        {"http://etherx.jabber.org/streams",{"version", -1, FALSE, TRUE, NULL, NULL}},
+        {"http://etherx.jabber.org/streams",{"from",-1, FALSE, TRUE, NULL, NULL}},
+        {"http://etherx.jabber.org/streams",{"to",-1, FALSE, TRUE, NULL, NULL}},
+        {"http://etherx.jabber.org/streams",{"id",-1, FALSE, TRUE, NULL, NULL}},
+        {"http://etherx.jabber.org/streams",{"xml:lang",-1, FALSE, TRUE, NULL, NULL}},
+        {"jabber:client",{"xmlns", hf_xmpp_xmlns, FALSE, TRUE, NULL, NULL}},
+        
+    };
+
     col_add_fstr(pinfo->cinfo, COL_INFO, "STREAM ");
-    proto_tree_add_text(tree, tvb, packet->offset, packet->length, "STREAM");
+
+    stream_item = proto_tree_add_item(tree, hf_xmpp_stream, tvb, packet->offset, packet->length, FALSE);
+    stream_tree = proto_item_add_subtree(stream_item, ett_xmpp_stream);
+
+    display_attrs_ext(stream_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
 }
