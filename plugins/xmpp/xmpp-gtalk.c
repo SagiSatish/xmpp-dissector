@@ -159,7 +159,7 @@ xmpp_gtalk_session_reason(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, e
     element_t *condition;
     element_t *text;
   
-    const gchar *reason_names[] = { "success", "busy"};
+    const gchar *reason_names[] = { "success", "busy", "cancel"};
 
     reason_item = proto_tree_add_text(tree, tvb, element->offset, element->length, "REASON");
     reason_tree = proto_item_add_subtree(reason_item, ett_xmpp_gtalk_session_reason);

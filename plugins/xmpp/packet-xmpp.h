@@ -3,6 +3,8 @@
 
 #define ETT_UNKNOWN_LEN 20
 
+#define XMPP_DEBUG
+
 extern int proto_xmpp;
 
 extern gint hf_xmpp_xmlns;
@@ -153,6 +155,7 @@ extern gint hf_xmpp_challenge;
 extern gint hf_xmpp_response;
 extern gint hf_xmpp_success;
 extern gint hf_xmpp_failure;
+extern gint hf_xmpp_stream;
 
 extern gint hf_xmpp_muc_x;
 extern gint hf_xmpp_muc_user_x;
@@ -261,6 +264,7 @@ extern gint ett_xmpp_challenge;
 extern gint ett_xmpp_response;
 extern gint ett_xmpp_success;
 extern gint ett_xmpp_failure;
+extern gint ett_xmpp_stream;
 
 extern gint ett_xmpp_muc_x;
 extern gint ett_xmpp_muc_hist;

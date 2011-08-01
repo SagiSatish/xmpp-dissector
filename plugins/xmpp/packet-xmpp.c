@@ -23,8 +23,6 @@
 
 #define XMPP_PORT 5222
 
-#define XMPP_DEBUG 1
-
 static dissector_handle_t xml_handle = NULL;
 
 int proto_xmpp = -1;
@@ -77,6 +75,7 @@ gint hf_xmpp_services = -1;
 gint hf_xmpp_channel = -1;
 
 gint hf_xmpp_iq_session = -1;
+gint hf_xmpp_stream = -1;
 
 gint hf_xmpp_vcard  = -1;
 gint hf_xmpp_vcard_x_update = -1;
@@ -286,6 +285,7 @@ gint ett_xmpp_challenge = -1;
 gint ett_xmpp_response = -1;
 gint ett_xmpp_success = -1;
 gint ett_xmpp_failure = -1;
+gint ett_xmpp_stream = -1;
 
 gint ett_xmpp_muc_x = -1;
 gint ett_xmpp_muc_hist = -1;
@@ -413,7 +413,7 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
 
     while(xml_frame)
     {
-        packet = xml_frame_to_element_t(xml_frame, NULL);
+        packet = xml_frame_to_element_t(xml_frame, NULL, tvb);
         DISSECTOR_ASSERT(packet);
 
         if (strcmp(packet->name, "iq") == 0) {
@@ -1033,6 +1033,11 @@ proto_register_xmpp(void) {
                 "AUTH", "xmpp.auth", FT_NONE, BASE_NONE, NULL, 0x0,
                 "auth packet", HFILL
             }},
+            { &hf_xmpp_stream,
+            {
+                "STREAM", "xmpp.stream", FT_NONE, BASE_NONE, NULL, 0x0,
+                "XMPP stream", HFILL
+            }},
             { &hf_xmpp_challenge,
             {
                 "CHALLENGE", "xmpp.challenge", FT_NONE, BASE_NONE, NULL, 0x0,
@@ -1298,6 +1303,7 @@ proto_register_xmpp(void) {
         &ett_xmpp_jingle_file_transfer_file,
         &ett_xmpp_jitsi_inputevt,
         &ett_xmpp_jitsi_inputevt_rmt_ctrl,
+        &ett_xmpp_stream,
     };
 
     static gint* ett_unknown_ptr[ETT_UNKNOWN_LEN];
