@@ -32,6 +32,7 @@
 #include <epan/strutil.h>
 
 #include "xmpp-conference.h"
+#include "epan/tvbparse.h"
 
 
 void xmpp_auth(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
@@ -602,4 +603,40 @@ xmpp_stream(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pack
     stream_tree = proto_item_add_subtree(stream_item, ett_xmpp_stream);
 
     display_attrs_ext(stream_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
+}
+
+/*returns TRUE if stream end occurs*/
+gboolean
+xmpp_stream_close(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo)
+{
+    tvbparse_t* tt;
+    tvbparse_elem_t* elem;
+    tvbparse_wanted_t* want_ignore = tvbparse_chars(1,1,0," \t\r\n",NULL,NULL,NULL);
+    tvbparse_wanted_t* want_name = tvbparse_chars(2,1,0,"abcdefghijklmnopqrstuvwxyz.-_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",NULL,NULL,NULL);
+    tvbparse_wanted_t* want_stream_end_with_ns = tvbparse_set_seq(3, NULL, NULL, NULL,
+                                                               want_name,
+                                                               tvbparse_char(4, ":", NULL, NULL, NULL),
+                                                               want_name,
+                                                               NULL);
+    
+    tvbparse_wanted_t* want_stream_end = tvbparse_set_oneof(5, NULL, NULL, NULL,
+                                                               want_stream_end_with_ns,
+                                                               want_name,
+                                                               NULL);
+    
+    tvbparse_wanted_t* want_stream_end_tag = tvbparse_set_seq(6, NULL, NULL, NULL,
+                                                               tvbparse_string(-1,"</",NULL,NULL,NULL),
+                                                               want_stream_end,
+                                                               tvbparse_char(-1,">",NULL,NULL,NULL),
+							       NULL);
+    tt = tvbparse_init(tvb,0,-1,NULL,want_ignore);
+
+    if((elem = tvbparse_get(tt,want_stream_end_tag))!=NULL)
+    {
+        proto_tree_add_text(tree, tvb, elem->offset, elem->len, "STREAM END");
+        col_add_fstr(pinfo->cinfo, COL_INFO, "STREAM END");
+
+        return TRUE;
+    }
+    return FALSE;
 }
