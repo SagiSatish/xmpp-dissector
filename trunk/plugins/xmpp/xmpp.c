@@ -74,9 +74,13 @@ xmpp_jingle_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_
 
 
         attr_id = get_attr(packet, "id");
+        DISSECTOR_ASSERT(attr_id);
+        
         se_id = se_strdup(attr_id->value);
 
         attr_sid = get_attr(jingle_packet, "sid");
+        DISSECTOR_ASSERT(attr_sid);
+        
         se_sid = se_strdup(attr_sid->value);
 
         se_tree_insert_string(xmpp_info->jingle_sessions, se_id, (void*) se_sid, EMEM_TREE_STRING_NOCASE);
@@ -106,9 +110,12 @@ xmpp_gtalk_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t
 
 
         attr_id = get_attr(packet, "id");
+        DISSECTOR_ASSERT(attr_id);
+
         se_id = se_strdup(attr_id->value);
 
         attr_sid = get_attr(gtalk_packet, "id");
+        DISSECTOR_ASSERT(attr_sid);
         se_sid = se_strdup(attr_sid->value);
 
         se_tree_insert_string(xmpp_info->gtalk_sessions, se_id, (void*) se_sid, EMEM_TREE_STRING_NOCASE);
