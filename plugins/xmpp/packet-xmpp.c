@@ -382,8 +382,12 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
     xmpp_tree = proto_item_add_subtree(xmpp_item, ett_xmpp);
     
 
+    /*if stream end occurs then return*/
+    if(xmpp_stream_close(xmpp_tree,tvb, pinfo))
+        return;
+
     call_dissector(xml_handle,tvb,pinfo,xmpp_tree);
-    
+
     if(!pinfo->private_data)
         return;
 
