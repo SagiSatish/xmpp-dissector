@@ -76,6 +76,7 @@ gint hf_xmpp_channel = -1;
 
 gint hf_xmpp_iq_session = -1;
 gint hf_xmpp_stream = -1;
+gint hf_xmpp_features = -1;
 
 gint hf_xmpp_vcard  = -1;
 gint hf_xmpp_vcard_x_update = -1;
@@ -286,6 +287,8 @@ gint ett_xmpp_response = -1;
 gint ett_xmpp_success = -1;
 gint ett_xmpp_failure = -1;
 gint ett_xmpp_stream = -1;
+gint ett_xmpp_features = -1;
+gint ett_xmpp_features_mechanisms = -1;
 
 gint ett_xmpp_muc_x = -1;
 gint ett_xmpp_muc_hist = -1;
@@ -464,6 +467,8 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
                 xmpp_xml_header(xmpp_tree, tvb, pinfo, packet);
             } else if (strcmp(packet->name, "stream") == 0) {
                 xmpp_stream(xmpp_tree, tvb, pinfo, packet);
+            } else if (strcmp(packet->name, "features") == 0) {
+                xmpp_features(xmpp_tree, tvb, pinfo, packet);
             } else {
                 proto_tree_show_first_child(xmpp_tree);
                 expert_add_info_format(pinfo, xmpp_tree, PI_UNDECODED, PI_NOTE, "Unknown packet: %s", packet->name);
@@ -1062,10 +1067,15 @@ proto_register_xmpp(void) {
                 "FAILURE", "xmpp.failure", FT_NONE, BASE_NONE, NULL, 0x0,
                 "failure packet", HFILL
             }},
+            { &hf_xmpp_features,
+            {
+                "FEATURES", "xmpp.features", FT_NONE, BASE_NONE, NULL, 0x0,
+                "stream features", HFILL
+            }},
             { &hf_xmpp_unknown,
             {
                 "UNKNOWN", "xmpp.unknown", FT_STRING, BASE_NONE, NULL, 0x0,
-                "unknown packet", HFILL
+                "unknown element", HFILL
             }},
             { &hf_xmpp_unknown_attr,
             {
@@ -1308,6 +1318,8 @@ proto_register_xmpp(void) {
         &ett_xmpp_jitsi_inputevt,
         &ett_xmpp_jitsi_inputevt_rmt_ctrl,
         &ett_xmpp_stream,
+        &ett_xmpp_features,
+        &ett_xmpp_features_mechanisms,
     };
 
     static gint* ett_unknown_ptr[ETT_UNKNOWN_LEN];

@@ -55,6 +55,8 @@ static void xmpp_message_subject(proto_tree *tree, tvbuff_t *tvb, packet_info *p
 void xmpp_failure(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
 static void xmpp_failure_text(proto_tree *tree, tvbuff_t *tvb, element_t *element);
 
+static void xmpp_features_mechanisms(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
+
 void
 xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
 {
@@ -603,6 +605,7 @@ xmpp_stream(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *pack
     stream_tree = proto_item_add_subtree(stream_item, ett_xmpp_stream);
 
     display_attrs_ext(stream_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(stream_tree, packet, pinfo, tvb, NULL, 0);
 }
 
 /*returns TRUE if stream end occurs*/
@@ -639,4 +642,44 @@ xmpp_stream_close(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo)
         return TRUE;
     }
     return FALSE;
+}
+
+void
+xmpp_features(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
+{
+    proto_item *features_item;
+    proto_tree *features_tree;
+
+    elem_info elems_info [] = {
+        {NAME, "mechanisms", xmpp_features_mechanisms, MANY}
+    };
+
+    features_item = proto_tree_add_item(tree, hf_xmpp_features, tvb, packet->offset, packet->length, FALSE);
+    features_tree = proto_item_add_subtree(features_item, ett_xmpp_features);
+
+    col_add_fstr(pinfo->cinfo, COL_INFO, "FEATURES ");
+
+    display_attrs(features_tree, packet, pinfo, tvb, NULL, 0);
+    display_elems(features_tree, packet, pinfo, tvb, elems_info, array_length(elems_info));
+}
+
+static void
+xmpp_features_mechanisms(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
+{
+    proto_item *mechanisms_item;
+    proto_tree *mechanisms_tree;
+
+    attr_info attrs_info [] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL}
+    };
+
+    elem_info elems_info [] = {
+        {NAME, "mechanism", xmpp_simple_cdata_elem, MANY},
+    };
+
+    mechanisms_item = proto_tree_add_text(tree, tvb, packet->offset, packet->length, "MECHANISMS: ");
+    mechanisms_tree = proto_item_add_subtree(mechanisms_item, ett_xmpp_features_mechanisms);
+
+    display_attrs(mechanisms_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(mechanisms_tree, packet, pinfo, tvb, elems_info, array_length(elems_info));
 }
