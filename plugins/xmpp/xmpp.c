@@ -231,13 +231,22 @@ xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
         element_t *child = childs->data;
         if(!child->was_read)
         {
-            proto_item *unknown_item = proto_tree_add_string_format(tree,
+            proto_item *unknown_item;
+            proto_tree *unknown_tree;
+
+#ifdef XMPP_DEBUG
+            unknown_item = proto_tree_add_string_format(tree,
                     hf_xmpp_unknown, tvb, child->offset, child->length, child->name,
                     "%s", ep_string_upcase(child->name));
+#else
+            unknown_item = proto_tree_add_text(tree, tvb, child->offset, child->length,
+                    "%s", ep_string_upcase(child->name));
+#endif
+            unknown_tree = proto_item_add_subtree(unknown_item, ett_unknown[0]);
 
-            proto_tree *unknown_tree = proto_item_add_subtree(unknown_item, ett_unknown[0]);
-
-            col_append_fstr(pinfo->cinfo, COL_INFO, "%s ", ep_string_upcase(child->name));
+            /*Add COL_INFO only if root element is IQ*/
+            if(strcmp(element->name,"iq")==0)
+                col_append_fstr(pinfo->cinfo, COL_INFO, "%s ", ep_string_upcase(child->name));
 
             if(child->default_ns_abbrev)
                 proto_item_append_text(unknown_item,"(%s)",child->default_ns_abbrev);
@@ -273,13 +282,22 @@ xmpp_cdata(proto_tree *tree, tvbuff_t *tvb, element_t *element, gint hf)
     }
 }
 
+/* displays element that looks like <element_name>element_value</element_name>
+ * ELEMENT_NAME: element_value as TEXT(proto_tree_add_text) int PROTO_TREE
+ */
+void
+xmpp_simple_cdata_elem(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo _U_, element_t *element)
+{
+    proto_tree_add_text(tree, tvb, element->offset, element->length, "%s: %s", ep_string_upcase(element->name), elem_cdata(element));
+}
+
 array_t*
-ep_init_array_t(const gchar** array, gint len)
+ep_init_array_t(const gpointer array, gint len)
 {
     array_t *result;
 
     result = ep_alloc(sizeof(array_t));
-    result->data = (const gpointer) array;
+    result->data = array;
     result->length = len;
     
     return result;
@@ -332,7 +350,7 @@ find_element_by_name(element_t *packet,const gchar *name)
     GList *found_elements;
     element_t *search_element;
 
-    /*create fake elementonly with name*/
+    /*create fake element only with name*/
     search_element = ep_alloc(sizeof(element_t));
     search_element->name = ep_strdup(name);
 
@@ -345,8 +363,9 @@ find_element_by_name(element_t *packet,const gchar *name)
 }
 
 
-/*function searches and removes element from packet.
-  if element doesn't exist, NULL is returned.*/
+/* steal_*
+ * function searches element in packet and sets it as read.
+ * if element doesn't exist, NULL is returned.*/
 element_t*
 steal_element_by_name(element_t *packet,const gchar *name)
 {
@@ -358,9 +377,6 @@ steal_element_by_name(element_t *packet,const gchar *name)
     if(element_l)
     {
         element = element_l->data;
-/*
-        packet->elements = g_list_delete_link(packet->elements, element_l);
-*/
         element->was_read = TRUE;
     }
 
@@ -368,8 +384,6 @@ steal_element_by_name(element_t *packet,const gchar *name)
 
 }
 
-/*function searches and removes one element from packet by name
-  names are taken from variable names*/
 element_t*
 steal_element_by_names(element_t *packet, const gchar **names, gint names_len)
 {
@@ -395,15 +409,10 @@ steal_element_by_attr(element_t *packet, const gchar *attr_name, const gchar *at
         element_t *child_elem = childs->data;
         attr_t *attr = get_attr(child_elem, attr_name);
 
-/*
-        child is one of the defined stanza error conditions
-*/
         if (!child_elem->was_read && attr && strcmp(attr->value, attr_value) == 0) {
 
             result = childs->data;
-/*
-            packet->elements = g_list_delete_link(packet->elements, childs);
-*/
+            
             result->was_read = TRUE;
             
             break;
@@ -424,15 +433,10 @@ steal_element_by_name_and_attr(element_t *packet, const gchar *name, const gchar
         element_t *child_elem = childs->data;
         attr_t *attr = get_attr(child_elem, attr_name);
 
-/*
-        child is one of the defined stanza error conditions
-*/
         if (!child_elem->was_read && attr && strcmp(child_elem->name, name) == 0 && strcmp(attr->value, attr_value) == 0) {
 
             result = childs->data;
-/*
-            packet->elements = g_list_delete_link(packet->elements, childs);
-*/
+            
             result->was_read = TRUE;
 
             break;
@@ -811,13 +815,17 @@ display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t
     {
         attr_t *unknown_attr = attrs_copy->data;
         proto_item* unknown_attr_item;
+        
+#ifdef XMPP_DEBUG
         unknown_attr_item = proto_tree_add_string_format(tree,
                 hf_xmpp_unknown_attr, tvb, unknown_attr->offset, unknown_attr->length,
                 unknown_attr->name, "%s: %s", unknown_attr->name, unknown_attr->value);
-        #ifdef XMPP_DEBUG
         proto_item_append_text(unknown_attr_item, " [UNKNOWN ATTR]");
         expert_add_info_format(pinfo, unknown_attr_item, PI_UNDECODED, PI_NOTE,"Unknown attribute %s.", unknown_attr->name);
-        #endif
+#else
+        unknown_attr_item = proto_tree_add_text(tree, tvb, unknown_attr->offset, unknown_attr->length,
+                "%s: %s", unknown_attr->name, unknown_attr->value);
+#endif
         attrs_copy = attrs_copy->next;
     }
     g_list_free(attrs_copy_head);
@@ -898,15 +906,16 @@ display_attrs_ext(proto_tree *tree, element_t *element, packet_info *pinfo, tvbu
         attr_t *unknown_attr = attrs_copy->data;
         proto_item *unknown_attr_item;
 
-        //printf("%s %s\n",element->default_ns_abbrev,unknown_attr->name);
-
+#ifdef XMPP_DEBUG
         unknown_attr_item = proto_tree_add_string_format(tree,
                 hf_xmpp_unknown_attr, tvb, unknown_attr->offset, unknown_attr->length,
                 unknown_attr->name, "%s: %s", unknown_attr->name, unknown_attr->value);
-       #ifdef XMPP_DEBUG
         proto_item_append_text(unknown_attr_item, " [UNKNOWN ATTR]");
         expert_add_info_format(pinfo, unknown_attr_item, PI_UNDECODED, PI_NOTE,"Unknown attribute %s. [DISP ATTR EXT]", unknown_attr->name);
-        #endif
+#else
+        unknown_attr_item = proto_tree_add_text(tree, tvb, unknown_attr->offset, unknown_attr->length,
+                "%s: %s", unknown_attr->name, unknown_attr->value);
+#endif
 
         attrs_copy = attrs_copy->next;
     }
