@@ -292,12 +292,12 @@ xmpp_simple_cdata_elem(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo _U_, 
 }
 
 array_t*
-ep_init_array_t(const gpointer array, gint len)
+ep_init_array_t(const gchar** array, gint len)
 {
     array_t *result;
 
     result = ep_alloc(sizeof(array_t));
-    result->data = array;
+    result->data = (gpointer) array;
     result->length = len;
     
     return result;
