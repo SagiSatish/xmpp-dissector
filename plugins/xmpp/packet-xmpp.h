@@ -157,6 +157,8 @@ extern gint hf_xmpp_response;
 extern gint hf_xmpp_success;
 extern gint hf_xmpp_failure;
 extern gint hf_xmpp_stream;
+extern gint hf_xmpp_starttls;
+extern gint hf_xmpp_proceed;
 
 extern gint hf_xmpp_muc_x;
 extern gint hf_xmpp_muc_user_x;
@@ -268,6 +270,8 @@ extern gint ett_xmpp_failure;
 extern gint ett_xmpp_stream;
 extern gint ett_xmpp_features;
 extern gint ett_xmpp_features_mechanisms;
+extern gint ett_xmpp_proceed;
+extern gint ett_xmpp_starttls;
 
 extern gint ett_xmpp_muc_x;
 extern gint ett_xmpp_muc_hist;

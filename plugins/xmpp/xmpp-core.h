@@ -12,5 +12,7 @@ extern void xmpp_xml_header(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo,
 extern void xmpp_stream(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
 extern gboolean xmpp_stream_close(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo);
 extern void xmpp_features(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
+extern void xmpp_starttls(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
+extern void xmpp_proceed(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet);
 #endif	/* XMPP_CORE_H */
 

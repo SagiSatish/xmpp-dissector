@@ -683,3 +683,41 @@ xmpp_features_mechanisms(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, el
     display_attrs(mechanisms_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
     display_elems(mechanisms_tree, packet, pinfo, tvb, elems_info, array_length(elems_info));
 }
+
+void
+xmpp_starttls(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
+{
+    proto_item *tls_item;
+    proto_tree *tls_tree;
+
+    attr_info attrs_info [] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
+    };
+
+    col_add_fstr(pinfo->cinfo, COL_INFO, "STARTTLS ");
+
+    tls_item = proto_tree_add_item(tree, hf_xmpp_starttls, tvb, packet->offset, packet->length, FALSE);
+    tls_tree = proto_item_add_subtree(tls_item, ett_xmpp_starttls);
+
+    display_attrs(tls_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(tls_tree, packet, pinfo, tvb, NULL, 0);
+}
+
+void
+xmpp_proceed(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
+{
+    proto_item *proceed_item;
+    proto_tree *proceed_tree;
+
+    attr_info attrs_info [] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
+    };
+
+    col_add_fstr(pinfo->cinfo, COL_INFO, "PROCEED ");
+
+    proceed_item = proto_tree_add_item(tree, hf_xmpp_proceed, tvb, packet->offset, packet->length, FALSE);
+    proceed_tree = proto_item_add_subtree(proceed_item, ett_xmpp_proceed);
+
+    display_attrs(proceed_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(proceed_tree, packet, pinfo, tvb, NULL, 0);
+}
