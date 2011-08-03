@@ -159,7 +159,7 @@ extern element_t* xml_frame_to_element_t(xml_frame_t *xml_frame, element_t *pare
 extern void element_t_tree_free(element_t *root);
 
 /** Allocs ephemeral memory for array_t struct.*/
-extern array_t* ep_init_array_t(const gpointer array, gint len);
+extern array_t* ep_init_array_t(const gchar** array, gint len);
 
 /*Allocs ephemeral memory for attr_t struct*/
 extern attr_t* ep_init_attr_t(gchar *value, gint offset, gint length);
