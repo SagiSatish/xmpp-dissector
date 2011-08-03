@@ -176,6 +176,8 @@ gint hf_xmpp_challenge = -1;
 gint hf_xmpp_response = -1;
 gint hf_xmpp_success = -1;
 gint hf_xmpp_failure = -1;
+gint hf_xmpp_starttls = -1;
+gint hf_xmpp_proceed = -1;
 
 gint hf_xmpp_muc_x = -1;
 gint hf_xmpp_muc_user_x  = -1;
@@ -289,6 +291,8 @@ gint ett_xmpp_failure = -1;
 gint ett_xmpp_stream = -1;
 gint ett_xmpp_features = -1;
 gint ett_xmpp_features_mechanisms = -1;
+gint ett_xmpp_starttls = -1;
+gint ett_xmpp_proceed = -1;
 
 gint ett_xmpp_muc_x = -1;
 gint ett_xmpp_muc_hist = -1;
@@ -384,12 +388,14 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
     xmpp_item = proto_tree_add_item(tree,proto_xmpp, tvb, 0, -1, FALSE);
     xmpp_tree = proto_item_add_subtree(xmpp_item, ett_xmpp);
     
+    call_dissector(xml_handle,tvb,pinfo,xmpp_tree);
 
     /*if stream end occurs then return*/
     if(xmpp_stream_close(xmpp_tree,tvb, pinfo))
+    {
+        proto_tree_hide_first_child(xmpp_tree);
         return;
-
-    call_dissector(xml_handle,tvb,pinfo,xmpp_tree);
+    }
 
     if(!pinfo->private_data)
         return;
@@ -469,7 +475,11 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
                 xmpp_stream(xmpp_tree, tvb, pinfo, packet);
             } else if (strcmp(packet->name, "features") == 0) {
                 xmpp_features(xmpp_tree, tvb, pinfo, packet);
-            } else {
+            } else if (strcmp(packet->name, "starttls") == 0) {
+                xmpp_starttls(xmpp_tree, tvb, pinfo, packet);
+            }else if (strcmp(packet->name, "proceed") == 0) {
+                xmpp_proceed(xmpp_tree, tvb, pinfo, packet);
+            }else {
                 proto_tree_show_first_child(xmpp_tree);
                 expert_add_info_format(pinfo, xmpp_tree, PI_UNDECODED, PI_NOTE, "Unknown packet: %s", packet->name);
             }
@@ -1072,6 +1082,16 @@ proto_register_xmpp(void) {
                 "FEATURES", "xmpp.features", FT_NONE, BASE_NONE, NULL, 0x0,
                 "stream features", HFILL
             }},
+            { &hf_xmpp_starttls,
+            {
+                "STARTTLS", "xmpp.starttls", FT_NONE, BASE_NONE, NULL, 0x0,
+                "starttls packet", HFILL
+            }},
+            { &hf_xmpp_proceed,
+            {
+                "PROCEED", "xmpp.proceed", FT_NONE, BASE_NONE, NULL, 0x0,
+                "proceed packet", HFILL
+            }},
             { &hf_xmpp_unknown,
             {
                 "UNKNOWN", "xmpp.unknown", FT_STRING, BASE_NONE, NULL, 0x0,
@@ -1320,6 +1340,8 @@ proto_register_xmpp(void) {
         &ett_xmpp_stream,
         &ett_xmpp_features,
         &ett_xmpp_features_mechanisms,
+        &ett_xmpp_starttls,
+        &ett_xmpp_proceed,
     };
 
     static gint* ett_unknown_ptr[ETT_UNKNOWN_LEN];
