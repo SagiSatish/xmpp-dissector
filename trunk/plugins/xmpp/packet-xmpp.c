@@ -392,7 +392,7 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
             last_char = tvb_get_guint8(tvb, index);
         }
 
-        if (index >= 0 && last_char != '>' && last_char > ' ') {
+        if (index >= 0 && last_char != '>') {
             pinfo->desegment_len = DESEGMENT_ONE_MORE_SEGMENT;
             return;
         }
@@ -413,7 +413,8 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
     /*if stream end occurs then return*/
     if(xmpp_stream_close(xmpp_tree,tvb, pinfo))
     {
-        proto_tree_hide_first_child(xmpp_tree);
+        if(xmpp_tree)
+            proto_tree_hide_first_child(xmpp_tree);
         return;
     }
 
@@ -502,6 +503,8 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
             }else {
                 proto_tree_show_first_child(xmpp_tree);
                 expert_add_info_format(pinfo, xmpp_tree, PI_UNDECODED, PI_NOTE, "Unknown packet: %s", packet->name);
+                col_clear(pinfo->cinfo, COL_INFO);
+                col_append_fstr(pinfo->cinfo, COL_INFO, "UNKNOWN PACKET ");
             }
 
             /*appends to COL_INFO information about src or dst*/
@@ -1169,8 +1172,8 @@ proto_register_xmpp(void) {
             }},
             { &hf_xmpp_gtalk,
             {
-                "session ID", "xmpp.gtalk", FT_STRING, BASE_NONE, NULL, 0x0,
-                "GTalk session id", HFILL
+                "GTALK SESSION", "xmpp.gtalk", FT_STRING, BASE_NONE, NULL, 0x0,
+                "GTalk SID", HFILL
             }},
             { &hf_xmpp_gtalk_setting,
             {
