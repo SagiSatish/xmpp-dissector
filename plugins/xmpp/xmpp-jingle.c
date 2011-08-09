@@ -1,4 +1,7 @@
-/* urn:xmpp:jingle:1
+/* xmpp-jingle.c
+ * Wireshark's XMPP dissector.
+ *
+ * urn:xmpp:jingle:1
  * urn:xmpp:jingle:apps:rtp:1
  * urn:xmpp:jingle:apps:rtp:errors:1
  * urn:xmpp:jingle:apps:rtp:info:1
@@ -12,6 +15,28 @@
  *
  * http://jabber.org/protocol/jinglenodes
  * http://jabber.org/protocol/jinglenodes#channel
+ *
+ * Copyright 2011, Mariusz Okroj <okrojmariusz[AT]gmail.com>
+ *
+ * $Id$
+ *
+ * Wireshark - Network traffic analyzer
+ * By Gerald Combs <gerald@wireshark.org>
+ * Copyright 1998 Gerald Combs
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -29,7 +54,7 @@
 #include <epan/dissectors/packet-xml.h>
 
 #include <plugins/xmpp/packet-xmpp.h>
-#include <plugins/xmpp/xmpp.h>
+#include <plugins/xmpp/xmpp-utils.h>
 #include <plugins/xmpp/xmpp-jingle.h>
 #include <plugins/xmpp/xmpp-conference.h>
 #include <plugins/xmpp/xmpp-gtalk.h>

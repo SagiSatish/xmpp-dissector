@@ -34,7 +34,7 @@ DISSECTOR_SRC = \
 DISSECTOR_INCLUDES = \
         packet-xmpp.h \
         xmpp-core.h \
-	xmpp.h \
+	xmpp-utils.h \
         xmpp-jingle.h \
         xmpp-other.h \
         xmpp-gtalk.h \
@@ -45,7 +45,7 @@ DISSECTOR_INCLUDES = \
 # used to generate "plugin.c".
 DISSECTOR_SUPPORT_SRC = \
         xmpp-core.c \
-	xmpp.c \
+	xmpp-utils.c \
         xmpp-jingle.c \
         xmpp-other.c \
         xmpp-gtalk.c \

@@ -1,3 +1,29 @@
+/* packet-xmpp.c
+ * Wireshark's XMPP dissector.
+ * 
+ * Copyright 2011, Mariusz Okroj <okrojmariusz[AT]gmail.com>
+ *
+ * $Id$
+ *
+ * Wireshark - Network traffic analyzer
+ * By Gerald Combs <gerald@wireshark.org>
+ * Copyright 1998 Gerald Combs
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -16,7 +42,7 @@
 
 #include <epan/dissectors/packet-xml.h>
 
-#include <plugins/xmpp/xmpp.h>
+#include <plugins/xmpp/xmpp-utils.h>
 #include <plugins/xmpp/packet-xmpp.h>
 #include <plugins/xmpp/xmpp-core.h>
 #include <plugins/xmpp/xmpp-jingle.h>
@@ -334,13 +360,7 @@ gint ett_xmpp_hashes_hash = -1;
 gint ett_xmpp_jitsi_inputevt = -1;
 gint ett_xmpp_jitsi_inputevt_rmt_ctrl = -1;
 
-gint ett_unknown[ETT_UNKNOWN_LEN] =
-{
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-};
+gint ett_unknown[ETT_UNKNOWN_LEN];
 
 static void
 dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
@@ -1348,6 +1368,7 @@ proto_register_xmpp(void) {
     gint i;
     for(i=0;i<ETT_UNKNOWN_LEN;i++)
     {
+        ett_unknown[i] = -1;
         ett_unknown_ptr[i] = &ett_unknown[i];
     }
 

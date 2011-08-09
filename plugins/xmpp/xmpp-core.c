@@ -1,5 +1,27 @@
-/* jabber:client
- * urn:ietf:params:xml:ns:xmpp-sasl
+/* xmpp-core.c
+ * Wireshark's XMPP dissector.
+ *
+ * Copyright 2011, Mariusz Okroj <okrojmariusz[AT]gmail.com>
+ *
+ * $Id$
+ *
+ * Wireshark - Network traffic analyzer
+ * By Gerald Combs <gerald@wireshark.org>
+ * Copyright 1998 Gerald Combs
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -21,7 +43,7 @@
 
 #include <epan/dissectors/packet-xml.h>
 
-#include <plugins/xmpp/xmpp.h>
+#include <plugins/xmpp/xmpp-utils.h>
 #include <plugins/xmpp/packet-xmpp.h>
 #include <plugins/xmpp/xmpp-core.h>
 #include <plugins/xmpp/xmpp-jingle.h>
@@ -677,7 +699,7 @@ xmpp_features_mechanisms(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, el
         {NAME, "mechanism", xmpp_simple_cdata_elem, MANY},
     };
 
-    mechanisms_item = proto_tree_add_text(tree, tvb, packet->offset, packet->length, "MECHANISMS: ");
+    mechanisms_item = proto_tree_add_text(tree, tvb, packet->offset, packet->length, "MECHANISMS");
     mechanisms_tree = proto_item_add_subtree(mechanisms_item, ett_xmpp_features_mechanisms);
 
     display_attrs(mechanisms_tree, packet, pinfo, tvb, attrs_info, array_length(attrs_info));
