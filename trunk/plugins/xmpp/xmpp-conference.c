@@ -3,7 +3,7 @@
  *
  * XEP-0298: Delivering Conference Information to Jingle Participants (Coin)
  *
- * Copyright 2011, Mariusz Okroj <okrojmariusz[AT]gmail.com>
+ * Copyright 2011, Mariusz Okroj <okrojmariusz[]gmail.com>
  *
  * $Id$
  *

@@ -1,6 +1,6 @@
 /* xmpp-utils.h
  *
- * Copyright 2011, Mariusz Okroj <okrojmariusz[AT]gmail.com>
+ * Copyright 2011, Mariusz Okroj <okrojmariusz[]gmail.com>
  *
  * $Id$
  *
@@ -52,6 +52,8 @@ typedef struct _attr_t{
     gchar *name;
     gint offset;
     gint length;
+
+    gboolean was_read;
 } attr_t;
 
 typedef struct _data_t{
@@ -161,6 +163,8 @@ extern void xmpp_gtalk_session_track(packet_info *pinfo, element_t *packet, xmpp
  * ETT_UNKNOWN_LEN in packet-xmpp.h 
  */
 extern void xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element);
+
+extern void xmpp_unknown_attrs(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element, gboolean displ_short_list);
 
 /** Displays CDATA from element in tree. You can use your own header field hf or
  * pass -1. If you pass -1 then CDATA will be display as text(proto_tree_add_text):
