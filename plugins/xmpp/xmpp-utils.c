@@ -191,40 +191,13 @@ xmpp_ibb_session_track(packet_info *pinfo, element_t *packet, xmpp_conv_info_t *
 }
 
 static void
-xmpp_unknown_items(proto_tree *tree, tvbuff_t *tvb, element_t *element, guint level)
+xmpp_unknown_items(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element, guint level)
 {
-    GList *keys = g_hash_table_get_keys(element->attrs);
     GList *childs = element->elements;
-    
-    GList *keys_head = keys;
-
-    gboolean short_list_started = FALSE;
-    proto_item* parent_item = proto_tree_get_parent(tree);
-
-
+   
     DISSECTOR_ASSERT( level < ETT_UNKNOWN_LEN );
 
-    while(keys)
-    {
-        attr_t *attr = get_attr(element, (const gchar*)keys->data);
-        if(attr)
-        {
-            if(!short_list_started)
-                proto_item_append_text(parent_item, " [");
-            else
-                proto_item_append_text(parent_item, " ");
-            proto_item_append_text(parent_item, "%s=\"%s\"", (gchar*)keys->data,attr->value);
-
-            proto_tree_add_text(tree, tvb, attr->offset, attr->length, "%s: %s",(gchar*)keys->data,attr->value);
-            short_list_started = TRUE;
-        }
-        keys = keys->next;
-    }
-
-    if(short_list_started)
-        proto_item_append_text(parent_item, "]");
-
-    g_list_free(keys_head);
+    xmpp_unknown_attrs(tree, tvb, pinfo, element, TRUE);
 
     if(element->data)
     {
@@ -240,7 +213,7 @@ xmpp_unknown_items(proto_tree *tree, tvbuff_t *tvb, element_t *element, guint le
         if(child->default_ns_abbrev)
             proto_item_append_text(child_item, "(%s)", child->default_ns_abbrev);
 
-        xmpp_unknown_items(child_tree, tvb, child, level +1);
+        xmpp_unknown_items(child_tree, tvb, pinfo, child, level +1);
 
         childs = childs->next;
     }
@@ -277,7 +250,7 @@ xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
             if(child->default_ns_abbrev)
                 proto_item_append_text(unknown_item,"(%s)",child->default_ns_abbrev);
 
-            xmpp_unknown_items(unknown_tree, tvb, child, 1);
+            xmpp_unknown_items(unknown_tree, tvb, pinfo, child, 1);
 #ifdef XMPP_DEBUG
             proto_item_append_text(unknown_item, " [UNKNOWN]");
 
@@ -286,6 +259,68 @@ xmpp_unknown(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *ele
         }
         childs = childs->next;
     }
+}
+
+void
+xmpp_unknown_attrs(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo _U_, element_t *element, gboolean displ_short_list)
+{
+    proto_item *item = proto_tree_get_parent(tree);
+
+    GList *keys = g_hash_table_get_keys(element->attrs);
+    GList *values = g_hash_table_get_values(element->attrs);
+
+    GList *keys_head = keys, *values_head = values;
+
+    gboolean short_list_started = FALSE;
+
+    while(keys && values)
+    {
+        attr_t *attr = (attr_t*) values->data;
+        if (!attr->was_read) {
+            if (displ_short_list) {
+                if (!short_list_started)
+                    proto_item_append_text(item, " [");
+                else
+                    proto_item_append_text(item, " ");
+                proto_item_append_text(item, "%s=\"%s\"", (gchar*) keys->data, attr->value);
+
+                short_list_started = TRUE;
+            }
+
+            /*If unknown element has xmlns attrib then header field hf_xmpp_xmlns is added to the tree.
+             In other case only text.*/
+            if (strcmp(keys->data, "xmlns") == 0)
+                proto_tree_add_string(tree, hf_xmpp_xmlns, tvb, attr->offset, attr->length, attr->value);
+            else {
+                /*xmlns may looks like xmlns:abbrev="sth"*/
+                gchar* xmlns_needle = epan_strcasestr(keys->data, "xmlns:");
+                if (xmlns_needle && xmlns_needle == keys->data) {
+                    proto_tree_add_string_format(tree, hf_xmpp_xmlns, tvb, attr->offset, attr->length, attr->value,"%s: %s", (gchar*)keys->data, attr->value);
+                } else {
+                    proto_item* unknown_attr_item;
+
+#ifdef XMPP_DEBUG
+                    unknown_attr_item = proto_tree_add_string_format(tree,
+                            hf_xmpp_unknown_attr, tvb, attr->offset, attr->length,
+                            attr->name, "%s: %s", attr->name, attr->value);
+                    proto_item_append_text(unknown_attr_item, " [UNKNOWN ATTR]");
+                    expert_add_info_format(pinfo, unknown_attr_item, PI_UNDECODED, PI_NOTE, "Unknown attribute %s.", attr->name);
+#else
+                    unknown_attr_item = proto_tree_add_text(tree, tvb, attr->offset, attr->length,
+                            "%s: %s", attr->name, attr->value);
+#endif
+                }
+            }
+        }
+        keys = keys->next;
+        values = values->next;
+    }
+
+    if(short_list_started && displ_short_list)
+        proto_item_append_text(item, "]");
+
+    g_list_free(keys_head);
+    g_list_free(values_head);
 }
 
 void
@@ -550,6 +585,7 @@ xml_frame_to_element_t(xml_frame_t *xml_frame, element_t *parent, tvbuff_t *tvb)
                 attr_t *attr = ep_alloc(sizeof(attr_t));
                 attr->length = 0;
                 attr->offset = 0;
+                attr->was_read = FALSE;
                 
                 if (child->value != NULL) {
                     l = tvb_reported_length(child->value);
@@ -666,6 +702,9 @@ get_attr(element_t *element, const gchar* attr_name)
         result = g_hash_table_find(element->attrs, attr_find_pred, (gpointer)attr_name);
     }
 
+    if(result)
+        result->was_read = TRUE;
+
     return result;
 }
 
@@ -689,6 +728,9 @@ get_attr_ext(element_t *element, const gchar* attr_name, const gchar* ns_abbrev)
     {
         result = g_hash_table_find(element->attrs, attr_find_pred, (gpointer)attr_name);
     }
+
+    if(result)
+        result->was_read = TRUE;
 
     return result;
 }
@@ -781,8 +823,6 @@ display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t
     attr_t *attr;
     guint i;
     gboolean short_list_started = FALSE;
-    GList *attrs_copy = g_hash_table_get_values(element->attrs);
-    GList *attrs_copy_head;
 
     if(element->default_ns_abbrev)
         proto_item_append_text(item, "(%s)",element->default_ns_abbrev);
@@ -815,8 +855,6 @@ display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t
                 short_list_started = TRUE;
             }
 
-            attrs_copy = g_list_remove(attrs_copy, attr);
-
         } else if(attrs[i].is_required)
         {
             expert_add_info_format(pinfo, item, PI_PROTOCOL, PI_WARN,
@@ -834,27 +872,8 @@ display_attrs(proto_tree *tree, element_t *element, packet_info *pinfo, tvbuff_t
     }
     proto_item_append_text(item,"]");
 
-    attrs_copy_head = attrs_copy;
-
     /*displays attributes that weren't recognized*/
-    while(attrs_copy)
-    {
-        attr_t *unknown_attr = attrs_copy->data;
-        proto_item* unknown_attr_item;
-        
-#ifdef XMPP_DEBUG
-        unknown_attr_item = proto_tree_add_string_format(tree,
-                hf_xmpp_unknown_attr, tvb, unknown_attr->offset, unknown_attr->length,
-                unknown_attr->name, "%s: %s", unknown_attr->name, unknown_attr->value);
-        proto_item_append_text(unknown_attr_item, " [UNKNOWN ATTR]");
-        expert_add_info_format(pinfo, unknown_attr_item, PI_UNDECODED, PI_NOTE,"Unknown attribute %s.", unknown_attr->name);
-#else
-        unknown_attr_item = proto_tree_add_text(tree, tvb, unknown_attr->offset, unknown_attr->length,
-                "%s: %s", unknown_attr->name, unknown_attr->value);
-#endif
-        attrs_copy = attrs_copy->next;
-    }
-    g_list_free(attrs_copy_head);
+    xmpp_unknown_attrs(tree, tvb, pinfo, element, FALSE);
 }
 
 void
@@ -864,8 +883,6 @@ display_attrs_ext(proto_tree *tree, element_t *element, packet_info *pinfo, tvbu
     attr_t *attr;
     guint i;
     gboolean short_list_started = FALSE;
-    GList *attrs_copy = g_hash_table_get_values(element->attrs);
-    GList *attrs_copy_head;
 
     GList *ns_abbrevs_head, *ns_abbrevs = g_hash_table_get_keys(element->namespaces);
     GList *ns_fullnames_head, *ns_fullnames = g_hash_table_get_values(element->namespaces);
@@ -903,8 +920,6 @@ display_attrs_ext(proto_tree *tree, element_t *element, packet_info *pinfo, tvbu
                         short_list_started = TRUE;
                     }
 
-                    attrs_copy = g_list_remove(attrs_copy, attr);
-
                 } else if (attrs[i].info.is_required) {
                     expert_add_info_format(pinfo, item, PI_PROTOCOL, PI_WARN,
                             "Required attribute \"%s\" doesn't appear in \"%s\".", attrs[i].info.name,
@@ -924,28 +939,9 @@ display_attrs_ext(proto_tree *tree, element_t *element, packet_info *pinfo, tvbu
     }
     proto_item_append_text(item,"]");
 
-    attrs_copy_head = attrs_copy;
-
     /*displays attributes that weren't recognized*/
-    while(attrs_copy)
-    {
-        attr_t *unknown_attr = attrs_copy->data;
-        proto_item *unknown_attr_item;
+    xmpp_unknown_attrs(tree, tvb, pinfo, element, FALSE);
 
-#ifdef XMPP_DEBUG
-        unknown_attr_item = proto_tree_add_string_format(tree,
-                hf_xmpp_unknown_attr, tvb, unknown_attr->offset, unknown_attr->length,
-                unknown_attr->name, "%s: %s", unknown_attr->name, unknown_attr->value);
-        proto_item_append_text(unknown_attr_item, " [UNKNOWN ATTR]");
-        expert_add_info_format(pinfo, unknown_attr_item, PI_UNDECODED, PI_NOTE,"Unknown attribute %s. [DISP ATTR EXT]", unknown_attr->name);
-#else
-        unknown_attr_item = proto_tree_add_text(tree, tvb, unknown_attr->offset, unknown_attr->length,
-                "%s: %s", unknown_attr->name, unknown_attr->value);
-#endif
-
-        attrs_copy = attrs_copy->next;
-    }
-    g_list_free(attrs_copy_head);
     g_list_free(ns_abbrevs_head);
     g_list_free(ns_fullnames_head);
 }

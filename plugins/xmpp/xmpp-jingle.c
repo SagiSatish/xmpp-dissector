@@ -16,7 +16,7 @@
  * http://jabber.org/protocol/jinglenodes
  * http://jabber.org/protocol/jinglenodes#channel
  *
- * Copyright 2011, Mariusz Okroj <okrojmariusz[AT]gmail.com>
+ * Copyright 2011, Mariusz Okroj <okrojmariusz[]gmail.com>
  *
  * $Id$
  *

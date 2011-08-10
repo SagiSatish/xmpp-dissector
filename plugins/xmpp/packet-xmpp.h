@@ -1,6 +1,6 @@
 /* packet-xmpp.h
  *
- * Copyright 2011, Mariusz Okroj <okrojmariusz[AT]gmail.com>
+ * Copyright 2011, Mariusz Okroj <okrojmariusz[]gmail.com>
  *
  * $Id$
  *

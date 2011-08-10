@@ -1,7 +1,7 @@
 /* xmpp-other.c
  * Wireshark's XMPP dissector.
  *
- * Copyright 2011, Mariusz Okroj <okrojmariusz[AT]gmail.com>
+ * Copyright 2011, Mariusz Okroj <okrojmariusz[]gmail.com>
  *
  * $Id$
  *
