@@ -53,6 +53,7 @@ static dissector_handle_t xml_handle = NULL;
 
 int proto_xmpp = -1;
 
+static gboolean xmpp_desegment = TRUE;
 
 gint hf_xmpp_xmlns = -1;
 gint hf_xmpp_id = -1;
@@ -382,19 +383,24 @@ dissect_xmpp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
     int index;
     gchar last_char;
 
-    index = tvb_reported_length(tvb) - 1;
-    if (index >= 0) {
-        last_char = tvb_get_guint8(tvb, index);
-
-        while(last_char <= ' ' && index - 1 >= 0)
+    if (xmpp_desegment)
+    {
+        index = tvb_reported_length(tvb) - 1;
+        if (index >= 0)
         {
-            index--;
             last_char = tvb_get_guint8(tvb, index);
-        }
 
-        if (index >= 0 && last_char != '>') {
-            pinfo->desegment_len = DESEGMENT_ONE_MORE_SEGMENT;
-            return;
+            while (last_char <= ' ' && index - 1 >= 0)
+            {
+                index--;
+                last_char = tvb_get_guint8(tvb, index);
+            }
+
+            if (index >= 0 && last_char != '>')
+            {
+                pinfo->desegment_len = DESEGMENT_ONE_MORE_SEGMENT;
+                return;
+            }
         }
     }
 
@@ -1367,6 +1373,8 @@ proto_register_xmpp(void) {
         &ett_xmpp_proceed,
     };
 
+    module_t *xmpp_module;
+
     static gint* ett_unknown_ptr[ETT_UNKNOWN_LEN];
     gint i;
     for(i=0;i<ETT_UNKNOWN_LEN;i++)
@@ -1382,6 +1390,14 @@ proto_register_xmpp(void) {
             "XMPP", /* short name */
             "xmpp" /* abbrev     */
             );
+
+    xmpp_module = prefs_register_protocol(proto_xmpp, NULL);
+    prefs_register_bool_preference(xmpp_module, "desegment",
+            "Reasemble XMPP messages",
+            "Whether the XMPP dissector should reassemble messages. "
+            "To use this option, you must also enable \"Allow subdissectors to reassemble TCP streams\" in the TCP protocol settings",
+            &xmpp_desegment);
+
     proto_register_field_array(proto_xmpp, hf, array_length(hf));
     proto_register_subtree_array(ett, array_length(ett));
     proto_register_subtree_array(ett_unknown_ptr, array_length(ett_unknown_ptr));
