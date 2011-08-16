@@ -470,6 +470,9 @@ steal_element_by_attr(element_t *packet, const gchar *attr_name, const gchar *at
         element_t *child_elem = childs->data;
         attr_t *attr = get_attr(child_elem, attr_name);
 
+        if(attr)
+            attr->was_read = FALSE;
+
         if (!child_elem->was_read && attr && strcmp(attr->value, attr_value) == 0) {
 
             result = childs->data;
@@ -493,6 +496,9 @@ steal_element_by_name_and_attr(element_t *packet, const gchar *name, const gchar
     while (childs) {
         element_t *child_elem = childs->data;
         attr_t *attr = get_attr(child_elem, attr_name);
+
+        if(attr)
+            attr->was_read = FALSE;
 
         if (!child_elem->was_read && attr && strcmp(child_elem->name, name) == 0 && strcmp(attr->value, attr_value) == 0) {
 
