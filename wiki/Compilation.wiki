@@ -1,6 +1,5 @@
 #summary How get it to work
 #labels Featured,Phase-Deploy
-#sidebar TableOfContents
 
   * [Compilation#Instruction_for_Linux Instruction for Linux]
   * [Compilation#Instruction_for_Windows Instruction for Windows]
