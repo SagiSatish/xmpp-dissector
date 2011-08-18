@@ -1,7 +1,7 @@
 #summary How get it to work
 #labels Featured,Phase-Deploy
 
-<wiki:toc max_depth="1" />
+<wiki:toc max_depth="2" />
 
   * [Compilation#Instruction_for_Linux Instruction for Linux]
   * [Compilation#Instruction_for_Windows Instruction for Windows]
