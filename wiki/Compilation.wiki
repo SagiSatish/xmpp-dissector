@@ -3,8 +3,6 @@
 
 <wiki:toc max_depth="2" />
 
-  * [Compilation#Instruction_for_Linux Instruction for Linux]
-  * [Compilation#Instruction_for_Windows Instruction for Windows]
 
 = Instruction for Linux  =
 
