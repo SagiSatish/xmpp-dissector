@@ -1,5 +1,9 @@
 #summary How get it to work
 #labels Featured,Phase-Deploy
+#sidebar TableOfContents
+
+  * [Instruction_for_Linux Instruction for Linux]
+  * [Instruction_for_Windows Instruction for Windows]
 
 = Instruction for Linux  =
 
