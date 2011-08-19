@@ -5,6 +5,36 @@
 
 This file is HOWTO for XMPP dissector developers. Before reading this doc you should be familiar with Wireshark README files, especialy README.developer and README.plugins.
 
+== How Wireshark displays packets ==
+
+Packet that looks like:
+<code language="xml">
+<iq
+    from='marok.test@gmail.com/gmail.9EB5BC18'
+    to='marok@marook.dyndns.org/c92ed70a'
+    type='set'
+    id='90E8492345BCC05E'>
+    <jin:jingle
+        action='session-initiate'
+        sid='c1448747008' initiator='marok.test@gmail.com/gmail.9EB5BC18'
+        xmlns:jin='urn:xmpp:jingle:1'>
+        <jin:content
+            name='video'
+            creator='initiator'>
+            <rtp:description media='video' xmlns:rtp='urn:xmpp:jingle:apps:rtp:1'>
+                <rtp:payload-type id='99' name='H264-SVC'>
+                    ...
+                </rtp:payload-type>              
+            </rtp:description>
+            <p:transport xmlns:p='http://www.google.com/transport/p2p'/>
+        </jin:content>
+    </jin:jingle>
+</iq>
+</code>
+is displayed by Wireshark like in the screenshoot:
+
+[http://dl.dropbox.com/u/4436801/wireshark_xmpp/ws_zrzut.png]
+
 = Files structure =
 
 XMPP dissector is written as a plugin. Hence all files related to this dissector are stored in plugins/xmpp directory.
