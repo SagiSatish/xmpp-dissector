@@ -1,0 +1,19 @@
+#summary HOWTO for developers
+#labels Phase-Implementation
+
+= Introduction =
+
+This file is HOWTO for XMPP dissector developers. Before reading this doc you should be familiar with Wireshark README files, especialy README.developer and README.plugins.
+
+= Files structure =
+
+XMPP dissector is written as a plugin. Hence all files related to this dissector are stored in plugins/xmpp directory.
+
+Files and their content:
+  * packet-xmpp.c _(main file of the XMPP dissector)_
+    * header fields (hf`_``*`) and subtree ids (ett`_``*`) initializations
+    * XMPP_PORT
+    * dissect_xmpp, proto_reg_handoff_xmpp, proto_register_xmpp - characteristic functions for each dissector
+  * packet-xmpp.h
+    * header fields (hf`_``*`) and subtree ids (ett`_``*`) exports
+    * ETT_UNKNOWN_LEN - it describes depth of tree for unknown elements. If depth of tree for unknown element is higher than ETT_UNKNOWN_LEN then packet is set as malformed. In this case it should be increased.
