@@ -57,3 +57,34 @@ Files and their content:
     * functions responsible for: getting data from XML dissector, displaying them into protocol tree, managing memory
   * xmpp-`*`.c
     * functions that process specific elements
+
+= Develope custom type of packet =
+
+== Skeleton code ==
+
+Each function that processes the part of XMPP packet should return void and have 4 parameters: proto_tree, tvbuff_t, packet_info and element_t.
+{{{
+void xmpp_foo(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
+}}}
+
+Standard proto`_`tree and proto`_`item declarations.
+{{{
+proto_item *xmpp_foo_item;
+proto_tree *xmpp_foo_tree;
+attr_info attrs_info[] = {
+    {"attr1", hf_xmpp_foo_attr, TRUE, TRUE, NULL, NULL},
+    {"attr2", -1, FALSE, TRUE, NULL, NULL},
+};
+elem_info elems_info[] = {
+    {NAME, "bar", xmpp_foo_bar, MANY},
+};
+}}}
+
+
+{{{
+xmpp_foo_item = proto_tree_add_item(tree, hf_xmpp_foo, tvb, element->offset, element->length, TRUE);
+xmpp_foo_tree = proto_item_add_subtree(xmpp_foo_item,ett_xmpp_foo);
+}}}
+== Example ==
+Let's take an example of the [http://xmpp.org/schemas/roster.xsd roster packet].
+
