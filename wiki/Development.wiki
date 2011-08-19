@@ -71,6 +71,10 @@ Standard proto`_`tree and proto`_`item declarations.
 {{{
 proto_item *xmpp_foo_item;
 proto_tree *xmpp_foo_tree;
+}}}
+
+Below we can see declaration of attributes and elements which will be searched in _element_. attr_info structure consists of attribute name, header field, boolean value describing that the attribute is required, another bool making that the attribute is displayed in area no 3
+{{{
 attr_info attrs_info[] = {
     {"attr1", hf_xmpp_foo_attr, TRUE, TRUE, NULL, NULL},
     {"attr2", -1, FALSE, TRUE, NULL, NULL},
@@ -87,4 +91,3 @@ xmpp_foo_tree = proto_item_add_subtree(xmpp_foo_item,ett_xmpp_foo);
 }}}
 == Example ==
 Let's take an example of the [http://xmpp.org/schemas/roster.xsd roster packet].
-
