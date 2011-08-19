@@ -55,12 +55,12 @@ To compile sources you need tools such as Visual C++ compiler, subversion client
 
 == Details ==
 
-At first you should download and install following tools:
+At first you should download and install the following tools:
  * Visual C++ 2010 Express - http://www.microsoft.com/visualstudio/en-us/products/2010-editions/visual-cpp-express
  * subversion client - http://www.sliksvn.com/en/download
  * patch tool - http://gnuwin32.sourceforge.net/downlinks/patch.php
  * Python - http://www.python.org/download/releases/2.7.2/
- * Cygwin - http://cygwin.com/setup.exe - during the installation from "Select Package" page choose following packages: Archive/unzip, Devel/bison, Devel/flex, Interpreters/perl, Web/wget
+ * Cygwin - http://cygwin.com/setup.exe - during the installation from "Select Package" page choose the following packages: Archive/unzip, Devel/bison, Devel/flex, Interpreters/perl, Web/wget
 
 Next download and unpack Wireshark's [http://wiresharkdownloads.riverbed.com/wireshark/src/wireshark-1.6.1.tar.bz2 sources].
 
