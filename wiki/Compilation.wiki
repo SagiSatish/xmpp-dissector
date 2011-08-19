@@ -8,7 +8,7 @@
 
 == Introduction ==
 
-To compile sources you will need linux tools such as gcc, svn, autoconf, automake, libtool, bison, yacc, flex, GTK+, GLib, libpcap.
+To compile sources you need linux tools such as gcc, svn, autoconf, automake, libtool, bison, yacc, flex, GTK+, GLib, libpcap.
 
 
 == Details ==
@@ -23,18 +23,18 @@ Next unpack downloaded file.
 tar -xvjf wireshark-1.6.0.tar.bz2
 }}}
 
-Now you have to get XMPP dissector sources.
+Now get XMPP dissector sources.
 {{{
 svn checkout http://xmpp-dissector.googlecode.com/svn/trunk/ wireshark-1.6.0 --force
 }}}
 
-If you have all sources, you have to patch make files. It will allow you to compile XMPP dissector sources.
+If you have all sources, patch all make files. It will allow you to compile XMPP dissector sources.
 {{{
 cd wireshark-1.6.0
 patch -p0 -i wireshark_config.patch
 }}}
 
-Next you have to run
+Next run
 {{{
 ./autogen.sh
 ./configure --prefix=/your-path/wireshark-bin
@@ -98,4 +98,4 @@ config.nmake(951) : fatal error U1050: Can't find C:\wireshark-win32-libs-1.6\vc
 }}}
 you should download this [http://www.microsoft.com/download/en/confirmation.aspx?id=5555 file] and copy it to the C:\wireshark-win32-libs-1.6 directory.
 
-All binaries you can find in the wireshark-1.6.1\wireshark-gtk2 directory.
+All ready for use binaries you can find in the wireshark-1.6.1\wireshark-gtk2 directory.
