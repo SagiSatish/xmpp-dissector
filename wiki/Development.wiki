@@ -67,13 +67,15 @@ Each function that processes the part of XMPP packet should return void and have
 void xmpp_foo(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *element)
 }}}
 
-Standard proto`_`tree and proto`_`item declarations.
+Standard proto`_`tree and proto`_`item declaration.
 {{{
-proto_item *xmpp_foo_item;
-proto_tree *xmpp_foo_tree;
+proto_item *foo_item;
+proto_tree *foo_tree;
 }}}
 
-Below we can see declaration of attributes and elements which will be searched in _element_. attr_info structure consists of attribute name, header field, boolean value describing that the attribute is required, another bool making that the attribute is displayed in area no 3
+Below we can see declaration of attributes and elements which will be searched in _element_.
+_attr_info_ structure consists of attribute name, header field, boolean value describing that the attribute is required, another bool making that the attribute is displayed in area no. 3 (important attributes), pointer to the validation function and pointer to the data passing to this function.
+_elem_info_ structure consists of a way of searching an element, data required to looking for an element, function that will process found element, number of possible occurences of an element.
 {{{
 attr_info attrs_info[] = {
     {"attr1", hf_xmpp_foo_attr, TRUE, TRUE, NULL, NULL},
@@ -84,10 +86,16 @@ elem_info elems_info[] = {
 };
 }}}
 
-
+Standard proto`_`tree and proto`_`item initialization.
 {{{
-xmpp_foo_item = proto_tree_add_item(tree, hf_xmpp_foo, tvb, element->offset, element->length, TRUE);
-xmpp_foo_tree = proto_item_add_subtree(xmpp_foo_item,ett_xmpp_foo);
+foo_item = proto_tree_add_item(tree, hf_xmpp_foo, tvb, element->offset, element->length, TRUE);
+foo_tree = proto_item_add_subtree(foo_item,ett_xmpp_foo);
+}}}
+
+Calling functions that display attributes and elements in tree using _attr_info_ array and _elem_info_ array. If _display_elems_ doesn't call then function _xmpp_unknown_ must be called.
+{{{
+display_attrs(foo_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+display_elems(foo_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
 }}}
 == Example ==
 Let's take an example of the [http://xmpp.org/schemas/roster.xsd roster packet].
