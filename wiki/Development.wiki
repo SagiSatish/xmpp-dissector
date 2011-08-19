@@ -5,10 +5,10 @@
 
 This file is HOWTO for XMPP dissector developers. Before reading this doc you should be familiar with Wireshark README files, especialy README.developer and README.plugins.
 
-== How Wireshark displays packets ==
+== How XMPP dissector displays packets ==
 
 Packet that looks like:
-<code language="xml">
+{{{
 <iq
     from='marok.test@gmail.com/gmail.9EB5BC18'
     to='marok@marook.dyndns.org/c92ed70a'
@@ -30,10 +30,16 @@ Packet that looks like:
         </jin:content>
     </jin:jingle>
 </iq>
-</code>
+}}}
 is displayed by Wireshark like in the screenshoot:
 
 [http://dl.dropbox.com/u/4436801/wireshark_xmpp/ws_zrzut.png]
+
+Areas marked in the picture above means:
+  # element name - jingle
+  # namespace abbreviation - jin
+  # important arguments
+  # all arguments
 
 = Files structure =
 
