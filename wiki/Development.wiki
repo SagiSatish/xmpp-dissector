@@ -53,3 +53,7 @@ Files and their content:
   * packet-xmpp.h
     * header fields (hf`_``*`) and subtree ids (ett`_``*`) exports
     * ETT_UNKNOWN_LEN - it describes depth of tree for unknown elements. If depth of tree for unknown element is higher than ETT_UNKNOWN_LEN then packet is set as malformed. In this case it should be increased.
+  * xmpp-utils.c
+    * functions responsible for: getting data from XML dissector, displaying them into protocol tree, managing memory
+  * xmpp-`*`.c
+    * functions that process specific elements
