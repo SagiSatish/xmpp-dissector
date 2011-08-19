@@ -1,5 +1,5 @@
 #summary HOWTO for developers
-#labels Phase-Implementation,Deprecated
+#labels Phase-Implementation
 
 = Introduction =
 
