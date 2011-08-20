@@ -92,7 +92,7 @@ foo_item = proto_tree_add_item(tree, hf_xmpp_foo, tvb, element->offset, element-
 foo_tree = proto_item_add_subtree(foo_item,ett_xmpp_foo);
 }}}
 
-Calling functions that display attributes and elements in tree using _attr_info_ array and _elem_info_ array. If _display_elems_ doesn't call then function _xmpp_unknown_ must be called.
+Calling functions that display attributes and elements in tree using _attr_info_ array and _elem_info_ array. If _display_elems_ doesn't call then function _xmpp_unknown_ MUST be called.
 {{{
 display_attrs(foo_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 display_elems(foo_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
@@ -100,7 +100,7 @@ display_elems(foo_tree, element, pinfo, tvb, elems_info, array_length(elems_info
 == Example ==
 Let's take an example of the [http://xmpp.org/schemas/roster.xsd roster packet].
 
-ROSTER packet consist of one element _query_ and _query_ has only one child _item_. 
+ROSTER packet consist of one element _QUERY_ and _QUERY_ has only one child _ITEM_. 
 
 At first you should add proper header fields and subtree IDs to the _packet-xmpp.c_
 {{{
@@ -152,7 +152,7 @@ xmpp_roster_query(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t
     proto_item *query_item;
     proto_tree *query_tree;
 }}}
-_QUERY_ element from may have only 2 attributes: xmlns and ver. hf_xmpp_xmlns is header field that is added to each _xmlns_ attribute that occurs. _ver_ attribute is displayed as text (-1 instead of header field).
+_QUERY_ element may have only 2 attributes: _xmlns_ and _ver_. _hf_xmpp_xmlns_ is header field that is added to each _xmlns_ attribute that occurs. _ver_ attribute is displayed as text (-1 instead of header field).
 {{{
     attr_info attrs_info[] = {
         {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
@@ -170,17 +170,61 @@ Information about sort of packet is set in column info field. It facilitates the
 
     col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(jabber:iq:roster) ");
 }}}
-Standard proto`_`tree and proto`_`item initialization. Header field and subtree ID are added.
+Standard proto`_`tree and proto`_`item initialization. Header field and subtree ID are added to the protocol tree.
 {{{
     query_item = proto_tree_add_item(tree, hf_xmpp_query, tvb, element->offset, element->length, FALSE);
     query_tree = proto_item_add_subtree(query_item, ett_xmpp_query);
 }}}
-
+Information are displayed in the protocol tree using _attrs`_`info_ and _elems`_`info_. Attributes and elements, that aren't defined in these structures, are displayed as text.
 {{{
     display_attrs(query_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
     display_elems(query_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
 }}}
 
 {{{
+}
+}}}
+Now, let's write function that dissect _ITEM_ that is part of _QUERY_. This function may be static, because it is called only by _xmpp`_`roster`_`query_.
+{{{
+static void
+xmpp_roster_item(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t *element)
+{
+    proto_item *item_item;
+    proto_tree *item_tree;
+}}}
+Declaration and initialization arrays that will validate attributes values. If attribute has value that isn't defined in these arrays then information about it is added to the expert info module.
+{{{
+    const gchar *ask_enums[] = {"subscribe"};
+    const gchar *subscription_enums[] = {"both","from","none","remove","to"};
+
+    array_t *ask_enums_array = ep_init_array_t(ask_enums,array_length(ask_enums));
+    array_t *subscription_array = ep_init_array_t(subscription_enums,array_length(subscription_enums));
+}}}
+
+{{{
+    attr_info attrs_info[] = {
+        {"jid", hf_xmpp_query_item_jid, TRUE, TRUE, NULL, NULL},
+        {"name", hf_xmpp_query_item_name, FALSE, TRUE, NULL, NULL},
+        {"ask", hf_xmpp_query_item_ask, FALSE, TRUE, val_enum_list, ask_enums_array},
+        {"approved", hf_xmpp_query_item_approved, FALSE, TRUE, NULL, NULL},
+        {"subscription", hf_xmpp_query_item_subscription, FALSE, TRUE, val_enum_list, subscription_array},
+    };
+
+    element_t *group;
+
+    item_item = proto_tree_add_item(tree, hf_xmpp_query_item, tvb, element->offset, element->length, FALSE);
+    item_tree = proto_item_add_subtree(item_item, ett_xmpp_query_item);
+
+    display_attrs(item_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+}}}
+
+{{{
+    while((group = steal_element_by_name(element,"group"))!=NULL)
+    {
+        proto_tree_add_string(item_tree, hf_xmpp_query_item_group, tvb, group->offset, group->length, elem_cdata(group));
+    }
+}}}
+{{{
+    xmpp_unknown(item_tree, tvb, pinfo, element);
 }
 }}}
