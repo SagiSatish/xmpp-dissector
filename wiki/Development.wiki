@@ -229,3 +229,15 @@ In this case we MUST call _xmpp`_`unknown_, because _display`_`elems_ isn't used
     xmpp_unknown(item_tree, tvb, pinfo, element);
 }
 }}}
+The last thing that must be done is adding information to the _xmpp`_`iq_ function(_xmpp-core.c_) to the _elems`_`info_ array.
+{{{
+void
+xmpp_iq(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, element_t *packet)
+{
+    ...
+    elem_info elems_info [] = {
+        ...
+        {NAME_AND_ATTR, name_attr_struct("query", "xmlns", "jabber:iq:roster"), xmpp_roster_query, ONE},
+        ...
+    };
+}}}
