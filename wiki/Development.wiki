@@ -100,4 +100,47 @@ display_elems(foo_tree, element, pinfo, tvb, elems_info, array_length(elems_info
 == Example ==
 Let's take an example of the [http://xmpp.org/schemas/roster.xsd roster packet].
 
-TODO
+ROSTER packet consist of one element _query_ and _query_ has only one child _item_. 
+
+At first you should add proper header field and subtree variables to the _packet-xmpp.c_
+{{{
+gint hf_xmpp_query = -1;
+gint hf_xmpp_query_item = -1;
+
+gint ett_xmpp_query = -1;
+gint ett_xmpp_query_item = -1;
+}}}
+and put them into right array.
+{{{
+static hf_register_info hf[] = {
+        ...
+        { &hf_xmpp_query,
+        {
+            "QUERY", "xmpp.query", FT_NONE, BASE_NONE, NULL, 0x0,
+            "iq query", HFILL
+        }},
+        { &hf_xmpp_query_item,
+        {
+            "ITEM", "xmpp.query.item", FT_NONE, BASE_NONE, NULL, 0x0,
+            "iq query item", HFILL
+
+        }},
+        ...
+}
+
+static gint * ett[] = {
+        &ett_xmpp,
+        &ett_xmpp_iq,
+        &ett_xmpp_query,
+        &ett_xmpp_query_item,
+        ...
+};
+}}}
+These variables have to be visible in files that contain our dissection functions, so you should add them to the _packet-xmpp.h_.
+{{{
+extern gint hf_xmpp_query;
+extern gint hf_xmpp_query_item;
+
+extern gint ett_xmpp_query;
+extern gint ett_xmpp_query_item;
+}}}
