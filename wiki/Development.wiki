@@ -102,7 +102,7 @@ Let's take an example of the [http://xmpp.org/schemas/roster.xsd roster packet].
 
 ROSTER packet consist of one element _query_ and _query_ has only one child _item_. 
 
-At first you should add proper header field and subtree variables to the _packet-xmpp.c_
+At first you should add proper header fields and subtree IDs to the _packet-xmpp.c_
 {{{
 gint hf_xmpp_query = -1;
 gint hf_xmpp_query_item = -1;
@@ -136,11 +136,49 @@ static gint * ett[] = {
         ...
 };
 }}}
-These variables have to be visible in files that contain our dissection functions, so you should add them to the _packet-xmpp.h_.
+These variables have to be visible in files that contain our dissection functions (e.g. in the _xmpp-other.c_), so you should add them to the _packet-xmpp.h_.
 {{{
 extern gint hf_xmpp_query;
 extern gint hf_xmpp_query_item;
 
 extern gint ett_xmpp_query;
 extern gint ett_xmpp_query_item;
+}}}
+
+
+{{{
+xmpp_roster_query(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t *element)
+{
+    proto_item *query_item;
+    proto_tree *query_tree;
+
+    attr_info attrs_info[] = {
+        {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
+        {"ver", -1, FALSE, TRUE, NULL, NULL},
+    };
+}}}
+_QUERY_ element from may have only 2 attributes: xmlns and ver. hf_xmpp_xmlns is header field that is added to each _xmlns_ attribute that occurs. _ver_ attribute is displayed as text (-1 instead of header field).
+{{{
+    elem_info elems_info[] = {
+        {NAME, "item", xmpp_roster_item, MANY},
+    };
+}}}
+_QUERY_ may also contain many _ITEM_ elements. 
+{{{
+
+    col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(jabber:iq:roster) ");
+}}}
+Information about sort of packet is set in column info field. It facilitates the analisis of captured packets.
+{{{
+    query_item = proto_tree_add_item(tree, hf_xmpp_query, tvb, element->offset, element->length, FALSE);
+    query_tree = proto_item_add_subtree(query_item, ett_xmpp_query);
+}}}
+Standard proto`_`tree and proto`_`item initialization. Header field and subtree ID is added.
+{{{
+    display_attrs(query_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
+    display_elems(query_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
+}}}
+
+{{{
+}
 }}}
