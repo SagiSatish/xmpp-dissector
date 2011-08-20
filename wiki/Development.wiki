@@ -151,29 +151,31 @@ xmpp_roster_query(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t
 {
     proto_item *query_item;
     proto_tree *query_tree;
-
+}}}
+_QUERY_ element from may have only 2 attributes: xmlns and ver. hf_xmpp_xmlns is header field that is added to each _xmlns_ attribute that occurs. _ver_ attribute is displayed as text (-1 instead of header field).
+{{{
     attr_info attrs_info[] = {
         {"xmlns", hf_xmpp_xmlns, TRUE, TRUE, NULL, NULL},
         {"ver", -1, FALSE, TRUE, NULL, NULL},
     };
 }}}
-_QUERY_ element from may have only 2 attributes: xmlns and ver. hf_xmpp_xmlns is header field that is added to each _xmlns_ attribute that occurs. _ver_ attribute is displayed as text (-1 instead of header field).
+_QUERY_ may also contain many _ITEM_ elements. 
 {{{
     elem_info elems_info[] = {
         {NAME, "item", xmpp_roster_item, MANY},
     };
 }}}
-_QUERY_ may also contain many _ITEM_ elements. 
+Information about sort of packet is set in column info field. It facilitates the analisis of captured packets.
 {{{
 
     col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(jabber:iq:roster) ");
 }}}
-Information about sort of packet is set in column info field. It facilitates the analisis of captured packets.
+Standard proto`_`tree and proto`_`item initialization. Header field and subtree ID are added.
 {{{
     query_item = proto_tree_add_item(tree, hf_xmpp_query, tvb, element->offset, element->length, FALSE);
     query_tree = proto_item_add_subtree(query_item, ett_xmpp_query);
 }}}
-Standard proto`_`tree and proto`_`item initialization. Header field and subtree ID is added.
+
 {{{
     display_attrs(query_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
     display_elems(query_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
