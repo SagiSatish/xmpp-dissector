@@ -200,7 +200,7 @@ Declaration and initialization arrays that will validate attributes values. If a
     array_t *ask_enums_array = ep_init_array_t(ask_enums,array_length(ask_enums));
     array_t *subscription_array = ep_init_array_t(subscription_enums,array_length(subscription_enums));
 }}}
-
+If we want to validate some attribute, we must set _val`_`enum`_`list_ as _val`_`func_ and proper _array`_`t_ struct as _data_.
 {{{
     attr_info attrs_info[] = {
         {"jid", hf_xmpp_query_item_jid, TRUE, TRUE, NULL, NULL},
@@ -217,13 +217,14 @@ Declaration and initialization arrays that will validate attributes values. If a
 
     display_attrs(item_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
 }}}
-
+We can recognize elements manualy as you see below.
 {{{
     while((group = steal_element_by_name(element,"group"))!=NULL)
     {
         proto_tree_add_string(item_tree, hf_xmpp_query_item_group, tvb, group->offset, group->length, elem_cdata(group));
     }
 }}}
+In this case we MUST call _xmpp`_`unknown_, because _display`_`elems_ isn't used.
 {{{
     xmpp_unknown(item_tree, tvb, pinfo, element);
 }
