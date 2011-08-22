@@ -426,7 +426,8 @@ find_element_by_name(element_t *packet,const gchar *name)
 
 /* steal_*
  * function searches element in packet and sets it as read.
- * if element doesn't exist, NULL is returned.*/
+ * if element doesn't exist, NULL is returned.
+ * If element is set as read, it is invisible for these functions.*/
 element_t*
 steal_element_by_name(element_t *packet,const gchar *name)
 {
@@ -679,8 +680,7 @@ element_t_tree_free(element_t *root)
     g_list_free(root->elements);
 }
 
-/*Function recognize attribute names if they looks like ns:attr_name or xmlns:ns*/
-/*TODO ns:attr*/
+/*Function recognize attribute names if they looks like xmlns:ns*/
 static gboolean
 attr_find_pred(gpointer key, gpointer value _U_, gpointer user_data)
 {
@@ -697,7 +697,7 @@ attr_find_pred(gpointer key, gpointer value _U_, gpointer user_data)
     return FALSE;
 }
 
-/*Functions returns element's attibute by name*/
+/*Functions returns element's attibute by name and set as read*/
 attr_t*
 get_attr(element_t *element, const gchar* attr_name)
 {
@@ -715,7 +715,7 @@ get_attr(element_t *element, const gchar* attr_name)
 }
 
 /*Functions returns element's attibute by name and namespace abbrev*/
-attr_t*
+static attr_t*
 get_attr_ext(element_t *element, const gchar* attr_name, const gchar* ns_abbrev)
 {
     gchar* search_phrase;

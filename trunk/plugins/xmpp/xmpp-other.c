@@ -238,20 +238,17 @@ xmpp_roster_query(proto_tree *tree, tvbuff_t *tvb, packet_info* pinfo, element_t
         {"ver", -1, FALSE, TRUE, NULL, NULL},
     };
 
-    element_t *item;
+    elem_info elems_info[] = {
+        {NAME, "item", xmpp_roster_item, MANY},
+    };
 
-     col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(jabber:iq:roster) ");
+    col_append_fstr(pinfo->cinfo, COL_INFO, "QUERY(jabber:iq:roster) ");
 
     query_item = proto_tree_add_item(tree, hf_xmpp_query, tvb, element->offset, element->length, FALSE);
     query_tree = proto_item_add_subtree(query_item, ett_xmpp_query);
 
     display_attrs(query_tree, element, pinfo, tvb, attrs_info, array_length(attrs_info));
-
-    while ((item = steal_element_by_name(element, "item")) != NULL) {
-        xmpp_roster_item(query_tree, tvb, pinfo, item);
-    }
-    
-    xmpp_unknown(query_tree, tvb, pinfo, element);
+    display_elems(query_tree, element, pinfo, tvb, elems_info, array_length(elems_info));
 }
 
 static void
