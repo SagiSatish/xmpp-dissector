@@ -58,7 +58,7 @@ Files and their content:
   * xmpp-`*`.c
     * functions that process specific elements
 
-= Develope custom type of packet =
+= Adding custom type of packet =
 
 == Skeleton code ==
 
