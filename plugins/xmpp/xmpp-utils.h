@@ -204,7 +204,8 @@ extern GList* find_element_by_name(element_t *packet,const gchar *name);
 
 /** steal_*
  * Functions searches and marks as read found elements.
- */
+ * If element is set as read, it is invisible for these functions.*/
+ 
 extern element_t* steal_element_by_name(element_t *packet, const gchar *name);
 extern element_t* steal_element_by_names(element_t *packet, const gchar **names, gint names_len);
 extern element_t* steal_element_by_attr(element_t *packet, const gchar *attr_name, const gchar *attr_value);
@@ -219,7 +220,8 @@ extern gchar* element_to_string(tvbuff_t *tvb, element_t *element);
 /*Converts attribute to string. Returns memory allocated as ephemeral.*/
 extern gchar* attr_to_string(tvbuff_t *tvb, attr_t *attr);
 
-/*Returns attribute by name.*/
+/* Returns attribute by name and set as read. If attrib is set as read, it may be found
+ * one more time, but it is invisible for function xmpp_unknown_attrib*/
 extern attr_t* get_attr(element_t *element, const gchar* attr_name);
 
 /*Function hides first element in tree.*/
